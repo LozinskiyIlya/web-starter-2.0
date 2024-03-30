@@ -1,28 +1,24 @@
 package com.starter.web;
 
-import com.starter.domain.entity.Role;
-import com.starter.domain.repository.RoleRepository;
-import jakarta.annotation.PostConstruct;
+import com.starter.web.populator.Populator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.event.EventListener;
 
-import static com.starter.domain.entity.Role.Roles.values;
+import java.util.Collection;
+
 @SpringBootApplication
 public class WebStarterApplication {
 
     @Autowired
-    private RoleRepository roleRepository;
+    private Collection<Populator> populators;
 
-    @PostConstruct
-    public void populateRolesIfMissing() {
-        for (Role.Roles role : values()) {
-            roleRepository.findByName(role.getRoleName()).orElseGet(() -> {
-                Role newRole = new Role();
-                newRole.setName(role.getRoleName());
-                return roleRepository.save(newRole);
-            });
-        }
+    @EventListener(ApplicationReadyEvent.class)
+    public void setupApplication() {
+       populators.forEach(Populator::populate);
     }
     public static void main(String[] args) {
         SpringApplication.run(WebStarterApplication.class, args);
