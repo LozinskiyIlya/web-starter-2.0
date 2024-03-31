@@ -19,7 +19,6 @@ public class SwaggerUserPopulator implements Populator {
     public static final String SWAGGER_USER = "swagger_pierate";
     public static final String SWAGGER_PASSWORD = "securityisourpriority";
 
-
     private final PasswordEncoder encoder;
     private final UserRepository repo;
     private final RoleRepository roleRepository;

@@ -1,10 +1,18 @@
 package com.starter.web.configuration;
 
+import com.starter.domain.entity.Role;
+import com.starter.web.filter.SwaggerGuardingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -26,10 +34,38 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-//    @Bean
-//    public SwaggerGuardingFilter guardingFilter() {
-//        return new SwaggerGuardingFilter();
-//    }
+    @Bean
+    public SwaggerGuardingFilter guardingFilter() {
+        return new SwaggerGuardingFilter();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                // For HTTP Basic Auth
+                .httpBasic(AbstractHttpConfigurer::disable)
+
+                // CSRF
+                .csrf(AbstractHttpConfigurer::disable)
+
+                // CORS
+                .cors(cors -> {})
+
+                // Session Management
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Authorization Requests
+                .authorizeHttpRequests(auth -> auth
+                        // Define your authorization requests here
+                        .requestMatchers("/api/admin/**").hasRole(Role.Roles.ADMIN.getName())
+                        // Continue with more matchers as needed...
+                        .anyRequest().permitAll()
+                )
+                // Add your filters
+                .addFilterBefore(guardingFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 
     @Bean
     public HttpSessionEventPublisher httpSessionEventPublisher() {
