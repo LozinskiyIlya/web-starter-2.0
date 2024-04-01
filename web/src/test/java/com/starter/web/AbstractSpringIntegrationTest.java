@@ -7,9 +7,11 @@ import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
+import com.starter.web.service.auth.JwtProvider;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -19,9 +21,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.testcontainers.shaded.org.apache.commons.lang3.tuple.Pair;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.UUID;
 
 import static com.starter.domain.entity.Role.Roles.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -43,6 +47,9 @@ public abstract class AbstractSpringIntegrationTest {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private JwtProvider jwtProvider;
 
     @Autowired
     protected TransactionTemplate transactionTemplate;
@@ -121,54 +128,54 @@ public abstract class AbstractSpringIntegrationTest {
         }
     }
 
-//    @BeforeEach
-//    void setupTestInternalAdminIfMissing() {
-//        if (userRepository.findByLogin(TEST_INTERNAL_ADMIN).isEmpty()) {
-//            var internalAdmin = new User();
-//            internalAdmin.setLogin(TEST_INTERNAL_ADMIN);
-//            internalAdmin.setPassword("password");
-//            internalAdmin.setFirstLogin(false);
-//            internalAdmin.setRole(roleRepository.findByName(INTERNAL_ADMIN.getRoleName()).orElseGet(() -> {
-//                var roleInternalAdmin = new Role();
-//                roleInternalAdmin.setName(INTERNAL_ADMIN.getRoleName());
-//                return roleRepository.save(roleInternalAdmin);
-//            }));
-//            userRepository.save(internalAdmin);
-//        }
-//    }
-//
-//    protected String randomEmail() {
-//        return UUID.randomUUID().toString() + "@gmail.com";
-//    }
-//
-//    protected final String userToken(User user) {
-//        return jwtProvider.generateToken(user.getLogin());
-//    }
-//
-//    protected final Pair<String, String> userAuthHeader(User user) {
-//        return userAuthHeader(user.getLogin());
-//    }
-//
-//    protected final Pair<String, String> userAuthHeaderUnchecked(String login) {
-//        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(login));
-//    }
-//
-//    protected Pair<String, String> userAuthHeader(String login) {
-//        userRepository.findByLogin(login).orElseThrow();
-//        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(login));
-//    }
-//
-//    protected Pair<String, String> testUserAuthHeader() {
-//        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(TEST_USER));
-//    }
-//
-//    protected Pair<String, String> testAdminAuthHeader() {
-//        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(TEST_ADMIN));
-//    }
-//
-//    protected Pair<String, String> testInternalAdminAuthHeader() {
-//        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(TEST_INTERNAL_ADMIN));
-//    }
+    @BeforeEach
+    void setupTestInternalAdminIfMissing() {
+        if (userRepository.findByLogin(TEST_INTERNAL_ADMIN).isEmpty()) {
+            var internalAdmin = new User();
+            internalAdmin.setLogin(TEST_INTERNAL_ADMIN);
+            internalAdmin.setPassword("password");
+            internalAdmin.setFirstLogin(false);
+            internalAdmin.setRole(roleRepository.findByName(INTERNAL_ADMIN.getRoleName()).orElseGet(() -> {
+                var roleInternalAdmin = new Role();
+                roleInternalAdmin.setName(INTERNAL_ADMIN.getRoleName());
+                return roleRepository.save(roleInternalAdmin);
+            }));
+            userRepository.save(internalAdmin);
+        }
+    }
+
+    protected String randomEmail() {
+        return UUID.randomUUID() + "@gmail.com";
+    }
+
+    protected final String userToken(User user) {
+        return jwtProvider.generateToken(user.getLogin());
+    }
+
+    protected final Pair<String, String> userAuthHeader(User user) {
+        return userAuthHeader(user.getLogin());
+    }
+
+    protected final Pair<String, String> userAuthHeaderUnchecked(String login) {
+        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(login));
+    }
+
+    protected Pair<String, String> userAuthHeader(String login) {
+        userRepository.findByLogin(login).orElseThrow();
+        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(login));
+    }
+
+    protected Pair<String, String> testUserAuthHeader() {
+        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(TEST_USER));
+    }
+
+    protected Pair<String, String> testAdminAuthHeader() {
+        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(TEST_ADMIN));
+    }
+
+    protected Pair<String, String> testInternalAdminAuthHeader() {
+        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(TEST_INTERNAL_ADMIN));
+    }
 
     protected <T extends Comparable<T>> boolean isSortedDescending(List<T> list) {
         for (int i = 1; i < list.size(); i++) {

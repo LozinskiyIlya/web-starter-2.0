@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import static com.starter.domain.entity.Role.Roles.values;
+import java.util.Arrays;
 
 
 @Slf4j
@@ -19,12 +19,13 @@ public class RolePopulator implements Populator {
 
     @Override
     public void populate() {
-        for (Role.Roles role : values()) {
-            roleRepository.findByName(role.getRoleName()).orElseGet(() -> {
-                Role newRole = new Role();
-                newRole.setName(role.getRoleName());
-                return roleRepository.save(newRole);
-            });
-        }
+        Arrays.asList(Role.Roles.values()).forEach(role ->
+                roleRepository.findByName(role.getRoleName()).ifPresentOrElse(r -> {
+                }, () -> {
+                    Role newRole = new Role();
+                    newRole.setName(role.getRoleName());
+                    roleRepository.save(newRole);
+                }));
+        roleRepository.flush();
     }
 }
