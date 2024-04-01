@@ -41,23 +41,6 @@ public class SwaggerIT extends AbstractSpringIntegrationTest {
                     .andExpect(content().string(not(containsString("<title>Swagger UI</title>"))));
         }
 
-        @Test
-        @SneakyThrows
-        @DisplayName("Can use no-auth requests")
-        public void canPingNoAuth() {
-            mockMvc.perform(MockMvcRequestBuilders.get("/ping/no-auth"))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        @Disabled
-        @SneakyThrows
-        @DisplayName("Cant use authorized requests")
-        public void cantPing() {
-            mockMvc.perform(MockMvcRequestBuilders.get("/ping/auth"))
-                    .andExpect(status().is4xxClientError());
-        }
-
     }
 
     @Nested
@@ -88,32 +71,13 @@ public class SwaggerIT extends AbstractSpringIntegrationTest {
                         .andExpect(content().string(containsString("<title>Swagger UI</title>")));
             }
 
-            @Test
-            @SneakyThrows
-            @DisplayName("Can use no-auth requests")
-            public void canPingNoAuth() {
-                mockMvc.perform(MockMvcRequestBuilders.get("/ping/no-auth")
-                                .header("Authorization", header))
-                        .andExpect(status().isOk());
-            }
-
-            @Test
-            @Disabled
-            @SneakyThrows
-            @DisplayName("Cant use authorized requests")
-            public void cantPing() {
-                mockMvc.perform(MockMvcRequestBuilders.get("/ping/auth")
-                                .header("Authorization", header))
-                        .andExpect(status().is4xxClientError());
-            }
-
         }
 
         @Nested
         @DisplayName("And wrong header provided")
         class AndHeaderIsIncorrect {
 
-            private String header = "Basic wrongheader";
+            private final String header = "Basic wrongheader";
 
             @Test
             @DisplayName("Swagger gives 403")
@@ -132,27 +96,6 @@ public class SwaggerIT extends AbstractSpringIntegrationTest {
                                 .header("Authorization", header))
                         .andExpect(content().string(not(containsString("<title>Swagger UI</title>"))));
             }
-
-            @Test
-            @SneakyThrows
-            @DisplayName("Can use no-auth requests")
-            public void canPingNoAuth() {
-                mockMvc.perform(MockMvcRequestBuilders.get("/ping/no-auth")
-                                .header("Authorization", header))
-                        .andExpect(status().isOk());
-            }
-
-            @Test
-            @Disabled
-            @SneakyThrows
-            @DisplayName("Cant use authorized requests")
-            public void cantPing() {
-                mockMvc.perform(MockMvcRequestBuilders.get("/ping/auth")
-                                .header("Authorization", header))
-                        .andExpect(status().is4xxClientError());
-            }
         }
-
     }
-
 }

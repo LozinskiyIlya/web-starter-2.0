@@ -1,18 +1,24 @@
-package com.starter.web;
+package com.starter.web.controller.auth;
 
 
+import com.starter.domain.entity.User;
 import com.starter.web.populator.SwaggerUserPopulator;
+import com.starter.web.service.auth.AuthService;
+import com.starter.web.service.auth.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -20,10 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController("/api/v1/auth")
 public class AuthController {
 
+    private final AuthService authService;
+    private final JwtProvider jwtProvider;
+
     @PostMapping("/login")
     @Operation(summary = "Получение jwt токена", description = "Login to the application and receive a JWT token")
-    public String login(@Valid @RequestBody AuthRequest request) {
-        return "login";
+    public AuthResponse login(@Valid @RequestBody AuthRequest request) {
+        final var user = authService.login(request.getLogin(), request.getPassword());
+        final var token = jwtProvider.generateToken(user.getLogin());
+        return new AuthResponse(token, user.getFirstLogin());
     }
 
 
@@ -42,4 +53,11 @@ public class AuthController {
         private String password;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuthResponse {
+        private String token;
+        private Boolean firstLogin;
+    }
 }

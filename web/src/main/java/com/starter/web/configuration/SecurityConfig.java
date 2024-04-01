@@ -1,10 +1,12 @@
 package com.starter.web.configuration;
 
-import com.starter.domain.entity.Role;
+import com.starter.web.configuration.auth.JwtProperties;
+import com.starter.web.filter.JwtFilter;
 import com.starter.web.filter.SwaggerGuardingFilter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +22,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import static com.starter.domain.entity.Role.Roles.ADMIN;
+import static com.starter.domain.entity.Role.Roles.INTERNAL_ADMIN;
+
 
 /**
  * @author ilya
@@ -27,7 +32,11 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(JwtProperties.class)
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtFilter jwtFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -57,12 +66,13 @@ public class SecurityConfig {
                 // Authorization Requests
                 .authorizeHttpRequests(auth -> auth
                         // Define your authorization requests here
-                        .requestMatchers("/api/admin/**").hasRole(Role.Roles.ADMIN.getName())
+                        .requestMatchers("/api/admin/**").hasAnyRole(ADMIN.getName(), INTERNAL_ADMIN.getName())
                         // Continue with more matchers as needed...
                         .anyRequest().permitAll()
                 )
                 // Add your filters
-                .addFilterBefore(guardingFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(guardingFilter(), JwtFilter.class);
 
         return http.build();
     }
