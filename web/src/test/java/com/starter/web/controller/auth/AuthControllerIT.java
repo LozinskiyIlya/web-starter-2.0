@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTestData {
@@ -32,6 +33,34 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
     @Nested
     @DisplayName("Login")
     class Login {
+
+        @Test
+        @DisplayName("Invalid username")
+        void invalidUserName() throws Exception {
+            var authRequest = new AuthController.AuthRequest();
+            authRequest.setLogin(randomEmail());
+            authRequest.setPassword("password");
+            mockMvc.perform(postRequest("/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(authRequest)))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(content().json("{\"error\":\"Invalid login or password\"}", true));
+        }
+
+        @Test
+        @DisplayName("Invalid password")
+        void invalidPassword() throws Exception {
+            final var user = givenUserExists(u->{});
+            //when
+            var authRequest = new AuthController.AuthRequest();
+            authRequest.setLogin(user.getLogin());
+            authRequest.setPassword("invalid password");
+            mockMvc.perform(postRequest("/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(authRequest)))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(content().json("{\"error\":\"Invalid login or password\"}", true));
+        }
 
         @Test
         @DisplayName("should let log in with uppercase and lower case login")
