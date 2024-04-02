@@ -26,6 +26,20 @@ public class GlobalExceptionHandler {
         return Collections.singletonMap("error", e.getMessage());
     }
 
+    @ExceptionHandler({WrongUserException.class})
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public Map<String, String> handleForbiddenException(Exception e) {
+        return Collections.singletonMap("error", e.getMessage());
+    }
+
+    @ExceptionHandler({MissingPasswordException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public Map<String, String> handleBadRequestException(Exception e) {
+        return Collections.singletonMap("error", e.getMessage());
+    }
+
     public static class UnauthorizedException extends RuntimeException {
         public UnauthorizedException(String message) {
             super(message);
@@ -36,5 +50,11 @@ public class GlobalExceptionHandler {
         public DuplicateEmailException() {
             super("User with this email already exists");
         }
+    }
+
+    public static class WrongUserException extends RuntimeException {
+    }
+
+    public static class MissingPasswordException extends RuntimeException {
     }
 }

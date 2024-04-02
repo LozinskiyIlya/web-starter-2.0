@@ -47,7 +47,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
         var serializedUser = readResource("responses/user/current_user.json")
                 .replace("%USER_ID%", user.getId().toString());
         mockMvc.perform(getRequest("")
-                        .header(header.getLeft(), header.getRight()))
+                        .header(header.getFirst(), header.getSecond()))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(content().json(serializedUser, true));
     }
@@ -59,7 +59,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
         });
         var header = userAuthHeader(user);
         mockMvc.perform(getRequest("")
-                        .header(header.getLeft(), header.getRight()))
+                        .header(header.getFirst(), header.getSecond()))
                 .andExpect(status().isOk());
     }
 
@@ -68,7 +68,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
     void whenUserIsMissingReturn500() throws Exception {
         var header = userAuthHeaderUnchecked(UUID.randomUUID().toString());
         mockMvc.perform(getRequest("")
-                        .header(header.getLeft(), header.getRight()))
+                        .header(header.getFirst(), header.getSecond()))
                 .andExpect(status().isForbidden());
     }
 
