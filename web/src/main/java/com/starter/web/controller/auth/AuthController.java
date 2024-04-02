@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(value = "/api/auth")
-@Schema(description = "Контроллер для авторизации")
+@Schema(title = "Авторизации/Регистрация")
 public class AuthController {
 
     private final AuthService authService;
@@ -37,6 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Регистрация", description = "Регистрация по имейлу и паролю")
     public AuthResponse registerUser(@RequestBody @Valid RegistrationRequest request) {
         final var user = authService.register(request.getEmail(), request.getPassword());
         final var token = jwtProvider.generateToken(user.getLogin());
@@ -60,7 +61,7 @@ public class AuthController {
     }
 
     @Data
-    @Schema(description = "DTO для получение регистрации пользователя")
+    @Schema(description = "DTO для регистрации пользователя")
     public static class RegistrationRequest {
 
         @NotBlank(message = "Email is required")

@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/user/current-user")
-@Schema(description = "текущий пользователь")
+@Schema(title = "Текущий пользователь")
 public class CurrentUserController {
 
     private final CurrentUserService currentUserService;
@@ -28,7 +28,7 @@ public class CurrentUserController {
     private final UserInfoRepository userInfoRepository;
 
     @GetMapping("")
-    @Operation(summary = "отобразить данные пользователя")
+    @Operation(summary = "Отобразить данные пользователя")
     public CurrentUserDto getCurrentUser() {
         UserDetails userDetails = currentUserService.getUserDetails();
         User current = userRepository.findByLogin(userDetails.getUsername()).orElseThrow();

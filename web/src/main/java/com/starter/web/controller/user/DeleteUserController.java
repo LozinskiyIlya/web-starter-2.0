@@ -23,7 +23,7 @@ import static com.starter.domain.entity.User.UserType.GOOGLE;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users/delete")
-@Schema(description = "Удаление пользовательской информации")
+@Schema(title = "Удаление пользовательской информации")
 public class DeleteUserController {
 
     private final PurgeUserService purgeUserService;

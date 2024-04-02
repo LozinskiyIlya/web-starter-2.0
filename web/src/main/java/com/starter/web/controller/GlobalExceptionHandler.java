@@ -40,6 +40,13 @@ public class GlobalExceptionHandler {
         return Collections.singletonMap("error", e.getMessage());
     }
 
+    @ExceptionHandler({UserNotFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public Map<String, String> handleNotFoundException(Exception e) {
+        return Collections.singletonMap("error", e.getMessage());
+    }
+
     public static class UnauthorizedException extends RuntimeException {
         public UnauthorizedException(String message) {
             super(message);
@@ -53,8 +60,26 @@ public class GlobalExceptionHandler {
     }
 
     public static class WrongUserException extends RuntimeException {
+
+        @Override
+        public String getMessage() {
+            return "Wrong user";
+        }
     }
 
     public static class MissingPasswordException extends RuntimeException {
+
+        @Override
+        public String getMessage() {
+            return "Missing password";
+        }
+    }
+
+    public static class UserNotFoundException extends RuntimeException {
+
+        @Override
+        public String getMessage() {
+            return "User not found";
+        }
     }
 }

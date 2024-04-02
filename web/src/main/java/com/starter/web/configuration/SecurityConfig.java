@@ -22,8 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-import static com.starter.domain.entity.Role.Roles.ADMIN;
-import static com.starter.domain.entity.Role.Roles.INTERNAL_ADMIN;
+import static com.starter.domain.entity.Role.Roles.*;
 
 
 /**
@@ -67,6 +66,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Define your authorization requests here
                         .requestMatchers("/api/admin/**").hasAnyRole(ADMIN.getName(), INTERNAL_ADMIN.getName())
+                        .requestMatchers("/api/auth/password/change").hasRole(USER.getName())
                         // Continue with more matchers as needed...
                         .anyRequest().permitAll()
                 )
