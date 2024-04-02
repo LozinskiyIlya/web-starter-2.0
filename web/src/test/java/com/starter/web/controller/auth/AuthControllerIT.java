@@ -50,7 +50,8 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
         @Test
         @DisplayName("Invalid password")
         void invalidPassword() throws Exception {
-            final var user = givenUserExists(u->{});
+            final var user = givenUserExists(u -> {
+            });
             //when
             var authRequest = new AuthController.AuthRequest();
             authRequest.setLogin(user.getLogin());
@@ -108,6 +109,65 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
                             .content(mapper.writeValueAsString(authRequest)))
                     .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
             //then
+            var authResponse = mapper.readValue(content, AuthController.AuthResponse.class);
+            assertTrue(authResponse.getFirstLogin());
+        }
+    }
+
+    @Nested
+    @DisplayName("Register")
+    class Register {
+
+        @Test
+        @DisplayName("Email already exists")
+        void emailAlreadyExists() throws Exception {
+            final var user = givenUserExists(u -> {
+            });
+            var registrationRequest = new AuthController.RegistrationRequest();
+            registrationRequest.setEmail(user.getLogin());
+            registrationRequest.setPassword(user.getPassword());
+            mockMvc.perform(postRequest("/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(registrationRequest)))
+                    .andExpect(status().isConflict())
+                    .andExpect(content().json("{\"error\":\"User with this email already exists\"}", true));
+        }
+
+        @Test
+        @DisplayName("should let log in with differently cased email after registration")
+        void shouldLetLogInWithDifferentCaseEmail() throws Exception {
+            //given
+            final var email = randomEmail();
+            var registrationRequest = new AuthController.RegistrationRequest();
+            registrationRequest.setEmail("ggg" + email);
+            registrationRequest.setPassword("password");
+            MvcResult result = mockMvc.perform(postRequest("/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(registrationRequest)))
+                    .andExpect(status().isOk()).andReturn();
+            assertTrue(result.getResponse().getContentAsString().contains("token"));
+
+            //try to log in with differently cased email
+            var authRequest = new AuthController.AuthRequest();
+            authRequest.setLogin("GgG" + email.toUpperCase());
+            authRequest.setPassword("password");
+            result = mockMvc.perform(postRequest("/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(authRequest)))
+                    .andExpect(status().isOk()).andReturn();
+            assertTrue(result.getResponse().getContentAsString().contains("token"));
+        }
+
+        @Test
+        @DisplayName("should return firstLogin = true")
+        void shouldReturnFirstLoginTrue() throws Exception {
+            var registrationRequest = new AuthController.RegistrationRequest();
+            registrationRequest.setEmail(randomEmail());
+            registrationRequest.setPassword("password");
+            var content = mockMvc.perform(postRequest("/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(registrationRequest)))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
             var authResponse = mapper.readValue(content, AuthController.AuthResponse.class);
             assertTrue(authResponse.getFirstLogin());
         }

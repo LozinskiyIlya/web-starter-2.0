@@ -12,16 +12,29 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UnauthorizedException.class)
+    @ExceptionHandler({UnauthorizedException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ResponseBody
-    public Map<String, String> handleUnauthorizedException(UnauthorizedException e) {
+    public Map<String, String> handleUnauthorizedException(Exception e) {
+        return Collections.singletonMap("error", e.getMessage());
+    }
+
+    @ExceptionHandler({DuplicateEmailException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public Map<String, String> handleConflictException(Exception e) {
         return Collections.singletonMap("error", e.getMessage());
     }
 
     public static class UnauthorizedException extends RuntimeException {
         public UnauthorizedException(String message) {
             super(message);
+        }
+    }
+
+    public static class DuplicateEmailException extends RuntimeException {
+        public DuplicateEmailException() {
+            super("User with this email already exists");
         }
     }
 }
