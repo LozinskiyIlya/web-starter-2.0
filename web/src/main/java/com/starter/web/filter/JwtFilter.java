@@ -1,7 +1,7 @@
 package com.starter.web.filter;
 
-import com.starter.web.service.auth.CustomUserDetails;
-import com.starter.web.service.auth.CustomUserDetailsService;
+import com.starter.web.service.user.CustomUserDetails;
+import com.starter.web.service.user.CustomUserDetailsService;
 import com.starter.web.service.auth.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

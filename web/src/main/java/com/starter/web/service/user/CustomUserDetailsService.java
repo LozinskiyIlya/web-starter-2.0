@@ -1,4 +1,4 @@
-package com.starter.web.service.auth;
+package com.starter.web.service.user;
 
 import com.starter.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

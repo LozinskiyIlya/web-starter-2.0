@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(value = "/api/auth")
+@Schema(description = "Контроллер для авторизации")
 public class AuthController {
 
     private final AuthService authService;
