@@ -31,6 +31,8 @@ public class ApiAction extends AbstractEntity {
     @Column(name = "user_id")
     private UUID userId;
 
+    private String userQualifier;
+
     private String path;
 
     private String error;

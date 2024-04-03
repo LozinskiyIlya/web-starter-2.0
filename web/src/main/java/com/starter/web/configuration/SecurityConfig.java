@@ -3,6 +3,7 @@ package com.starter.web.configuration;
 import com.starter.web.configuration.auth.JwtProperties;
 import com.starter.web.filter.JwtFilter;
 import com.starter.web.filter.SwaggerGuardingFilter;
+import com.starter.web.filter.logging.CachingRequestBodyFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +37,7 @@ import static com.starter.domain.entity.Role.Roles.*;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final CachingRequestBodyFilter cachingBodyFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -57,7 +59,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
 
                 // CORS
-                .cors(cors -> {})
+                .cors(cors -> {
+                })
 
                 // Session Management
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -71,7 +74,8 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 // Add your filters
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(cachingBodyFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, CachingRequestBodyFilter.class)
                 .addFilterBefore(guardingFilter(), JwtFilter.class);
 
         return http.build();
