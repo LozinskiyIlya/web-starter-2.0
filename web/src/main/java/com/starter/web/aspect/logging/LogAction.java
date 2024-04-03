@@ -1,4 +1,4 @@
-package com.starter.web.filter.logging;
+package com.starter.web.aspect.logging;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

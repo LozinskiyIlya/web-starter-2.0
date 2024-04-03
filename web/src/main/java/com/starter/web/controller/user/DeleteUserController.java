@@ -2,7 +2,7 @@ package com.starter.web.controller.user;
 
 import com.starter.web.controller.GlobalExceptionHandler.MissingPasswordException;
 import com.starter.web.controller.GlobalExceptionHandler.WrongUserException;
-import com.starter.web.filter.logging.LogAction;
+import com.starter.web.aspect.logging.LogAction;
 import com.starter.web.service.user.CurrentUserService;
 import com.starter.web.service.user.PurgeUserService;
 import io.swagger.v3.oas.annotations.Operation;

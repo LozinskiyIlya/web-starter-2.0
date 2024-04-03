@@ -320,7 +320,6 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         @SneakyThrows
         @DisplayName("Api action is saved")
         void apiActionIsSaved() {
-            apiActionRepository.deleteAll();
             var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode("password")));
             var header = userAuthHeader(user);
             mockMvc.perform(deleteRequest("/" + user.getId())
@@ -329,9 +328,13 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
                             .content(bodyWithPassword("password")))
                     .andExpect(status().isOk());
             // saving api action entity is async
-            await().atMost(2, SECONDS).until(() -> apiActionRepository.count() > 0);
+            await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserId(user.getId()).isEmpty());
             var actions = apiActionRepository.findAllByUserId(user.getId());
             assertEquals(1, actions.size());
+            var deleteAction = actions.get(0);
+            assertEquals(user.getId(), deleteAction.getUserId());
+            assertEquals(user.getLogin(), deleteAction.getUserQualifier());
+            assertTrue(deleteAction.getPath().contains("/api/users/delete/"));
         }
 
 

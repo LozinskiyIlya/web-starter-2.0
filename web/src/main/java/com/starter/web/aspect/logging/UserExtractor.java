@@ -1,4 +1,4 @@
-package com.starter.web.filter.logging;
+package com.starter.web.aspect.logging;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.util.ContentCachingRequestWrapper;

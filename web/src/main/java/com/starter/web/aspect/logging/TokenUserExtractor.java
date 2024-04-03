@@ -1,4 +1,4 @@
-package com.starter.web.filter.logging;
+package com.starter.web.aspect.logging;
 
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserRepository;

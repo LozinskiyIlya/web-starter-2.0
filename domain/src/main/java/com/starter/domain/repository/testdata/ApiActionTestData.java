@@ -19,7 +19,6 @@ public interface ApiActionTestData {
         metadata.setUserAgent("User Agent");
         metadata.setParams("param1=value1");
         metadata.setHttpMethod("GET");
-        metadata.setResponseCode(200);
         action.setMetadata(metadata);
         configure.accept(action);
         return apiActionRepository().saveAndFlush(action);

@@ -54,7 +54,6 @@ public class ApiAction extends AbstractEntity {
         private String userAgent;
         private String httpMethod;
         private String params;
-        private int responseCode;
     }
 
     static class MetadataConverter implements AttributeConverter<Metadata, String> {
