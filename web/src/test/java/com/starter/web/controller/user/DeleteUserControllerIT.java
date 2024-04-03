@@ -312,7 +312,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
             return Stream.<Pair<String, Runnable>>of(
                             Pair.of("user", () -> assertFalse(userRepository.existsById(user.getId()))),
                             Pair.of("userInfo", () -> assertFalse(userInfoRepository.existsById(userInfo.getId())))
-                            )
+                    )
                     .map(it -> DynamicTest.dynamicTest(it.getFirst(), it.getSecond()::run));
         }
 
@@ -335,6 +335,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
             assertEquals(user.getId(), deleteAction.getUserId());
             assertEquals(user.getLogin(), deleteAction.getUserQualifier());
             assertTrue(deleteAction.getPath().contains("/api/users/delete/"));
+            assertEquals("DELETE", deleteAction.getMetadata().getHttpMethod());
         }
 
 

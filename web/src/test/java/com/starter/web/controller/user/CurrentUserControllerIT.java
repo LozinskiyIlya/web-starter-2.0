@@ -96,6 +96,6 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
 
     @Override
     protected String controllerPath() {
-        return "/api/user/current-user";
+        return "/api/user/current";
     }
 }

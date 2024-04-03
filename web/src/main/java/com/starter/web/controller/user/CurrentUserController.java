@@ -19,7 +19,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/user/current-user")
+@RequestMapping("api/user/current")
 @Schema(title = "Текущий пользователь")
 public class CurrentUserController {
 
