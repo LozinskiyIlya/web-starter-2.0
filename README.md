@@ -3,13 +3,13 @@
 ## Includes
 
 * Domain-starter
-  ** postgresql
-  ** ready to use basic entities for user management
-  ** testcontainers-postgresql
+  * postgresql
+  * ready to use basic entities for user management
+  * testcontainers-postgresql
 * Swagger-ui
 * Register / Login / Change password / Delete user
 * JWT authentication
-* Testing
+* Testing with JUnit 5
 
 
 ## Stack
