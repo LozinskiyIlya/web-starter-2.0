@@ -36,6 +36,7 @@ public class LogActionInterceptor implements HandlerInterceptor {
 
     /**
      * Mark the request if the handler method has {@link LogAction} annotation
+     *
      * @see CachingRequestBodyFilter it will cache request body if the request was marked
      * we will use this cache to access request body in {@link #afterCompletion}
      */
@@ -60,8 +61,8 @@ public class LogActionInterceptor implements HandlerInterceptor {
                     LogAction actionAnnotation = handlerMethod.getMethodAnnotation(LogAction.class);
                     if (actionAnnotation != null) {
                         actionSaver.save(
+                                actionAnnotation,
                                 request,
-                                actionAnnotation.logParams(),
                                 ex
                         );
                     }

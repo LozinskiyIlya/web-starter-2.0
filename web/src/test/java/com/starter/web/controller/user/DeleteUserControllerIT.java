@@ -3,10 +3,7 @@ package com.starter.web.controller.user;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
-import com.starter.domain.repository.Repository;
-import com.starter.domain.repository.RoleRepository;
-import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserRepository;
+import com.starter.domain.repository.*;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
@@ -24,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -293,6 +292,9 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         @Autowired
         private UserInfoRepository userInfoRepository;
 
+        @Autowired
+        private ApiActionRepository apiActionRepository;
+
         @TestFactory
         @SneakyThrows
         @DisplayName("All related entities are deleted")
@@ -312,6 +314,24 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
                             Pair.of("userInfo", () -> assertFalse(userInfoRepository.existsById(userInfo.getId())))
                             )
                     .map(it -> DynamicTest.dynamicTest(it.getFirst(), it.getSecond()::run));
+        }
+
+        @Test
+        @SneakyThrows
+        @DisplayName("Api action is saved")
+        void apiActionIsSaved() {
+            apiActionRepository.deleteAll();
+            var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode("password")));
+            var header = userAuthHeader(user);
+            mockMvc.perform(deleteRequest("/" + user.getId())
+                            .header(header.getFirst(), header.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bodyWithPassword("password")))
+                    .andExpect(status().isOk());
+            // saving api action entity is async
+            await().atMost(2, SECONDS).until(() -> apiActionRepository.count() > 0);
+            var actions = apiActionRepository.findAllByUserId(user.getId());
+            assertEquals(1, actions.size());
         }
 
 
