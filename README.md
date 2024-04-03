@@ -1,5 +1,7 @@
 # Web Starter
 
+### Starter for web back end based on spring boot
+
 ## Includes
 
 * Domain-starter
@@ -9,6 +11,7 @@
 * Swagger-ui
 * Register / Login / Change password / Delete user
 * JWT authentication
+* Job scheduling
 * Testing with JUnit 5
 
 
