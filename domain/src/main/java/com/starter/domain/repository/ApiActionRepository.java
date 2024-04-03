@@ -11,4 +11,6 @@ import java.util.UUID;
  */
 public interface ApiActionRepository extends Repository<ApiAction> {
     List<ApiAction> findAllByUserId(UUID userId);
+
+    List<ApiAction> findAllByUserQualifier(String userQualifier);
 }

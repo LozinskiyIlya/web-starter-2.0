@@ -1,12 +1,15 @@
 package com.starter.web.controller.auth;
 
+import com.starter.domain.entity.ApiAction;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
+import com.starter.domain.repository.ApiActionRepository;
 import com.starter.domain.repository.Repository;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,7 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.function.Supplier;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +33,9 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
     private RoleRepository roleRepository;
 
     @Autowired
+    private ApiActionRepository apiActionRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Nested
@@ -38,7 +46,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
         @DisplayName("Invalid username")
         void invalidUserName() throws Exception {
             var authRequest = new AuthController.AuthRequest();
-            authRequest.setLogin(randomEmail());
+            authRequest.setEmail(randomEmail());
             authRequest.setPassword("password");
             mockMvc.perform(postRequest("/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -54,7 +62,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
             });
             //when
             var authRequest = new AuthController.AuthRequest();
-            authRequest.setLogin(user.getLogin());
+            authRequest.setEmail(user.getLogin());
             authRequest.setPassword("invalid password");
             mockMvc.perform(postRequest("/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -74,7 +82,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
             });
             //try to log in with upper and lower case email
             var authRequest = new AuthController.AuthRequest();
-            authRequest.setLogin("ggg" + email.toUpperCase());
+            authRequest.setEmail("ggg" + email.toUpperCase());
             authRequest.setPassword("password");
             MvcResult result = mockMvc.perform(postRequest("/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +92,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
 
             //try to log in with lower case email
             authRequest = new AuthController.AuthRequest();
-            authRequest.setLogin("GGG" + email.toLowerCase());
+            authRequest.setEmail("GGG" + email.toLowerCase());
             authRequest.setPassword("password");
             result = mockMvc.perform(postRequest("/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -102,7 +110,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
             });
             //when
             var authRequest = new AuthController.AuthRequest();
-            authRequest.setLogin(user.getLogin());
+            authRequest.setEmail(user.getLogin());
             authRequest.setPassword("password");
             var content = mockMvc.perform(postRequest("/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -149,7 +157,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
 
             //try to log in with differently cased email
             var authRequest = new AuthController.AuthRequest();
-            authRequest.setLogin("GgG" + email.toUpperCase());
+            authRequest.setEmail("GgG" + email.toUpperCase());
             authRequest.setPassword("password");
             result = mockMvc.perform(postRequest("/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -172,6 +180,74 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
             assertTrue(authResponse.getFirstLogin());
         }
     }
+
+
+    @RequiredArgsConstructor
+    abstract class OnSomeAuthRelatedRequest {
+
+        protected final String endpointPath;
+        protected final Supplier<User> userSupplier;
+
+        private static String bodyWithEmailAndPassword(String email, String password) {
+            return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
+        }
+
+        @Test
+        @DisplayName("Saves api action on successful request")
+        void savesApiActionOnSuccessfulRequest() throws Exception {
+            final var user = userSupplier.get();
+            final var email = user == null ? randomEmail() : user.getLogin();
+            mockMvc.perform(postRequest(endpointPath)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bodyWithEmailAndPassword(email, "password")))
+                    .andExpect(status().isOk());
+
+            final var saved = assertCreationAndReturn(email);
+            assertNull(saved.getError());
+        }
+
+        @Test
+        @DisplayName("Saves api action on failed request")
+        void savesApiActionOnFailedRequest() throws Exception {
+            final var user = userSupplier.get();
+            final var email = user == null ? randomEmail() : user.getLogin();
+            mockMvc.perform(postRequest(endpointPath)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bodyWithEmailAndPassword(email, "1234567")))
+                    .andExpect(status().is4xxClientError());
+            final var saved = assertCreationAndReturn(email);
+            assertNotNull(saved.getError());
+        }
+
+        private ApiAction assertCreationAndReturn(String email) {
+            final var apiAction = apiActionRepository.findAllByUserQualifier(email).get(0);
+            assertTrue(apiAction.getPath().contains(endpointPath));
+            assertEquals("POST", apiAction.getMetadata().getHttpMethod());
+            return apiAction;
+        }
+    }
+
+    @Nested
+    @DisplayName("On LOGIN request")
+    class OnLoginRequest extends OnSomeAuthRelatedRequest {
+
+        public OnLoginRequest() {
+            super("/login", () -> givenUserExists(u -> {
+                u.setLogin(randomEmail());
+                u.setPassword(passwordEncoder.encode("password"));
+            }));
+        }
+    }
+
+    @Nested
+    @DisplayName("On REGISTER request")
+    class OnRegisterRequest extends OnSomeAuthRelatedRequest {
+
+        public OnRegisterRequest() {
+            super("/register", () -> null);
+        }
+    }
+
 
     @Override
     public Repository<User> userRepository() {

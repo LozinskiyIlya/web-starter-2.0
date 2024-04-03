@@ -2,7 +2,9 @@ package com.starter.web.configuration.swagger;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,5 +23,16 @@ public class SwaggerConfig {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")));
+    }
+
+    @Bean
+    public OpenApiCustomizer removeGlobalResponsesCustomizer() {
+        // removes all 4xx responses from all endpoints documentation
+        return openApi -> openApi.getPaths().values().forEach(pathItem -> pathItem.readOperationsMap().values().forEach(operation -> {
+            ApiResponses responses = operation.getResponses();
+            for (int i = 400; i < 499; i++) {
+                responses.remove(String.valueOf(i));
+            }
+        }));
     }
 }

@@ -31,7 +31,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Получение jwt токена", description = "Login to the application and receive a JWT token")
     public AuthResponse login(@Valid @RequestBody AuthRequest request) {
-        final var user = authService.login(request.getLogin(), request.getPassword());
+        final var user = authService.login(request.getEmail(), request.getPassword());
         final var token = jwtProvider.generateToken(user.getLogin());
         return new AuthResponse(token, user.getFirstLogin());
     }
@@ -52,7 +52,7 @@ public class AuthController {
         @NotNull
         @NotEmpty
         @Schema(description = "логин пользователя", example = SwaggerUserPopulator.SWAGGER_USER)
-        private String login;
+        private String email;
 
         @NotNull
         @NotEmpty
