@@ -1,0 +1,12 @@
+{
+  "username": "current user login",
+  "firstName": "current user first name",
+  "lastName": "current user last name",
+  "userId": "%USER_ID%",
+  "role": "ROLE_USER",
+  "userType": "REAL",
+  "enabled": true,
+  "accountNonExpired": true,
+  "accountNonLocked": true,
+  "credentialsNonExpired": true
+}

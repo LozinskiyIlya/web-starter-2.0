@@ -17,9 +17,8 @@ public interface UserTestData {
     default User givenUserExists(Consumer<User> configure) {
         var user = new User();
         user.setRole(roleRepository().findAll().stream().filter(it -> it.getName().contains("USER")).findFirst().orElseThrow());
-        user.setLogin(UUID.randomUUID().toString()+"@gmail.com");
+        user.setLogin(UUID.randomUUID() +"@gmail.com");
         user.setPassword("b4a60a7779e66241ffe1fb9ea15ec595");
-        user.setFirstLogin(false);
         configure.accept(user);
         return userRepository().saveAndFlush(user);
     }

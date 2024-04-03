@@ -21,8 +21,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "users",
         indexes = {
-                @Index(name = "user_role_fk_index", columnList = "role_id"),
-                @Index(name = "user_login_index", columnList = "login")
+                @Index(name = "user_login_index", columnList = "login"),
+                @Index(name = "user_role_fk_index", columnList = "role_id")
         }
 )
 @SQLDelete(sql = "UPDATE users SET state='DELETED' WHERE id=?")
@@ -42,7 +42,8 @@ public class User extends AbstractEntity {
     private Boolean firstLogin = true;
 
     @NotNull
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "role_id")
     private Role role;
 
     @Setter(AccessLevel.NONE)
