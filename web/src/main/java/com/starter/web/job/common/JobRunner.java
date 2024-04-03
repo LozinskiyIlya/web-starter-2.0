@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -67,7 +68,8 @@ public class JobRunner {
         updateInvocationStatus(details, IN_PROGRESS);
         try {
             log.info("Running {} #{}", job.name(), details.getId());
-            job.run();
+            final var run = job.run();
+            run.get();
         } catch (Exception ex) {
             log.error("Failed to run job {} #{}", job.name(), details.getId(), ex);
             updateInvocationStatus(details, FAILURE);
@@ -95,8 +97,8 @@ public class JobRunner {
 
         private final Job job;
 
-        void run() {
-            executor.submit(job::run);
+        Future<?> run() {
+           return executor.submit(job::run);
         }
 
         private String name() {

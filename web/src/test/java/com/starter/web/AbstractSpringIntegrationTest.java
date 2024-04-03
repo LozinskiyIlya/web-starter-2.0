@@ -7,6 +7,7 @@ import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
+import com.starter.web.job.TestJob;
 import com.starter.web.service.auth.JwtProvider;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.util.Pair;
@@ -188,5 +190,10 @@ public abstract class AbstractSpringIntegrationTest {
 
     @TestConfiguration
     static class AbstractSpringIntegrationTestConfig {
+
+        @Bean
+        public TestJob testJob() {
+            return new TestJob();
+        }
     }
 }
