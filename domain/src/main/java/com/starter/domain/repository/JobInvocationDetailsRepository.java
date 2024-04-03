@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface JobInvocationDetailsRepository extends Repository<JobInvocationDetails> {
     Optional<JobInvocationDetails> findFirstByJobNameAndStatusInOrderByExecutedAtDesc(String jobName, JobInvocationDetails.JobInvocationStatus... statuses);
+
 }

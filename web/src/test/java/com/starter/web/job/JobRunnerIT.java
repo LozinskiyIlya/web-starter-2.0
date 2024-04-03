@@ -8,6 +8,7 @@ import com.starter.web.AbstractSpringIntegrationTest;
 import com.starter.web.job.common.JobRunner;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,12 +36,14 @@ public class JobRunnerIT extends AbstractSpringIntegrationTest implements JobInv
     }
 
     @Test
+    @DisplayName("Job runs successfully")
     public void jobRuns() {
         jobRunner.runJobsIfNecessary();
         assertThat(TestJob.executionCount.get()).isEqualTo(1);
     }
 
     @Test
+    @DisplayName("Successful job execution updates status")
     public void successfulJobExecutionUpdatesStatus() {
         jobRunner.runJobsIfNecessary();
         final var latestDetails = jobInvocationDetailsRepository.findFirstByJobNameAndStatusInOrderByExecutedAtDesc(TestJob.class.getSimpleName(), JobInvocationDetails.JobInvocationStatus.SUCCESS);
@@ -49,6 +52,7 @@ public class JobRunnerIT extends AbstractSpringIntegrationTest implements JobInv
 
 
     @Test
+    @DisplayName("Job failure updates status")
     public void jobFailureUpdatesStatus() {
         TestJob.shouldFail.set(true);
         jobRunner.runJobsIfNecessary();
@@ -58,6 +62,7 @@ public class JobRunnerIT extends AbstractSpringIntegrationTest implements JobInv
     }
 
     @Test
+    @DisplayName("Job does not run if last run was not enough time ago")
     public void jobDoesNotRunIfLastRunIsWithinThreshold() {
         // Set the threshold
         TestJob.minutesBetweenRuns.set(60); // 60 minutes
@@ -71,11 +76,12 @@ public class JobRunnerIT extends AbstractSpringIntegrationTest implements JobInv
 
         jobRunner.runJobsIfNecessary();
 
-        // Verify the job was not executed
+        // The job was not executed
         assertThat(TestJob.executionCount.get()).isEqualTo(0);
     }
 
     @Test
+    @DisplayName("Job runs if last run was enough time ago")
     public void jobRunsIfLastRunExceedsThreshold() {
         // Set the threshold
         TestJob.minutesBetweenRuns.set(60); // 60 minutes
@@ -89,8 +95,23 @@ public class JobRunnerIT extends AbstractSpringIntegrationTest implements JobInv
 
         jobRunner.runJobsIfNecessary();
 
-        // Verify the job was executed
+        // The job was executed
         assertThat(TestJob.executionCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Job does not run if another instance is already running")
+    public void jobDoesNotRunIfAnotherInstanceIsRunning() {
+        // Given a job run that is in progress
+        givenJobInvocationDetailsExists(details -> {
+            details.setJobName(TestJob.class.getSimpleName());
+            details.setStatus(JobInvocationDetails.JobInvocationStatus.IN_PROGRESS);
+        });
+
+        jobRunner.runJobsIfNecessary();
+
+        // The job was not executed
+        assertThat(TestJob.executionCount.get()).isEqualTo(0);
     }
 
 

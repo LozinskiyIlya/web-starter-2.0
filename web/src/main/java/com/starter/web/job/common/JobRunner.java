@@ -59,6 +59,11 @@ public class JobRunner {
 
     private void runIfNecessary(JobExecutor job) {
         log.info("Processing {}", job.name());
+        final var inProgress = repo.findFirstByJobNameAndStatusInOrderByExecutedAtDesc(job.name(), IN_PROGRESS);
+        if (inProgress.isPresent()) {
+            log.info("Skipping {}: job is already running", job.name());
+            return;
+        }
         final var previousRun = repo.findFirstByJobNameAndStatusInOrderByExecutedAtDesc(job.name(), SUCCESS, FAILURE);
         if (!job.shouldRun(previousRun)) {
             log.info("Skipping {}: run conditions are not satisfied", job.name());
