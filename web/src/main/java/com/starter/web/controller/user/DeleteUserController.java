@@ -1,8 +1,8 @@
 package com.starter.web.controller.user;
 
+import com.starter.web.aspect.logging.LogApiAction;
 import com.starter.web.controller.GlobalExceptionHandler.MissingPasswordException;
 import com.starter.web.controller.GlobalExceptionHandler.WrongUserException;
-import com.starter.web.aspect.logging.LogAction;
 import com.starter.web.service.user.CurrentUserService;
 import com.starter.web.service.user.PurgeUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +33,7 @@ public class DeleteUserController {
 
     @Operation(summary = "Удалить данные пользователя")
     @DeleteMapping("/{userId}")
-    @LogAction
+    @LogApiAction
     void purgeUser(@PathVariable("userId") UUID userId,
                    @RequestBody PurgeUserDTO body) {
         var currentUser = currentUserService.getUser().orElseThrow(WrongUserException::new);

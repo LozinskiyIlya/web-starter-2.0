@@ -11,9 +11,9 @@ import java.util.UUID;
  * The id is optional because user may not be authenticated
  */
 public abstract class UserExtractor {
-    abstract UserQualifier extract(HttpServletRequest request);
+    abstract UserQualifier extract(HttpServletRequest request, Object[] handlerArgs);
 
-    record UserQualifier(UUID id, String qualifier) {
+    public record UserQualifier(UUID id, String qualifier) {
     }
 
     protected String readBody(HttpServletRequest request) {

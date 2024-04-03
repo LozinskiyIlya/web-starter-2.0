@@ -16,7 +16,7 @@ public class TokenUserExtractor extends UserExtractor {
     private final UserRepository userRepository;
 
     @Override
-    UserQualifier extract(HttpServletRequest request) {
+    UserQualifier extract(HttpServletRequest request, Object[] handlerArgs) {
         final var login = jwtFilter.getUserLoginFromRequest(request);
         final var id = userRepository.findByLogin(login).map(User::getId).orElse(null);
         return new UserQualifier(id, login);

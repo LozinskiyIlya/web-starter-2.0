@@ -1,38 +1,30 @@
 package com.starter.web.aspect.logging;
 
-
 import com.starter.domain.entity.ApiAction;
 import com.starter.domain.entity.ApiAction.Metadata;
 import com.starter.domain.repository.ApiActionRepository;
+import com.starter.web.aspect.logging.UserExtractor.UserQualifier;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ActionSaver {
+public class ApiActionSaver {
 
     private final ApiActionRepository apiActionRepository;
-    private final Map<Class<? extends UserExtractor>, UserExtractor> userExtractors = new HashMap<>();
 
-
-    public void save(LogAction config, HttpServletRequest request, @Nullable Exception exception) {
-        final var meta = extractMetadata(request, config.logParams());
-        final var user = userExtractors.get(config.userExtractor()).extract(request);
+    public void save(HttpServletRequest request, UserQualifier userQualifier, boolean saveParams, @Nullable Exception exception) {
+        final var meta = extractMetadata(request, saveParams);
         final var action = new ApiAction();
         action.setMetadata(meta);
-        action.setUserId(user.id());
-        action.setUserQualifier(user.qualifier());
+        action.setUserId(userQualifier.id());
+        action.setUserQualifier(userQualifier.qualifier());
         try {
             action.setPath(request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE).toString());
         } catch (NullPointerException e) {
@@ -44,21 +36,15 @@ public class ActionSaver {
         apiActionRepository.saveAndFlush(action);
     }
 
-    private Metadata extractMetadata(HttpServletRequest request, boolean logParams) {
+    private Metadata extractMetadata(HttpServletRequest request, boolean saveParams) {
         var metadata = new Metadata();
         metadata.setUserAgent(request.getHeader("User-Agent"));
         metadata.setHttpMethod(request.getMethod());
         var ipHeaderVal = request.getHeader("Public-Ip");
         metadata.setIp(StringUtils.hasText(ipHeaderVal) ? ipHeaderVal : request.getRemoteAddr());
-        if (logParams) {
+        if (saveParams) {
             metadata.setParams(request.getQueryString());
         }
         return metadata;
-    }
-
-
-    @Autowired
-    private void setExtractorsMap(Collection<UserExtractor> userExtractors) {
-        userExtractors.forEach(e -> this.userExtractors.put(e.getClass(), e));
     }
 }

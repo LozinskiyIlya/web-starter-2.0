@@ -8,9 +8,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(METHOD)
 @Retention(RUNTIME)
-public @interface LogAction {
+public @interface LogApiAction {
 
     boolean logParams() default false;
 
-    Class<? extends UserExtractor> userExtractor() default TokenUserExtractor.class;
+    Class<? extends UserExtractor> userExtractor() default CurrentUserExtractor.class;
 }
