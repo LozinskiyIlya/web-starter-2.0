@@ -1,6 +1,7 @@
 package com.starter.web.controller.auth;
 
 import com.starter.web.aspect.logging.LogApiAction;
+import com.starter.web.aspect.logging.extractor.CodeUserExtractor;
 import com.starter.web.aspect.logging.extractor.LoginUserExtractor;
 import com.starter.web.service.auth.ChangePasswordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,7 @@ public class ChangePasswordController {
 
     @Operation(summary = "Сменить пароль по коду подтверждения")
     @PostMapping("/confirm-recovery")
+    @LogApiAction(userExtractor = CodeUserExtractor.class)
     public void changePassword(@RequestParam("code") UUID code, @RequestBody @Valid ChangePasswordDTO dto) {
         changePasswordService.changePasswordByCode(code, dto);
     }

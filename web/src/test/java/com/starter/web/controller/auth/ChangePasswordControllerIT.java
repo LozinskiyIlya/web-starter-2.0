@@ -1,5 +1,6 @@
 package com.starter.web.controller.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.ApiActionRepository;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
@@ -62,7 +65,8 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
 
         }
     }
-//
+
+    //
 //        @Test
 //        @SneakyThrows
 //        @DisplayName("Sends email message")
@@ -110,37 +114,31 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
 //    }
 //
 //
-//    @Nested
-//    @DisplayName("On confirming password change")
-//    class OnPasswordChangeConfirmationRequest {
-//
-//        @Test
-//        @SneakyThrows
-//        @DisplayName("Can confirm password change with proper code")
-//        void confirmsWithProperCode() {
-//            var user = givenUserExists(u -> {
-//                u.setPassword("old password");
-//            });
-//            var confirmation1 = givenEmailConfirmationExists(c -> {
-//                c.setUser(user);
-//            });
-//            var confirmation2 = givenEmailConfirmationExists(c -> {
-//                c.setUser(user);
-//            });
-//            final var newPassword = "new pass";
-//            var confirmationDto = new ChangePasswordController.ChangePasswordDTO();
-//            confirmationDto.setNewPassword(newPassword);
-//            mockMvc.perform(postRequest("/confirm-recovery?code=" + confirmation2.getId())
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content(new ObjectMapper().writeValueAsString(confirmationDto)))
-//                    .andExpect(status().isOk())
-//                    .andExpect(content().string(""));
-//            final var newEncodedPassword = userRepository.findById(user.getId()).map(User::getPassword).orElseThrow();
-//            assertNotEquals("old password", newEncodedPassword);
-//            assertTrue(passwordEncoder.matches(newPassword, newEncodedPassword));
-//            assertTrue(emailConfirmationRepository.findAllByUserAndType(user, CHANGE_PASSWORD).isEmpty());
-//        }
-//
+    @Nested
+    @DisplayName("On confirming password change")
+    class OnPasswordChangeConfirmationRequest {
+
+        @Test
+        @SneakyThrows
+        @DisplayName("Save api action")
+        void saveApiAction() {
+            final var newPassword = "new pass";
+            final var confirmationId = UUID.randomUUID();
+            var confirmationDto = new ChangePasswordController.ChangePasswordDTO();
+            confirmationDto.setNewPassword(newPassword);
+            mockMvc.perform(postRequest("/confirm-recovery?code=" + confirmationId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(new ObjectMapper().writeValueAsString(confirmationDto)))
+                    .andExpect(status().isOk());
+            await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserQualifier(confirmationId.toString()).isEmpty());
+            final var apiActions = apiActionRepository.findAllByUserQualifier(confirmationId.toString());
+            assertEquals(1, apiActions.size());
+            final var changeAction = apiActions.get(0);
+            assertNull(changeAction.getError());
+            assertTrue(changeAction.getPath().contains("/confirm-recovery"));
+            assertEquals("POST", changeAction.getMetadata().getHttpMethod());
+        }
+    }
 //        @Test
 //        @SneakyThrows
 //        @DisplayName("User type set to real even if it wasn't previously")

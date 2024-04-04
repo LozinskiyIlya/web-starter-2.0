@@ -16,6 +16,7 @@ import java.util.UUID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -94,6 +95,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
         await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserId(user.getId()).isEmpty());
         final var actions = apiActionRepository.findAllByUserId(user.getId());
         assertEquals(1, actions.size());
+        assertNull(actions.get(0).getError());
         assertEquals(user.getLogin(), actions.get(0).getUserQualifier());
         assertEquals("/api/user/current", actions.get(0).getPath());
         assertEquals("GET", actions.get(0).getMetadata().getHttpMethod());

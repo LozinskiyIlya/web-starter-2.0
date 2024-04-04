@@ -36,8 +36,6 @@ public class ChangePasswordService {
     public void changePasswordByCode(UUID code, ChangePasswordDTO dto) {
         log.info("Changing password by code {} to {}", code, dto.getNewPassword());
         // todo find user by code and change password
-        //  for now works only for current user
-        changePassword(dto);
     }
 
     @Transactional
