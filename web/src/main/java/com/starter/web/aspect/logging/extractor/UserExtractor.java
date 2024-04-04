@@ -13,6 +13,9 @@ public interface UserExtractor {
     UserQualifier extract(HttpServletRequest request, ProceedingJoinPoint joinPoint);
 
     record UserQualifier(UUID id, String qualifier) {
+        static UserQualifier empty() {
+            return new UserQualifier(null, null);
+        }
     }
 }
 

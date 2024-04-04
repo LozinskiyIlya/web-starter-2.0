@@ -8,9 +8,8 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- *
- * Implementations must keep naming convention <ParameterName>UserExtractor
- * @link ParameterUserExtractor.getParameterNameFromClass()
+ * Non-abstract implementations must keep naming convention <ParameterName>UserExtractor
+ * {@link ParameterUserExtractor#getParameterNameFromClass}
  */
 
 @Component
@@ -29,6 +28,9 @@ abstract class ParameterUserExtractor<T> implements UserExtractor {
         final var parameterTypes = methodSignature.getMethod().getParameterTypes();  // Types of the method arguments
         final var parameterNames = methodSignature.getParameterNames();
         final var value = findValue(args, parameterTypes, parameterNames);
+        if (value == null) {
+            return UserQualifier.empty();
+        }
         return getUserQualifier(value);
     }
 
