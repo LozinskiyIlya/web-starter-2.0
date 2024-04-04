@@ -1,8 +1,8 @@
 package com.starter.web.controller.auth;
 
 
-import com.starter.web.aspect.logging.extractor.EmailUserExtractor;
 import com.starter.web.aspect.logging.LogApiAction;
+import com.starter.web.aspect.logging.extractor.EmailUserExtractor;
 import com.starter.web.populator.SwaggerUserPopulator;
 import com.starter.web.service.auth.AuthService;
 import com.starter.web.service.auth.JwtProvider;

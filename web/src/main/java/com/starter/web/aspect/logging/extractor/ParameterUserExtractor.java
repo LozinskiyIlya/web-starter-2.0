@@ -3,12 +3,20 @@ package com.starter.web.aspect.logging.extractor;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ *
+ * Implementations must keep naming convention <ParameterName>UserExtractor
+ * @link ParameterUserExtractor.getParameterNameFromClass()
+ */
+
+@Component
 abstract class ParameterUserExtractor<T> implements UserExtractor {
 
-    abstract String getParameterName();
+    private final String parameterName = getParameterNameFromClass();
 
     abstract Class<T> getParameterType();
 
@@ -26,7 +34,7 @@ abstract class ParameterUserExtractor<T> implements UserExtractor {
 
     private T findValue(Object[] args, Class<?>[] parameterTypes, String[] parameterNames) {
         for (int i = 0; i < args.length; i++) {
-            if (parameterTypes[i].equals(getParameterType()) && parameterNames[i].equals(getParameterName())) {
+            if (parameterTypes[i].equals(getParameterType()) && parameterNames[i].equalsIgnoreCase(parameterName)) {
                 return getParameterType().cast(args[i]);
             }
             // Attempt to find a value via getters
@@ -47,8 +55,7 @@ abstract class ParameterUserExtractor<T> implements UserExtractor {
     private T getValueFromGetter(Object arg) {
         try {
             // Build getter method name for 'parameterName'
-            final var capitalizedParameterName = getParameterName().substring(0, 1).toUpperCase() + getParameterName().substring(1);
-            final var getter = arg.getClass().getMethod("get" + capitalizedParameterName);
+            final var getter = arg.getClass().getMethod("get" + parameterName);
             // Invoke the getter if it exists
             final var returnValue = getter.invoke(arg);
             return getParameterType().cast(returnValue);
@@ -60,7 +67,7 @@ abstract class ParameterUserExtractor<T> implements UserExtractor {
 
     private T getValueFromField(Object arg) {
         try {
-            final var field = arg.getClass().getDeclaredField(getParameterName());
+            final var field = arg.getClass().getDeclaredField(parameterName.toLowerCase());
             field.setAccessible(true); // Make private field accessible
             final var fieldValue = field.get(arg);
             return getParameterType().cast(fieldValue);
@@ -68,5 +75,11 @@ abstract class ParameterUserExtractor<T> implements UserExtractor {
             // Field not found or not accessible, ignore and move on
         }
         return null;
+    }
+
+    private String getParameterNameFromClass() {
+        final var className = this.getClass().getSimpleName();
+        // Get first word
+        return className.substring(0, className.indexOf("UserExtractor"));
     }
 }
