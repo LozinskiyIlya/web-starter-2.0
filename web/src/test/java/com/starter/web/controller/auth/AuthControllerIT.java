@@ -9,7 +9,6 @@ import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,8 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.function.Supplier;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -182,72 +180,57 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
     }
 
 
-    @RequiredArgsConstructor
-    abstract class OnSomeAuthRelatedRequest {
+    @Nested
+    @DisplayName("Saves api action")
+    class SavesApiAction {
 
-        protected final String endpointPath;
-        protected final Supplier<User> userSupplier;
+        private final static String password = "password";
 
-        private static String bodyWithEmailAndPassword(String email, String password) {
-            return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
+        @Test
+        @DisplayName("On successful login request")
+        void onSuccessfulLoginRequest() throws Exception {
+            final var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode(password)));
+            final var apiAction = performRequestAndReturnCreatedAction("/login", user.getLogin(), status().isOk());
+            assertEquals(user.getId(), apiAction.getUserId());
+            assertNull(apiAction.getError());
         }
 
         @Test
-        @DisplayName("Saves api action on successful request")
-        void savesApiActionOnSuccessfulRequest() throws Exception {
-            final var user = userSupplier.get();
-            final var email = user == null ? randomEmail() : user.getLogin();
-            mockMvc.perform(postRequest(endpointPath)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(bodyWithEmailAndPassword(email, "password")))
-                    .andExpect(status().isOk());
-
-            final var saved = assertCreationAndReturn(email);
-            assertNull(saved.getError());
+        @DisplayName("On failed login request")
+        void onFailedLoginRequest() throws Exception {
+            final var email = randomEmail();
+            final var apiAction = performRequestAndReturnCreatedAction("/login", email, status().is4xxClientError());
+            assertNotNull(apiAction.getError());
         }
 
         @Test
-        @DisplayName("Saves api action on failed request")
-        void savesApiActionOnFailedRequest() throws Exception {
-            final var user = userSupplier.get();
-            final var email = user == null ? randomEmail() : user.getLogin();
-            mockMvc.perform(postRequest(endpointPath)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(bodyWithEmailAndPassword(email, "1234567")))
-                    .andExpect(status().is4xxClientError());
-            final var saved = assertCreationAndReturn(email);
-            assertNotNull(saved.getError());
+        @DisplayName("On successful register request")
+        void onSuccessfulRegRequest() throws Exception {
+            final var email = randomEmail();
+            final var apiAction = performRequestAndReturnCreatedAction("/register", email, status().isOk());
+            assertNull(apiAction.getError());
         }
 
-        private ApiAction assertCreationAndReturn(String email) {
+        @Test
+        @DisplayName("On failed register request")
+        void onFailedRegRequest() throws Exception {
+            final var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode(password)));
+            final var apiAction = performRequestAndReturnCreatedAction("/register", user.getLogin(), status().is4xxClientError());
+            assertTrue(apiAction.getError().contains("email already exists"));
+        }
+
+        private ApiAction performRequestAndReturnCreatedAction(String path, String email, ResultMatcher status) throws Exception {
+            final var body = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
+            mockMvc.perform(postRequest(path)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status);
             final var apiAction = apiActionRepository.findAllByUserQualifier(email).get(0);
-            assertTrue(apiAction.getPath().contains(endpointPath));
+            assertTrue(apiAction.getPath().contains(path));
             assertEquals("POST", apiAction.getMetadata().getHttpMethod());
             return apiAction;
         }
     }
-
-    @Nested
-    @DisplayName("On LOGIN request")
-    class OnLoginRequest extends OnSomeAuthRelatedRequest {
-
-        public OnLoginRequest() {
-            super("/login", () -> givenUserExists(u -> {
-                u.setLogin(randomEmail());
-                u.setPassword(passwordEncoder.encode("password"));
-            }));
-        }
-    }
-
-    @Nested
-    @DisplayName("On REGISTER request")
-    class OnRegisterRequest extends OnSomeAuthRelatedRequest {
-
-        public OnRegisterRequest() {
-            super("/register", () -> null);
-        }
-    }
-
 
     @Override
     public Repository<User> userRepository() {

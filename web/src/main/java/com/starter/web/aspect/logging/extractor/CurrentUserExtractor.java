@@ -1,19 +1,20 @@
-package com.starter.web.aspect.logging;
+package com.starter.web.aspect.logging.extractor;
 
 import com.starter.web.service.user.CurrentUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
 
 @Component
 @RequiredArgsConstructor
-public class CurrentUserExtractor extends UserExtractor {
+public class CurrentUserExtractor implements UserExtractor {
 
     private final CurrentUserService currentUserService;
 
     @Override
-    UserQualifier extract(HttpServletRequest request, Object[] handlerArgs) {
+    public UserQualifier extract(HttpServletRequest request, ProceedingJoinPoint joinPoint) {
         final var user = currentUserService.getUser().orElseThrow();
         return new UserQualifier(user.getId(), user.getLogin());
     }

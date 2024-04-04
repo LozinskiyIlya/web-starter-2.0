@@ -1,6 +1,8 @@
 package com.starter.web.controller.auth;
 
 
+import com.starter.web.aspect.logging.extractor.EmailUserExtractor;
+import com.starter.web.aspect.logging.LogApiAction;
 import com.starter.web.populator.SwaggerUserPopulator;
 import com.starter.web.service.auth.AuthService;
 import com.starter.web.service.auth.JwtProvider;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/api/auth")
 @Schema(title = "Авторизации/Регистрация")
+@LogApiAction(userExtractor = EmailUserExtractor.class)
 public class AuthController {
 
     private final AuthService authService;

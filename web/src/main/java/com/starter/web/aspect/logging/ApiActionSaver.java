@@ -3,7 +3,7 @@ package com.starter.web.aspect.logging;
 import com.starter.domain.entity.ApiAction;
 import com.starter.domain.entity.ApiAction.Metadata;
 import com.starter.domain.repository.ApiActionRepository;
-import com.starter.web.aspect.logging.UserExtractor.UserQualifier;
+import com.starter.web.aspect.logging.extractor.UserExtractor.UserQualifier;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

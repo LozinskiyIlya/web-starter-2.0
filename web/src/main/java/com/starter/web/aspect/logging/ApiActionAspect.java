@@ -1,6 +1,7 @@
 package com.starter.web.aspect.logging;
 
-import com.starter.web.aspect.logging.UserExtractor.UserQualifier;
+import com.starter.web.aspect.logging.extractor.UserExtractor;
+import com.starter.web.aspect.logging.extractor.UserExtractor.UserQualifier;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -31,20 +32,21 @@ public class ApiActionAspect {
         userExtractors.forEach(e -> this.userExtractors.put(e.getClass(), e));
     }
 
-    @Around("@annotation(logApiAction)")
+    @Around("@within(logApiAction) || @annotation(logApiAction)")
     public Object logRequestDetails(ProceedingJoinPoint joinPoint, LogApiAction logApiAction) throws Throwable {
         Object result;
         Exception exception = null;
         UserQualifier userQualifier = new UserQualifier(null, null);
+        LogApiAction config = getAnnotationConfig(joinPoint, logApiAction);
         final var request = getRequest();
         try {
-            userQualifier = userExtractors.get(logApiAction.userExtractor()).extract(request, joinPoint.getArgs());
+            userQualifier = userExtractors.get(config.userExtractor()).extract(request, joinPoint);
             result = joinPoint.proceed();
         } catch (Exception e) {
             exception = e; // Capture exception if any
             throw e; // Re-throw the exception to keep the method's original behavior
         } finally {
-            apiActionSaver.save(request, userQualifier, logApiAction.logParams(), exception);
+            apiActionSaver.save(request, userQualifier, config.logParams(), exception);
         }
 
         return result;
@@ -56,5 +58,11 @@ public class ApiActionAspect {
         } catch (NullPointerException e) {
             throw new IllegalStateException("@LogApiAction annotation is used outside of a web request context.");
         }
+    }
+
+    private static LogApiAction getAnnotationConfig(ProceedingJoinPoint joinPoint, LogApiAction annotation) {
+        return annotation == null ?
+                joinPoint.getTarget().getClass().getAnnotation(LogApiAction.class) :
+                annotation;
     }
 }
