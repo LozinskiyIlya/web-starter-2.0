@@ -1,7 +1,6 @@
 package com.starter.web.aspect.logging.extractor;
 
 
-import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,7 +23,9 @@ abstract class UUIDParameterUserExtractor extends ParameterUserExtractor<UUID> {
 
     @Override
     UserQualifier getUserQualifier(UUID parameter) {
-        return new UserQualifier(userRepository.findById(parameter).map(User::getId).orElse(null), parameter.toString());
+        return userRepository.findById(parameter)
+                .map(u -> new UserQualifier(u.getId(), u.getLogin()))
+                .orElseGet(() -> new UserQualifier(null, parameter.toString()));
     }
 
 }
