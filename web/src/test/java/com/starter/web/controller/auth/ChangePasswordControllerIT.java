@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,6 +50,8 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
             });
             mockMvc.perform(postRequest("/recovery?login=" + user.getLogin()))
                     .andExpect(status().isOk());
+            // saving api action entity is async
+            await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserId(user.getId()).isEmpty());
             final var apiActions = apiActionRepository.findAllByUserId(user.getId());
             assertEquals(1, apiActions.size());
             final var changeAction = apiActions.get(0);
@@ -278,6 +282,8 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"newPassword\": \"" + newPassword + "\"}"))
                     .andExpect(status().isOk());
+            // saving api action entity is async
+            await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserId(user.getId()).isEmpty());
             final var apiActions = apiActionRepository.findAllByUserId(user.getId());
             assertEquals(1, apiActions.size());
             final var changeAction = apiActions.get(0);

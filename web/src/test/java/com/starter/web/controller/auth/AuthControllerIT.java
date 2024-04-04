@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -225,6 +227,8 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status);
+            // saving api action entity is async
+            await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserQualifier(email).isEmpty());
             final var apiAction = apiActionRepository.findAllByUserQualifier(email).get(0);
             assertTrue(apiAction.getPath().contains(path));
             assertEquals("POST", apiAction.getMetadata().getHttpMethod());
