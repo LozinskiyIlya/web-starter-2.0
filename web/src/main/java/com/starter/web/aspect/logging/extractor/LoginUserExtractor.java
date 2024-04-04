@@ -4,16 +4,15 @@ import com.starter.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-
 @Component
 @RequiredArgsConstructor
-public class EmailUserExtractor extends StringParameterUserExtractor {
+public class LoginUserExtractor extends StringParameterUserExtractor {
 
     private final UserRepository userRepository;
 
     @Override
     String getParameterName() {
-        return "email";
+        return "login";
     }
 
     @Override

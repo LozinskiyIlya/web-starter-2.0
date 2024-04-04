@@ -2,6 +2,7 @@ package com.starter.web.controller.auth;
 
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
+import com.starter.domain.repository.ApiActionRepository;
 import com.starter.domain.repository.Repository;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
@@ -30,26 +31,33 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
     private RoleRepository roleRepository;
 
     @Autowired
+    private ApiActionRepository apiActionRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
-//
-//    @Nested
-//    @DisplayName("On requesting passwordChange")
-//    class OnPasswordChangeRequest {
-//
-//        @Test
-//        @SneakyThrows
-//        @DisplayName("Creates email confirmation")
-//        void createsEmailConfirmation() {
-//            var user = participantCreator.givenParticipantExists(p -> {
-//            }).getUser();
-//            mockMvc.perform(postRequest("/recovery?login=" + user.getLogin()))
-//                    .andExpect(status().isOk())
-//                    .andExpect(content().string(""));
-//            var confirmations = emailConfirmationRepository.findAllByUserAndType(user, CHANGE_PASSWORD);
-//            assertFalse(confirmations.isEmpty());
-//            assertEquals(1, confirmations.size());
-//            assertEquals(SENT, confirmations.get(0).getStatus());
-//        }
+
+    @Nested
+    @DisplayName("On requesting passwordChange")
+    class OnPasswordChangeRequest {
+
+        @Test
+        @SneakyThrows
+        @DisplayName("Saves api action")
+        void createsEmailConfirmation() {
+            var user = givenUserExists(u -> {
+            });
+            mockMvc.perform(postRequest("/recovery?login=" + user.getLogin()))
+                    .andExpect(status().isOk());
+            final var apiActions = apiActionRepository.findAllByUserId(user.getId());
+            assertEquals(1, apiActions.size());
+            final var changeAction = apiActions.get(0);
+            assertEquals(user.getLogin(), changeAction.getUserQualifier());
+            assertNull(changeAction.getError());
+            assertTrue(changeAction.getPath().contains("/recovery"));
+            assertEquals("POST", changeAction.getMetadata().getHttpMethod());
+
+        }
+    }
 //
 //        @Test
 //        @SneakyThrows
@@ -256,6 +264,27 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
                     .andExpect(status().isForbidden());
             final var password = userRepository.findById(user.getId()).map(User::getPassword).orElseThrow();
             assertEquals("old password", password);
+        }
+
+        @Test
+        @SneakyThrows
+        @DisplayName("Saves api action")
+        void savesApiAction() {
+            var user = givenUserExists(u -> u.setPassword("old password"));
+            final var token = userAuthHeader(user);
+            final var newPassword = "new pass";
+            mockMvc.perform(postRequest("/password/change")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"newPassword\": \"" + newPassword + "\"}"))
+                    .andExpect(status().isOk());
+            final var apiActions = apiActionRepository.findAllByUserId(user.getId());
+            assertEquals(1, apiActions.size());
+            final var changeAction = apiActions.get(0);
+            assertEquals(user.getLogin(), changeAction.getUserQualifier());
+            assertNull(changeAction.getError());
+            assertTrue(changeAction.getPath().contains("/password/change"));
+            assertEquals("POST", changeAction.getMetadata().getHttpMethod());
         }
 
     }

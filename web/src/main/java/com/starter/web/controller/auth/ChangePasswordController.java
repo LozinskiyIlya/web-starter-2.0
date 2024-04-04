@@ -1,5 +1,7 @@
 package com.starter.web.controller.auth;
 
+import com.starter.web.aspect.logging.LogApiAction;
+import com.starter.web.aspect.logging.extractor.LoginUserExtractor;
 import com.starter.web.service.auth.ChangePasswordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,6 +27,7 @@ public class ChangePasswordController {
 
     @Operation(summary = "Запросить смену пароля")
     @PostMapping("/recovery")
+    @LogApiAction(userExtractor = LoginUserExtractor.class)
     public void requestPasswordChange(@RequestParam("login") String login) {
         changePasswordService.requestPasswordChange(login);
     }
@@ -37,6 +40,7 @@ public class ChangePasswordController {
 
     @Operation(summary = "Сменить пароль текущему пользователю")
     @PostMapping("/password/change")
+    @LogApiAction
     public void changePasswordDirectly(@RequestBody @Valid ChangePasswordDTO dto) {
         changePasswordService.changePassword(dto);
     }
