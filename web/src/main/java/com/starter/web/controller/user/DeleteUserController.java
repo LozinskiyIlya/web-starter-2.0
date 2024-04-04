@@ -25,6 +25,7 @@ import static com.starter.domain.entity.User.UserType.GOOGLE;
 @RequiredArgsConstructor
 @RequestMapping("/api/users/delete")
 @Schema(title = "Удаление пользовательской информации")
+@LogApiAction
 public class DeleteUserController {
 
     private final PurgeUserService purgeUserService;
@@ -33,7 +34,6 @@ public class DeleteUserController {
 
     @Operation(summary = "Удалить данные пользователя")
     @DeleteMapping("/{userId}")
-    @LogApiAction
     void purgeUser(@PathVariable("userId") UUID userId,
                    @RequestBody PurgeUserDTO body) {
         var currentUser = currentUserService.getUser().orElseThrow(WrongUserException::new);

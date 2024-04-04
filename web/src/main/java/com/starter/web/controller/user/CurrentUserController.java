@@ -3,6 +3,7 @@ package com.starter.web.controller.user;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
+import com.starter.web.aspect.logging.LogApiAction;
 import com.starter.web.service.user.CurrentUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("api/user/current")
 @Schema(title = "Текущий пользователь")
+@LogApiAction
 public class CurrentUserController {
 
     private final CurrentUserService currentUserService;

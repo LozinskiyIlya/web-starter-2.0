@@ -3,10 +3,7 @@ package com.starter.web.controller.user;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
-import com.starter.domain.repository.Repository;
-import com.starter.domain.repository.RoleRepository;
-import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserRepository;
+import com.starter.domain.repository.*;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
@@ -16,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.UUID;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,6 +29,9 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private ApiActionRepository apiActionRepository;
 
     @Test
     @DisplayName("Returns current user based on token")
@@ -77,6 +80,23 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
     void whenTokenIsMissingReturn403() throws Exception {
         mockMvc.perform(getRequest(""))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Save api action")
+    void saveApiAction() throws Exception {
+        var user = givenUserExists(u -> {
+        });
+        var header = userAuthHeader(user);
+        mockMvc.perform(getRequest("")
+                        .header(header.getFirst(), header.getSecond()))
+                .andExpect(status().isOk());
+        await().atMost(2, SECONDS).until(() -> !apiActionRepository.findAllByUserId(user.getId()).isEmpty());
+        final var actions = apiActionRepository.findAllByUserId(user.getId());
+        assertEquals(1, actions.size());
+        assertEquals(user.getLogin(), actions.get(0).getUserQualifier());
+        assertEquals("/api/user/current", actions.get(0).getPath());
+        assertEquals("GET", actions.get(0).getMetadata().getHttpMethod());
     }
 
     @Override
