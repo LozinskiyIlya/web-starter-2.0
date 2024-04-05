@@ -12,7 +12,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({UnauthorizedException.class})
+    @ExceptionHandler({UnauthorizedException.class, InvalidOtpException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ResponseBody
     public Map<String, String> handleUnauthorizedException(Exception e) {
@@ -80,6 +80,15 @@ public class GlobalExceptionHandler {
         @Override
         public String getMessage() {
             return "User not found";
+        }
+    }
+
+
+    public static class InvalidOtpException extends RuntimeException {
+
+        @Override
+        public String getMessage() {
+            return "Invalid code";
         }
     }
 }
