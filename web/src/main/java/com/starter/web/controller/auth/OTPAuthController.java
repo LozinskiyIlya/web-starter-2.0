@@ -2,6 +2,9 @@ package com.starter.web.controller.auth;
 
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserRepository;
+import com.starter.web.aspect.logging.LogApiAction;
+import com.starter.web.aspect.logging.extractor.EmailUserExtractor;
+import com.starter.web.controller.GlobalExceptionHandler.UserNotFoundException;
 import com.starter.web.controller.auth.AuthController.AuthRequest;
 import com.starter.web.controller.auth.AuthController.AuthResponse;
 import com.starter.web.service.auth.AuthService;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/auth/otp")
 @Schema(title = "One time code")
+@LogApiAction(userExtractor = EmailUserExtractor.class)
 public class OTPAuthController {
 
     private final UserRepository userRepository;
@@ -49,7 +53,7 @@ public class OTPAuthController {
     @Operation(summary = "Validate code")
     @PostMapping("/validate")
     public AuthResponse validate(@RequestBody AuthRequest authRequest) {
-        final var user = userRepository.findByLogin(authRequest.getEmail()).orElseThrow();
+        final var user = userRepository.findByLogin(authRequest.getEmail()).orElseThrow(UserNotFoundException::new);
         final var token = otpAuthService.validate(user, authRequest.getPassword());
         return new AuthResponse(token, user.getFirstLogin());
     }
