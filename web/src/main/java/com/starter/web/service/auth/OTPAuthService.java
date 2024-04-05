@@ -9,6 +9,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
 import static java.time.Instant.now;
 
 
@@ -26,8 +29,9 @@ public class OTPAuthService {
 
 
     @SneakyThrows
+    // todo: use some entity with timestamp to make code valid for 5 full minutes, not 5 minutes window with fix start, like 00:05, 00:10, 00:15
     public String validate(User user, String code) {
-        if (!generator.generateOtp(user.getId(), now()).equals(code)) {
+        if (!generator.generate(user.getId(), now()).equals(code)) {
             throw new InvalidOtpException();
         }
         return jwtProvider.generateToken(user.getLogin());
@@ -35,7 +39,7 @@ public class OTPAuthService {
 
     @Transactional
     public void challenge(User user) {
-        final var code = generator.generateOtp(user.getId(), now());
+        final var code = generator.generate(user.getId(), now());
         log.info("Generated code: {}", code);
         // todo send code to user
     }

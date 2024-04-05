@@ -22,7 +22,7 @@ import java.util.UUID;
 public class OTPAuthConfig {
 
     private static final int OTP_LENGTH = 6;
-    private static final Duration OTP_DURATION = Duration.ofMinutes(5);
+    private static final Duration OTP_DURATION = Duration.ofSeconds(5 * 60L);
 
     @Bean
     public OTPGenerator timeBasedOneTimePasswordGenerator() {
@@ -35,7 +35,7 @@ public class OTPAuthConfig {
         }
 
         @SneakyThrows
-        public String generateOtp(UUID seed, Instant timestamp) {
+        public String generate(UUID seed, Instant timestamp) {
             final var key = generateOtpSpec(seed.toString());
             return super.generateOneTimePasswordString(key, timestamp);
         }

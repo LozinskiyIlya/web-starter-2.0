@@ -88,7 +88,7 @@ public class GlobalExceptionHandler {
 
         @Override
         public String getMessage() {
-            return "Invalid code";
+            return "Invalid or expired code";
         }
     }
 }
