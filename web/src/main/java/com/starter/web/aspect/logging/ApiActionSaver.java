@@ -46,7 +46,7 @@ public class ApiActionSaver {
             action.setPath(request.getServletPath());
         }
         if (exception != null) {
-            action.setError(exception.toString());
+            action.setError(exception.getMessage());
         }
         apiActionRepository.saveAndFlush(action);
     }

@@ -8,10 +8,12 @@
     * postgresql
     * ready to use basic entities for user management
     * testcontainers-postgresql
-* Swagger-ui
 * Register / Login / Change password / Delete user
-* JWT authentication
+* One Time Password authorization
+* JWT based authentication
 * Job scheduling
+* Logs api calls to database
+* Swagger-ui
 * Testing with JUnit 5
 
 
