@@ -1,10 +1,8 @@
 package com.starter.web.configuration;
 
-import com.starter.web.configuration.auth.JwtProperties;
 import com.starter.web.filter.JwtFilter;
 import com.starter.web.filter.SwaggerGuardingFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +29,6 @@ import static com.starter.domain.entity.Role.Roles.*;
  */
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 

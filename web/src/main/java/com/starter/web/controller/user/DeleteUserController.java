@@ -1,9 +1,8 @@
 package com.starter.web.controller.user;
 
-import com.starter.web.aspect.logging.LogApiAction;
-import com.starter.web.controller.GlobalExceptionHandler.MissingPasswordException;
-import com.starter.web.controller.GlobalExceptionHandler.WrongUserException;
-import com.starter.web.service.user.CurrentUserService;
+import com.starter.common.aspect.logging.LogApiAction;
+import com.starter.common.exception.Exceptions.*;
+import com.starter.common.service.CurrentUserService;
 import com.starter.web.service.user.PurgeUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;

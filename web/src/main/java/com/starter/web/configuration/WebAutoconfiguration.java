@@ -6,6 +6,6 @@ import org.springframework.context.annotation.Import;
 
 @Configuration
 @EnableConfigurationProperties(ServerProperties.class)
-@Import({com.starter.domain.configuration.DomainAutoconfiguration.class})
+@Import({com.starter.domain.configuration.DomainAutoconfiguration.class, com.starter.common.config.CommonAutoconfiguration.class})
 public class WebAutoconfiguration {
 }

@@ -2,9 +2,9 @@ package com.starter.web.service.auth;
 
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserRepository;
-import com.starter.web.controller.GlobalExceptionHandler.UserNotFoundException;
+import com.starter.common.exception.Exceptions.*;
 import com.starter.web.controller.auth.ChangePasswordController.ChangePasswordDTO;
-import com.starter.web.service.user.CurrentUserService;
+import com.starter.common.service.CurrentUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

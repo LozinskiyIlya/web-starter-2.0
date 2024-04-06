@@ -1,16 +1,14 @@
 package com.starter.web.service.auth;
 
+import com.starter.common.service.JwtProvider;
 import com.starter.domain.entity.User;
 import com.starter.web.configuration.auth.OTPAuthConfig.OTPGenerator;
-import com.starter.web.controller.GlobalExceptionHandler.InvalidOtpException;
+import com.starter.common.exception.Exceptions.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 import static java.time.Instant.now;
 

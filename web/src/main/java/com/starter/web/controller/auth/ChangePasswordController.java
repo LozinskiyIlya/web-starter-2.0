@@ -1,8 +1,8 @@
 package com.starter.web.controller.auth;
 
-import com.starter.web.aspect.logging.LogApiAction;
-import com.starter.web.aspect.logging.extractor.CodeUserExtractor;
-import com.starter.web.aspect.logging.extractor.LoginUserExtractor;
+import com.starter.common.aspect.logging.LogApiAction;
+import com.starter.common.aspect.logging.extractor.CodeUserExtractor;
+import com.starter.common.aspect.logging.extractor.LoginUserExtractor;
 import com.starter.web.service.auth.ChangePasswordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;

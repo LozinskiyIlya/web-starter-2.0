@@ -1,8 +1,8 @@
 package com.starter.web.filter;
 
+import com.starter.common.service.JwtProvider;
 import com.starter.web.service.user.CustomUserDetails;
 import com.starter.web.service.user.CustomUserDetailsService;
-import com.starter.web.service.auth.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

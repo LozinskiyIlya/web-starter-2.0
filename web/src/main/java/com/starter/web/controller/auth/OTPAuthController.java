@@ -1,10 +1,10 @@
 package com.starter.web.controller.auth;
 
+import com.starter.common.aspect.logging.extractor.EmailUserExtractor;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserRepository;
-import com.starter.web.aspect.logging.LogApiAction;
-import com.starter.web.aspect.logging.extractor.EmailUserExtractor;
-import com.starter.web.controller.GlobalExceptionHandler.UserNotFoundException;
+import com.starter.common.aspect.logging.LogApiAction;
+import com.starter.common.exception.Exceptions.*;
 import com.starter.web.controller.auth.AuthController.AuthRequest;
 import com.starter.web.controller.auth.AuthController.AuthResponse;
 import com.starter.web.service.auth.AuthService;

@@ -1,5 +1,6 @@
 package com.starter.web.service;
 
+import com.starter.common.exception.Exceptions.InvalidOtpException;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.Repository;
@@ -8,7 +9,6 @@ import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
 import com.starter.web.configuration.auth.OTPAuthConfig.OTPGenerator;
-import com.starter.web.controller.GlobalExceptionHandler;
 import com.starter.web.service.auth.OTPAuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -80,7 +80,7 @@ class OTPAuthServiceIT extends AbstractSpringIntegrationTest implements UserTest
             final var user = givenUserExists(u -> {
             });
             final var invalidCode = RandomStringUtils.random(6);
-            assertThrows(GlobalExceptionHandler.InvalidOtpException.class,
+            assertThrows(InvalidOtpException.class,
                     () -> otpService.validate(user, invalidCode));
         }
 
@@ -91,7 +91,7 @@ class OTPAuthServiceIT extends AbstractSpringIntegrationTest implements UserTest
             });
             final var longTimeAgo = Instant.now().minus(otpGenerator.getTimeStep()).minus(Duration.ofMinutes(1));
             final var expiredCode = otpGenerator.generate(user.getId(), longTimeAgo);
-            assertThrows(GlobalExceptionHandler.InvalidOtpException.class,
+            assertThrows(InvalidOtpException.class,
                     () -> otpService.validate(user, expiredCode));
         }
 
@@ -102,7 +102,7 @@ class OTPAuthServiceIT extends AbstractSpringIntegrationTest implements UserTest
             });
             final var justExpired = Instant.now().minus(otpGenerator.getTimeStep());
             final var expiredCode = otpGenerator.generate(user.getId(), justExpired);
-            assertThrows(GlobalExceptionHandler.InvalidOtpException.class,
+            assertThrows(InvalidOtpException.class,
                     () -> otpService.validate(user, expiredCode));
         }
 

@@ -1,12 +1,12 @@
 package com.starter.web.service.auth;
 
 
+import com.starter.common.exception.Exceptions.DuplicateEmailException;
+import com.starter.common.exception.Exceptions.UnauthorizedException;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
-import com.starter.web.controller.GlobalExceptionHandler.DuplicateEmailException;
-import com.starter.web.controller.GlobalExceptionHandler.UnauthorizedException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
