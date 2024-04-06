@@ -10,10 +10,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import static com.starter.domain.entity.Role.Roles.values;
 
 @SpringBootApplication
-public class StarterApplication {
+public class DomainStarterApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(StarterApplication.class, args);
+		SpringApplication.run(DomainStarterApplication.class, args);
 	}
 
 	@Autowired

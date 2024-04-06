@@ -28,6 +28,7 @@
     <modules>
         <module>domain</module>
         <module>web</module>
+        <module>common</module>
     </modules>
 
     <dependencies>
