@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -15,7 +17,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
+
 @Aspect
+@Order(HIGHEST_PRECEDENCE + 1)
 @Component
 @RequiredArgsConstructor
 public class ApiActionAspect {
@@ -28,12 +33,12 @@ public class ApiActionAspect {
         userExtractors.forEach(e -> this.userExtractors.put(e.getClass(), e));
     }
 
-    @Around("@within(logApiAction) || @annotation(logApiAction)")
-    public Object logRequestDetails(ProceedingJoinPoint joinPoint, LogApiAction logApiAction) throws Throwable {
+    @Around("@within(LogApiAction) || @annotation(LogApiAction)")
+    public Object logRequestDetails(ProceedingJoinPoint joinPoint) throws Throwable {
         Object result;
         Exception exception = null;
         UserExtractor.UserQualifier userQualifier = new UserExtractor.UserQualifier(null, null);
-        LogApiAction config = getAnnotationConfig(joinPoint, logApiAction);
+        LogApiAction config = getAnnotationConfig(joinPoint);
         final var request = getRequest();
         try {
             userQualifier = userExtractors.get(config.userExtractor()).extract(request, joinPoint);
@@ -56,9 +61,9 @@ public class ApiActionAspect {
         }
     }
 
-    private static LogApiAction getAnnotationConfig(ProceedingJoinPoint joinPoint, LogApiAction annotation) {
-        return annotation == null ?
-                joinPoint.getTarget().getClass().getAnnotation(LogApiAction.class) :
-                annotation;
+    private static LogApiAction getAnnotationConfig(ProceedingJoinPoint joinPoint) {
+        LogApiAction methodAnnotation = ((MethodSignature) joinPoint.getSignature()).getMethod().getAnnotation(LogApiAction.class);
+        LogApiAction classAnnotation = joinPoint.getTarget().getClass().getAnnotation(LogApiAction.class);
+        return methodAnnotation != null ? methodAnnotation : classAnnotation;
     }
 }

@@ -47,8 +47,8 @@ class ChangePasswordControllerIT extends AbstractSpringIntegrationTest implement
 
         @Test
         @SneakyThrows
-        @DisplayName("Saves api action")
-        void createsEmailConfirmation() {
+        @DisplayName("Save api action")
+        void saveApiAction() {
             var user = givenUserExists(u -> {
             });
             mockMvc.perform(postRequest("/recovery?login=" + user.getLogin()))
