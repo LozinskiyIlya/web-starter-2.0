@@ -9,17 +9,16 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
 
 
-//@Component
-//@RequiredArgsConstructor
-//public class TokenUserExtractor implements UserExtractor {
-//
-//    private final JwtProvider jwtProvider;
-//    private final UserRepository userRepository;
-//
-//    @Override
-//    public UserQualifier extract(HttpServletRequest request, ProceedingJoinPoint joinPoint) {
-//        final var login = jwtProvider.getUserLoginFromRequest(request);
-//        final var id = userRepository.findByLogin(login).map(User::getId).orElse(null);
-//        return new UserQualifier(id, login);
-//    }
-//}
+@Component
+@RequiredArgsConstructor
+public class TokenUserExtractor implements UserExtractor {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserQualifier extract(HttpServletRequest request, ProceedingJoinPoint joinPoint) {
+        final var login = JwtProvider.getTokenFromRequest(request);
+        final var id = userRepository.findByLogin(login).map(User::getId).orElse(null);
+        return new UserQualifier(id, login);
+    }
+}
