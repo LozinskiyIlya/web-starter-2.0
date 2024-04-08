@@ -10,7 +10,7 @@ import java.net.URI;
 
 @Data
 @Validated
-@ConfigurationProperties("starter.server")
+@ConfigurationProperties(prefix = "starter.server")
 public class ServerProperties {
 
     @NotNull

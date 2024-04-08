@@ -10,6 +10,8 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * Non-abstract implementations must keep naming convention <ParameterName>UserExtractor
  * {@link ParameterUserExtractor#getParameterNameFromClass}
+ * ATTENTION: This implementation works only with -parameter compiler flag
+ * For details: see pom of the root module and <a href="https://docs.oracle.com/javase/tutorial/reflect/member/methodparameterreflection.html">java doc</a>
  */
 
 @Component
