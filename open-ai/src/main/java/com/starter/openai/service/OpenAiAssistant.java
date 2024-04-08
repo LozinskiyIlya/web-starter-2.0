@@ -33,7 +33,7 @@ public class OpenAiAssistant {
 
     private static final String MODEL = "gpt-4-1106-preview";
     private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
-    private static final String FILE_PURPOSE = "assistants";
+    private static final String FILE_PURPOSE = "user_data";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
     private static final int CHOICES = 1;
@@ -67,7 +67,9 @@ public class OpenAiAssistant {
     }
 
     public String runFilePipeline(String filePath, UUID userId) {
+        final var fileFormat = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf('.') + 1);
         final var uploaded = openAiService.uploadFile(FILE_PURPOSE, filePath);
+        log.info("Uploaded file status: {}, details: {}", uploaded.getStatus(), uploaded.getStatusDetails());
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
                 .metadata(Map.of("user_id", userId.toString()))
@@ -79,7 +81,7 @@ public class OpenAiAssistant {
                                         .build(),
                                 MessageRequest.builder()
                                         .role("user")
-                                        .content("Yes, you do have the file. Try again")
+                                        .content(String.format("Yes, you DO have the file in .%s format. Try again", fileFormat))
                                         .build()))
                         .build())
                 .build()
