@@ -3,12 +3,19 @@ package com.starter.openai.service;
 import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
+import com.theokanning.openai.messages.MessageRequest;
+import com.theokanning.openai.runs.CreateThreadAndRunRequest;
+import com.theokanning.openai.runs.Run;
 import com.theokanning.openai.service.OpenAiService;
+import com.theokanning.openai.threads.ThreadRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * @author ilya
@@ -21,6 +28,8 @@ import java.util.List;
 public class OpenAiAssistant {
 
     private static final String MODEL = "gpt-4-1106-preview";
+    private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
+    private static final String FILE_PURPOSE = "assistants";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
     private static final int CHOICES = 1;
@@ -51,6 +60,31 @@ public class OpenAiAssistant {
                 .messages(List.of(new ChatMessage("user", prompt)))
                 .build();
         return openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
+    }
+
+    public String runFilePipeline(String filePath, UUID userId) {
+        final var uploaded = openAiService.uploadFile(FILE_PURPOSE, filePath);
+        final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
+                .assistantId(ASSISTANT_ID)
+                .metadata(Map.of("user_id", userId.toString()))
+                .thread(ThreadRequest.builder()
+                        .messages(List.of(MessageRequest.builder()
+                                .role("user")
+                                .fileIds(List.of(uploaded.getId()))
+                                .content("Analise the file with your instructions")
+                                .metadata(Map.of("response_format", "json"))
+                                .build()))
+                        .build())
+                .build()
+        );
+        return waitForMessage(threadRun);
+    }
+
+    private String waitForMessage(Run run) {
+        while (!"completed".equals(run.getStatus())) {
+            run = openAiService.retrieveRun(run.getThreadId(), run.getId());
+        }
+        return openAiService.listMessages(run.getThreadId()).toString();
     }
 
     private String withMaxTextLength(String text) {
