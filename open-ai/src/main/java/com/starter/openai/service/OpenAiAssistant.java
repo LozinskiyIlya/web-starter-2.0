@@ -33,7 +33,7 @@ public class OpenAiAssistant {
 
     private static final String MODEL = "gpt-4-1106-preview";
     private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
-    private static final String FILE_PURPOSE = "user_data";
+    private static final String FILE_PURPOSE = "assistants";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
     private static final int CHOICES = 1;
