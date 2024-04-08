@@ -66,7 +66,6 @@ public class OpenAiAssistant {
     }
 
     public String runFilePipeline(String filePath, UUID userId) {
-        final var fileFormat = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf('.') + 1);
         final var uploaded = openAiFileManager.uploadFile(filePath);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
@@ -79,7 +78,7 @@ public class OpenAiAssistant {
                                         .build(),
                                 MessageRequest.builder()
                                         .role("user")
-                                        .content(String.format("Yes, you DO have the file in .%s format. Try again", fileFormat))
+                                        .content("Yes, you DO have the file. Try again")
                                         .build()))
                         .build())
                 .build()

@@ -13,7 +13,8 @@ import org.springframework.core.io.ResourceLoader;
 import java.util.UUID;
 
 @SpringBootTest
-public class OpenAiAssistantTest {
+@Disabled
+public class OpenAiAssistantIT {
 
     @Autowired
     private OpenAiAssistant openAiAssistant;
@@ -39,8 +40,8 @@ public class OpenAiAssistantTest {
 
     @Test
     @Disabled
-    @DisplayName("Run text pipeline")
-    void runTextPipe() {
+    @DisplayName("Runs text pipeline")
+    void runsTextPipe() {
         final var message = """
                 #money Nov 2023 (спринты 11-12)
                 72.5*30 = 2175 USD = 1996 EUR\s
@@ -60,7 +61,7 @@ public class OpenAiAssistantTest {
         protected abstract String getExtension();
 
         @SneakyThrows
-//        @Disabled
+        @Disabled
         @Test
         @DisplayName("For some file extension")
         void forSomeFileExtension() {
@@ -72,8 +73,8 @@ public class OpenAiAssistantTest {
     }
 
     @Nested
-    @DisplayName("For .pdf")
-    class RunFilePipelinePdf extends RunFilePipeline {
+    @DisplayName("For PDF files")
+    class RunPDFFilePipeline extends RunFilePipeline {
 
         @Override
         protected String getExtension() {
@@ -82,8 +83,8 @@ public class OpenAiAssistantTest {
     }
 
     @Nested
-    @DisplayName("For .png")
-    class RunFilePipelinePng extends RunFilePipeline {
+    @DisplayName("For PNG files")
+    class RunPNGFilePipeline extends RunFilePipeline {
 
         @Override
         protected String getExtension() {
