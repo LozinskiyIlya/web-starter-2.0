@@ -42,12 +42,32 @@ public class OpenAiAssistantTest {
 
     @SneakyThrows
     @Test
-    @Disabled
-    @DisplayName("Calls assistant api")
-    void callsAssistantApi() {
-        final var path = "files/pdf/Invoice1.pdf";
+//    @Disabled
+    @DisplayName("Run file pipeline")
+    void runFilePipe() {
+        final var path = "files/pdf/Invoice2.pdf";
         var resource = resourceLoader.getResource("classpath:" + path);
         String response = openAiAssistant.runFilePipeline(resource.getFile().getAbsolutePath(), UUID.randomUUID());
+        System.out.println(response);
+    }
+
+    @SneakyThrows
+    @Test
+//    @Disabled
+    @DisplayName("Run text pipeline")
+    void runTextPipe() {
+        final var message = "#money Nov 2023 (спринты 11-12)\n" +
+                "\n" +
+                "72.5*30 = 2175 USD = 1996 EUR \n" +
+                "\n" +
+                "Был долг #Долг 0 EUR \n" +
+                "\n" +
+                "Долг полный: 1996 EUR \n" +
+                "\n" +
+                "Плюс эти банк комиссии сколько обычно? вроде 30 EUR ? \n" +
+                "\n" +
+                "Тогда отправим 2026 EUR";
+        final var response = openAiAssistant.runTextPipeline(message, UUID.randomUUID());
         System.out.println(response);
     }
 

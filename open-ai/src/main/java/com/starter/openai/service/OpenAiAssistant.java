@@ -3,7 +3,10 @@ package com.starter.openai.service;
 import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
+import com.theokanning.openai.messages.Message;
+import com.theokanning.openai.messages.MessageContent;
 import com.theokanning.openai.messages.MessageRequest;
+import com.theokanning.openai.messages.content.Text;
 import com.theokanning.openai.runs.CreateThreadAndRunRequest;
 import com.theokanning.openai.runs.Run;
 import com.theokanning.openai.service.OpenAiService;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author ilya
@@ -69,11 +73,34 @@ public class OpenAiAssistant {
                 .metadata(Map.of("user_id", userId.toString()))
                 .thread(ThreadRequest.builder()
                         .messages(List.of(MessageRequest.builder()
-                                .role("user")
-                                .fileIds(List.of(uploaded.getId()))
-                                .content("Analise the file with your instructions")
-                                .metadata(Map.of("response_format", "json"))
-                                .build()))
+                                        .role("user")
+                                        .fileIds(List.of(uploaded.getId()))
+                                        .content("Analyse the file according to your instructions")
+                                        .build(),
+                                MessageRequest.builder()
+                                        .role("user")
+                                        .content("Yes, you do have the file. Try again")
+                                        .build()))
+                        .build())
+                .build()
+        );
+        return waitForMessage(threadRun);
+    }
+
+    public String runTextPipeline(String forwardedMessage, UUID userId) {
+        final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
+                .assistantId(ASSISTANT_ID)
+                .metadata(Map.of("user_id", userId.toString()))
+                .thread(ThreadRequest.builder()
+                        .messages(List.of(MessageRequest.builder()
+                                        .role("user")
+                                        .content(forwardedMessage)
+                                        .build(),
+                                MessageRequest.builder()
+                                        .role("user")
+                                        .content("Analise the forwarded message with your instructions")
+                                        .build()
+                        ))
                         .build())
                 .build()
         );
@@ -84,7 +111,15 @@ public class OpenAiAssistant {
         while (!"completed".equals(run.getStatus())) {
             run = openAiService.retrieveRun(run.getThreadId(), run.getId());
         }
-        return openAiService.listMessages(run.getThreadId()).toString();
+        final var messages = openAiService.listMessages(run.getThreadId())
+                .getData()
+                .stream()
+                .map(Message::getContent)
+                .flatMap(List::stream)
+                .map(MessageContent::getText)
+                .map(Text::getValue)
+                .collect(Collectors.joining("\n"));
+        return run.getMetadata().get("user_id") + " " + messages;
     }
 
     private String withMaxTextLength(String text) {
