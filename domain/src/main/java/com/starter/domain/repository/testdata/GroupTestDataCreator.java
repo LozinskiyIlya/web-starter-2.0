@@ -6,11 +6,11 @@ import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.function.Consumer;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class GroupTestDataCreator implements UserTestData, GroupTestData, BillTestData {
 

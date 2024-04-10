@@ -4,6 +4,7 @@ import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.*;
+import com.starter.domain.repository.testdata.GroupTestDataCreator;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
@@ -295,12 +296,23 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         @Autowired
         private ApiActionRepository apiActionRepository;
 
+        @Autowired
+        private GroupRepository groupRepository;
+
+        @Autowired
+        private BillRepository billRepository;
+
+        @Autowired
+        private GroupTestDataCreator groupTestDataCreator;
+
         @TestFactory
         @SneakyThrows
         @DisplayName("All related entities are deleted")
         Stream<DynamicTest> relatedEntitiesAreDeleted() {
             var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode("password")));
             var userInfo = givenUserInfoExists(ui -> ui.setUser(user));
+            var group = groupTestDataCreator.givenGroupExists(g -> g.setUser(user));
+            var bill = groupTestDataCreator.givenBillExists(b -> b.setGroup(group));
             //when then
             var header = userAuthHeader(user);
             mockMvc.perform(deleteRequest("/" + user.getId())
@@ -311,7 +323,9 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
 
             return Stream.<Pair<String, Runnable>>of(
                             Pair.of("user", () -> assertFalse(userRepository.existsById(user.getId()))),
-                            Pair.of("userInfo", () -> assertFalse(userInfoRepository.existsById(userInfo.getId())))
+                            Pair.of("userInfo", () -> assertFalse(userInfoRepository.existsById(userInfo.getId()))),
+                            Pair.of("group", () -> assertFalse(groupRepository.existsById(group.getId()))),
+                            Pair.of("bill", () -> assertFalse(billRepository.existsById(bill.getId())))
                     )
                     .map(it -> DynamicTest.dynamicTest(it.getFirst(), it.getSecond()::run));
         }
