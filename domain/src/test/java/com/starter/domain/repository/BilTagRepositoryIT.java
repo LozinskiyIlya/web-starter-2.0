@@ -1,19 +1,19 @@
 package com.starter.domain.repository;
 
-import com.starter.domain.entity.Group;
+import com.starter.domain.entity.BillTag;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@DisplayName("For 'Group' entity")
-class GroupRepositoryIT extends AbstractRepositoryTest<Group> {
+@DisplayName("For 'BillTag' entity")
+class BillTagRepositoryIT extends AbstractRepositoryTest<BillTag> {
 
     @Autowired
     private BillTestDataCreator groupCreator;
 
     @Override
-    Group createEntity() {
-        return groupCreator.givenGroupExists(g -> {
+    BillTag createEntity() {
+        return groupCreator.givenBillTagExists(b -> {
         });
     }
 }

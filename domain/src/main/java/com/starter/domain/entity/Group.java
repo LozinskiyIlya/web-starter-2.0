@@ -25,7 +25,7 @@ import java.time.Instant;
 public class Group extends AbstractEntity {
 
     @NotNull
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private User user;
 

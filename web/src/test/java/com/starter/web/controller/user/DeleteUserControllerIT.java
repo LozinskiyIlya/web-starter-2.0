@@ -4,7 +4,7 @@ import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.*;
-import com.starter.domain.repository.testdata.GroupTestDataCreator;
+import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -297,13 +298,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         private ApiActionRepository apiActionRepository;
 
         @Autowired
-        private GroupRepository groupRepository;
-
-        @Autowired
-        private BillRepository billRepository;
-
-        @Autowired
-        private GroupTestDataCreator groupTestDataCreator;
+        private BillTestDataCreator billTestDataCreator;
 
         @TestFactory
         @SneakyThrows
@@ -311,8 +306,12 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         Stream<DynamicTest> relatedEntitiesAreDeleted() {
             var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode("password")));
             var userInfo = givenUserInfoExists(ui -> ui.setUser(user));
-            var group = groupTestDataCreator.givenGroupExists(g -> g.setUser(user));
-            var bill = groupTestDataCreator.givenBillExists(b -> b.setGroup(group));
+            var group = billTestDataCreator.givenGroupExists(g -> g.setUser(user));
+            var billTag = billTestDataCreator.givenBillTagExists(t -> t.setUser(user));
+            var bill = billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(group);
+                b.setTags(Set.of(billTag));
+            });
             //when then
             var header = userAuthHeader(user);
             mockMvc.perform(deleteRequest("/" + user.getId())
@@ -324,8 +323,9 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
             return Stream.<Pair<String, Runnable>>of(
                             Pair.of("user", () -> assertFalse(userRepository.existsById(user.getId()))),
                             Pair.of("userInfo", () -> assertFalse(userInfoRepository.existsById(userInfo.getId()))),
-                            Pair.of("group", () -> assertFalse(groupRepository.existsById(group.getId()))),
-                            Pair.of("bill", () -> assertFalse(billRepository.existsById(bill.getId())))
+                            Pair.of("group", () -> assertFalse(billTestDataCreator.groupRepository().existsById(group.getId()))),
+                            Pair.of("bill", () -> assertFalse(billTestDataCreator.billRepository().existsById(bill.getId()))),
+                            Pair.of("billTag", () -> assertFalse(billTestDataCreator.billTagRepository().existsById(billTag.getId())))
                     )
                     .map(it -> DynamicTest.dynamicTest(it.getFirst(), it.getSecond()::run));
         }

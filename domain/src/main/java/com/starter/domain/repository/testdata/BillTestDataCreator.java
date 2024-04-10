@@ -1,23 +1,22 @@
 package com.starter.domain.repository.testdata;
 
-import com.starter.domain.entity.Bill;
-import com.starter.domain.entity.Group;
-import com.starter.domain.entity.Role;
-import com.starter.domain.entity.User;
+import com.starter.domain.entity.*;
 import com.starter.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
-public class GroupTestDataCreator implements UserTestData, GroupTestData, BillTestData {
+public class BillTestDataCreator implements UserTestData, GroupTestData, BillTestData, BillTagTestData {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final GroupRepository groupRepository;
     private final BillRepository billRepository;
+    private final BillTagRepository billTagRepository;
 
     @Override
     public Group givenGroupExists(Consumer<Group> configure) {
@@ -34,9 +33,26 @@ public class GroupTestDataCreator implements UserTestData, GroupTestData, BillTe
         Consumer<Bill> fullyConfigure = bill -> {
             bill.setGroup(givenGroupExists(g -> {
             }));
+            bill.setTags(Set.of(givenBillTagExists(t -> {
+            })));
             configure.accept(bill);
         };
         return BillTestData.super.givenBillExists(fullyConfigure);
+    }
+
+    @Override
+    public BillTag givenBillTagExists(Consumer<BillTag> configure) {
+        Consumer<BillTag> fullyConfigure = tag -> {
+            tag.setUser(givenUserExists(u -> {
+            }));
+            configure.accept(tag);
+        };
+        return BillTagTestData.super.givenBillTagExists(fullyConfigure);
+    }
+
+    @Override
+    public Repository<BillTag> billTagRepository() {
+        return billTagRepository;
     }
 
     @Override

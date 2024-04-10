@@ -1,9 +1,6 @@
 package com.starter.web.service.user;
 
-import com.starter.domain.repository.BillRepository;
-import com.starter.domain.repository.GroupRepository;
-import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserRepository;
+import com.starter.domain.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +20,7 @@ public class PurgeUserService {
     private final UserInfoRepository userInfoRepository;
     private final GroupRepository groupRepository;
     private final BillRepository billRepository;
+    private final BillTagRepository billTagRepository;
 
     @Transactional
     public void purgeUser(UUID userId) {
@@ -33,6 +31,7 @@ public class PurgeUserService {
                 billRepository.deleteAll(billRepository.findAllByGroup(g));
                 groupRepository.delete(g);
             });
+            billTagRepository.deleteAll(billTagRepository.findAllByUser(u));
             u.setLogin(u.getLogin() + "[deleted:" + tombstone + "]");
             userRepository.saveAndFlush(u);
             userRepository.delete(u);
