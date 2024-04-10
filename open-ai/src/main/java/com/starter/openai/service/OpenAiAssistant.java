@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * @author ilya
@@ -87,13 +85,14 @@ public class OpenAiAssistant {
     }
 
     public String runTextPipeline(String forwardedMessage, UUID userId) {
+        final var withed = withMaxTextLength(forwardedMessage);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
                 .metadata(Map.of("user_id", userId.toString()))
                 .thread(ThreadRequest.builder()
                         .messages(List.of(MessageRequest.builder()
                                         .role("user")
-                                        .content(forwardedMessage)
+                                        .content(withed)
                                         .build(),
                                 MessageRequest.builder()
                                         .role("user")
@@ -110,18 +109,18 @@ public class OpenAiAssistant {
         while (!"completed".equals(run.getStatus())) {
             run = openAiService.retrieveRun(run.getThreadId(), run.getId());
         }
-        final var messages = openAiService.listMessages(run.getThreadId())
+        return openAiService.listMessages(run.getThreadId())
                 .getData()
                 .stream()
+                .findFirst()
                 .map(Message::getContent)
-                .flatMap(List::stream)
+                .map(l -> l.get(l.size() - 1))
                 .map(MessageContent::getText)
-                .map(Text::getValue)
-                .collect(Collectors.joining("\n"));
-        return run.getMetadata().get("user_id") + " " + messages;
+                .map(Text::getValue).orElse("");
     }
 
     private String withMaxTextLength(String text) {
-        return text != null && text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) + "..." : text;
+        final var withed = text != null && text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) + "..." : text;
+        return withed.trim();
     }
 }
