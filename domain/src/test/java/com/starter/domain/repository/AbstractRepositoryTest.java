@@ -153,9 +153,7 @@ abstract class AbstractRepositoryTest<E extends AbstractEntity> {
             var entityId = new AtomicReference<UUID>();
             var saved = template.execute(t -> createEntity());
             entityId.set(saved.getId());
-            template.executeWithoutResult(t -> {
-                repository.deleteById(entityId.get());
-            });
+            template.executeWithoutResult(t -> repository.deleteById(entityId.get()));
             assertFalse(repository.findById(entityId.get()).isPresent());
             assertFalse(repository.existsById(entityId.get()));
         }
