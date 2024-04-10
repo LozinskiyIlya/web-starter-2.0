@@ -30,7 +30,7 @@ public class Group extends AbstractEntity {
     private User user;
 
     @NotNull
-    private String name;
+    private String title;
 
     @NotNull
     private String chatId;

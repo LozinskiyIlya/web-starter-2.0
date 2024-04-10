@@ -12,7 +12,7 @@ public interface GroupTestData {
 
     default Group givenGroupExists(Consumer<Group> configure) {
         var group = new Group();
-        group.setName("group-name");
+        group.setTitle("group-title");
         group.setChatId("-1234567890");
         configure.accept(group);
         return groupRepository().saveAndFlush(group);
