@@ -30,6 +30,7 @@
         <module>common</module>
         <module>web</module>
         <module>open-ai</module>
+        <module>telegram</module>
     </modules>
 
     <dependencies>
@@ -83,6 +84,11 @@
             <dependency>
                 <groupId>com.starter</groupId>
                 <artifactId>open-ai</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.starter</groupId>
+                <artifactId>telegram</artifactId>
                 <version>1.0.0</version>
             </dependency>
             <dependency>

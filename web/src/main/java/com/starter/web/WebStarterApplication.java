@@ -9,7 +9,7 @@ import org.springframework.context.event.EventListener;
 
 import java.util.Collection;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.starter")
 public class WebStarterApplication {
 
     @Autowired
