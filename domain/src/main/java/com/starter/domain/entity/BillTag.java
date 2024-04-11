@@ -32,9 +32,9 @@ public class BillTag extends AbstractEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private BillTagType tagType = BillTagType.DEFAULT;
+    private BillTag.TagType tagType = TagType.DEFAULT;
 
-    public enum BillTagType {
+    public enum TagType {
         DEFAULT, USER_DEFINED
     }
 }
