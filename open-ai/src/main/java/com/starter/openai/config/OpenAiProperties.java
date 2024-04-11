@@ -15,7 +15,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 @Data
 @Validated
-@ConfigurationProperties("starter.open-ai")
+@ConfigurationProperties(prefix = "starter.open-ai")
 public class OpenAiProperties {
     private final String token;
     private final Duration timeout = Duration.of(60, SECONDS);

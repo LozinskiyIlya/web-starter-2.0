@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  */
 
 @Configuration
-@EnableConfigurationProperties(OpenAiProperties.class)
+@EnableConfigurationProperties({OpenAiProperties.class, AssistantProperties.class})
 @RequiredArgsConstructor
 public class OpenAiConfig {
 
