@@ -12,7 +12,7 @@ public interface BillTagTestData {
 
     default BillTag givenBillTagExists(Consumer<BillTag> configure) {
         var billTag = new BillTag();
-        billTag.setName("Work");
+        billTag.setName("billTag");
         billTag.setHexColor("#FF0000");
         configure.accept(billTag);
         return billTagRepository().saveAndFlush(billTag);
