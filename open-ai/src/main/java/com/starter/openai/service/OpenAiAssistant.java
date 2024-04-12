@@ -1,5 +1,6 @@
 package com.starter.openai.service;
 
+import com.starter.openai.fragments.BillAssistantResponse;
 import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
@@ -39,6 +40,7 @@ public class OpenAiAssistant {
 
     private final OpenAiService openAiService;
     private final OpenAiFileManager openAiFileManager;
+    private final AssistantResponseParser responseParser;
 
     public String completion(String prompt) {
         CompletionRequest completionRequest = CompletionRequest.builder()
@@ -63,7 +65,7 @@ public class OpenAiAssistant {
         return openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
     }
 
-    public String runFilePipeline(String filePath, UUID userId) {
+    public BillAssistantResponse runFilePipeline(String filePath, UUID userId) {
         final var uploaded = openAiFileManager.uploadFile(filePath);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
@@ -81,10 +83,11 @@ public class OpenAiAssistant {
                         .build())
                 .build()
         );
-        return waitForMessage(threadRun);
+        final var response = waitForMessage(threadRun);
+        return responseParser.parse(response);
     }
 
-    public String runTextPipeline(String forwardedMessage, UUID userId) {
+    public BillAssistantResponse runTextPipeline(String forwardedMessage, UUID userId) {
         final var withed = withMaxTextLength(forwardedMessage);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
@@ -102,7 +105,8 @@ public class OpenAiAssistant {
                         .build())
                 .build()
         );
-        return waitForMessage(threadRun);
+        final var response = waitForMessage(threadRun);
+        return responseParser.parse(response);
     }
 
     private String waitForMessage(Run run) {

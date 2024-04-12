@@ -1,0 +1,10 @@
+{
+"buyer": "",
+"seller": "",
+"purpose": "sprints 11-12",
+"currency": "EUR",
+"amount": "2026",
+"mentionedDate": "Nov 2023",
+"dateFormat": "MMM yyyy",
+"tags": ["Work"]
+}

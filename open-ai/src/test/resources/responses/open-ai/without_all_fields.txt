@@ -1,0 +1,10 @@
+{
+"buyer": "",
+"seller": "",
+"purpose": "",
+"currency": "",
+"amount": "",
+"mentionedDate": "",
+"dateFormat": "",
+"tags": []
+}

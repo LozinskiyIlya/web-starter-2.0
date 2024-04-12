@@ -67,7 +67,7 @@ public class OpenAiAssistantIT {
         void forSomeFileExtension() {
             final var path = String.format("files/%s/Invoice2.%s", getExtension(), getExtension());
             var resource = resourceLoader.getResource("classpath:" + path);
-            String response = openAiAssistant.runFilePipeline(resource.getFile().getAbsolutePath(), UUID.randomUUID());
+            final var response = openAiAssistant.runFilePipeline(resource.getFile().getAbsolutePath(), UUID.randomUUID());
             System.out.println(response);
         }
     }
