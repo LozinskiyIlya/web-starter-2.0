@@ -1,5 +1,6 @@
-package com.starter.openai.service;
+package com.starter.web.service;
 
+import com.starter.web.service.openai.OpenAiFileManager;
 import com.theokanning.openai.file.File;
 import com.theokanning.openai.service.OpenAiService;
 import lombok.SneakyThrows;

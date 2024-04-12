@@ -5,6 +5,5 @@
 "currency": "",
 "amount": "",
 "mentionedDate": "",
-"dateFormat": "",
 "tags": []
 }

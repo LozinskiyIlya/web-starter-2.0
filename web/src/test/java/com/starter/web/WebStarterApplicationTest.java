@@ -2,7 +2,7 @@ package com.starter.web;
 
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.UserRepository;
-import com.starter.openai.config.AssistantProperties;
+import com.starter.web.configuration.openai.AssistantProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

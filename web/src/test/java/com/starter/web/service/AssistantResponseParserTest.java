@@ -1,7 +1,7 @@
-package com.starter.openai.service;
+package com.starter.web.service;
 
+import com.starter.web.service.openai.AssistantResponseParser;
 import lombok.SneakyThrows;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +10,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StringUtils;
 import org.testcontainers.shaded.com.google.common.base.Charsets;
 import org.testcontainers.shaded.com.google.common.io.ByteSource;
-
 
 import java.io.InputStream;
 
@@ -33,9 +32,9 @@ class AssistantResponseParserTest {
         assertTrue(StringUtils.hasText(parsed.getAmount()));
         assertTrue(StringUtils.hasText(parsed.getPurpose()));
         assertTrue(StringUtils.hasText(parsed.getCurrency()));
-        assertTrue(StringUtils.hasText(parsed.getMentionedDate()));
-        assertTrue(StringUtils.hasText(parsed.getDateFormat()));
         assertTrue(parsed.getTags().length > 0);
+        // 2023-09-01
+        assertEquals("2023-09-01T00:00:00Z", parsed.getMentionedDate().toString());
     }
 
     @Test
@@ -46,9 +45,9 @@ class AssistantResponseParserTest {
         assertTrue(StringUtils.hasText(parsed.getAmount()));
         assertTrue(StringUtils.hasText(parsed.getPurpose()));
         assertTrue(StringUtils.hasText(parsed.getCurrency()));
-        assertTrue(StringUtils.hasText(parsed.getMentionedDate()));
-        assertTrue(StringUtils.hasText(parsed.getDateFormat()));
         assertTrue(parsed.getTags().length > 0);
+        // Nov 2023
+        assertEquals("2023-11-01T00:00:00Z", parsed.getMentionedDate().toString());
     }
 
     @Test
@@ -57,6 +56,7 @@ class AssistantResponseParserTest {
         var response = readResource("responses/open-ai/without_all_fields.txt");
         var parsed = responseParser.parse(response);
         assertNotNull(parsed);
+        assertNotNull(parsed.getMentionedDate());
     }
 
 

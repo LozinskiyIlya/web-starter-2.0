@@ -1,8 +1,9 @@
-package com.starter.openai.fragments;
+package com.starter.web.fragments;
 
 
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.Arrays;
 
 @Data
@@ -12,8 +13,7 @@ public class BillAssistantResponse {
     private String purpose;
     private String currency;
     private String amount;
-    private String mentionedDate;
-    private String dateFormat;
+    private Instant mentionedDate;
     private String[] tags;
 
     public static BillAssistantResponse EMPTY() {
@@ -23,8 +23,7 @@ public class BillAssistantResponse {
         response.setPurpose("");
         response.setCurrency("");
         response.setAmount("");
-        response.setMentionedDate("");
-        response.setDateFormat("");
+        response.setMentionedDate(Instant.now());
         response.setTags(new String[0]);
         return response;
     }
@@ -37,8 +36,7 @@ public class BillAssistantResponse {
                 ", purpose='" + purpose + '\'' +
                 ", currency='" + currency + '\'' +
                 ", amount='" + amount + '\'' +
-                ", mentionedDate='" + mentionedDate + '\'' +
-                ", dateFormat='" + dateFormat + '\'' +
+                ", dateRow='" + mentionedDate + '\'' +
                 ", tags=" + Arrays.toString(tags) +
                 '}';
     }

@@ -1,6 +1,6 @@
-package com.starter.openai.service;
+package com.starter.web.service.openai;
 
-import com.starter.openai.fragments.BillAssistantResponse;
+import com.starter.web.fragments.BillAssistantResponse;
 import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
@@ -106,6 +106,7 @@ public class OpenAiAssistant {
                 .build()
         );
         final var response = waitForMessage(threadRun);
+        log.info("Text pipeline response: {}", response);
         return responseParser.parse(response);
     }
 

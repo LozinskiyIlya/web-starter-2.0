@@ -4,7 +4,6 @@
 "purpose": "Development and support of Product 1.0 from July 2023 until Sep 2023",
 "currency": "EUR",
 "amount": "9100.00",
-"mentionedDate": "2023-09-01",
-"dateFormat": "yyyy-MM-dd",
+"mentionedDate": "2023-09-01T00:00:00Z",
 "tags": ["Work"]
 }

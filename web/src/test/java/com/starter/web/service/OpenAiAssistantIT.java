@@ -1,6 +1,7 @@
-package com.starter.openai.service;
+package com.starter.web.service;
 
 
+import com.starter.web.service.openai.OpenAiAssistant;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;

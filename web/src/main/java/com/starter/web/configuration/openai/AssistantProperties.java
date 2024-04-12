@@ -1,4 +1,4 @@
-package com.starter.openai.config;
+package com.starter.web.configuration.openai;
 
 
 import lombok.Data;

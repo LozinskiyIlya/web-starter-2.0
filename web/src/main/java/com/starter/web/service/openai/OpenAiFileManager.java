@@ -1,4 +1,4 @@
-package com.starter.openai.service;
+package com.starter.web.service.openai;
 
 
 import com.theokanning.openai.service.OpenAiService;

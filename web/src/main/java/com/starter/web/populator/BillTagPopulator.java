@@ -3,7 +3,7 @@ package com.starter.web.populator;
 
 import com.starter.domain.entity.BillTag;
 import com.starter.domain.repository.BillTagRepository;
-import com.starter.openai.config.AssistantProperties;
+import com.starter.web.configuration.openai.AssistantProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

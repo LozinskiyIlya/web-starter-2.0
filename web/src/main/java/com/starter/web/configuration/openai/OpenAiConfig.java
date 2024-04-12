@@ -1,4 +1,4 @@
-package com.starter.openai.config;
+package com.starter.web.configuration.openai;
 
 import com.theokanning.openai.service.OpenAiService;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.starter.common.config;
+package com.starter.web.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
