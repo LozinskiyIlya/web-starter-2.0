@@ -13,5 +13,5 @@ import java.util.List;
 
 public interface GroupRepository extends Repository<Group> {
 
-   List<Group> findAllByUser(User user);
+   List<Group> findAllByOwner(User owner);
 }

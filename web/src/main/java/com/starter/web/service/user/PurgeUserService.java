@@ -27,7 +27,7 @@ public class PurgeUserService {
         userRepository.findById(userId).ifPresent(u -> {
             var tombstone = Instant.now();
             userInfoRepository.deleteAll(userInfoRepository.findAllByUser(u));
-            groupRepository.findAllByUser(u).forEach(g -> {
+            groupRepository.findAllByOwner(u).forEach(g -> {
                 billRepository.deleteAll(billRepository.findAllByGroup(g));
                 groupRepository.delete(g);
             });

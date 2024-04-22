@@ -14,7 +14,7 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "groups",
         indexes = {
-                @Index(name = "group_user_fk_index", columnList = "user_id")
+                @Index(name = "group_owner_fk_index", columnList = "owner_id")
         })
 @SQLDelete(sql = "UPDATE groups SET state='DELETED' WHERE id=?")
 @Loader(namedQuery = "findNonDeletedGroupsById")
@@ -24,8 +24,8 @@ public class Group extends AbstractEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
-    private User user;
+    @JoinColumn(name = "onwer_id", nullable = false, updatable = false)
+    private User owner;
 
     @NotNull
     private String title;

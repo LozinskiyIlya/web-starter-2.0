@@ -21,7 +21,7 @@ public class BillTestDataCreator implements UserTestData, GroupTestData, BillTes
     @Override
     public Group givenGroupExists(Consumer<Group> configure) {
         Consumer<Group> fullyConfigure = group -> {
-            group.setUser(givenUserExists(u -> {
+            group.setOwner(givenUserExists(u -> {
             }));
             configure.accept(group);
         };

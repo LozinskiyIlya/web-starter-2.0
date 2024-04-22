@@ -306,7 +306,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         Stream<DynamicTest> relatedEntitiesAreDeleted() {
             var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode("password")));
             var userInfo = givenUserInfoExists(ui -> ui.setUser(user));
-            var group = billTestDataCreator.givenGroupExists(g -> g.setUser(user));
+            var group = billTestDataCreator.givenGroupExists(g -> g.setOwner(user));
             var billTag = billTestDataCreator.givenBillTagExists(t -> t.setUser(user));
             var bill = billTestDataCreator.givenBillExists(b -> {
                 b.setGroup(group);
