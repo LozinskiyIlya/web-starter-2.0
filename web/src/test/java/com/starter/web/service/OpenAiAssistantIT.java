@@ -1,12 +1,10 @@
 package com.starter.web.service;
 
 
+import com.starter.web.fragments.MessageClassificationResponse;
 import com.starter.web.service.openai.OpenAiAssistant;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ResourceLoader;
@@ -35,8 +33,11 @@ public class OpenAiAssistantIT {
     @Disabled
     @DisplayName("Calls chat completions api")
     void callsChatCompletionsApi() {
-        String response = openAiAssistant.chatCompletion("Hello, my name is John and I am a student.");
-        System.out.println(response);
+        MessageClassificationResponse response = openAiAssistant.classifyMessage("Я расплатился с Username по всем платежам включая последний за Project");
+        Assertions.assertTrue(response.isPaymentRelated());
+
+        response = openAiAssistant.classifyMessage("Ну ты спрашиваешь такой вопрос, как будто на него можно по разносу ответить");
+        Assertions.assertFalse(response.isPaymentRelated());
     }
 
     @Test
