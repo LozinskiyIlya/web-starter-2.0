@@ -45,7 +45,7 @@ public class JobRunnerIT extends AbstractCommonSpringIntegrationTest implements 
     @DisplayName("Successful job execution updates status")
     public void successfulJobExecutionUpdatesStatus() {
         jobRunner.runJobsIfNecessary();
-        final var latestDetails = jobInvocationDetailsRepository.findFirstByJobNameAndStatusInOrderByExecutedAtDesc(TestJob.class.getSimpleName(), JobInvocationDetails.JobInvocationStatus.SUCCESS);
+        final var latestDetails = jobInvocationDetailsRepository.findFirstByJobNameAndStatusInOrderByCreatedAtDesc(TestJob.class.getSimpleName(), JobInvocationDetails.JobInvocationStatus.SUCCESS);
         Assertions.assertTrue(latestDetails.isPresent());
     }
 
@@ -56,7 +56,7 @@ public class JobRunnerIT extends AbstractCommonSpringIntegrationTest implements 
         TestJob.shouldFail.set(true);
         jobRunner.runJobsIfNecessary();
 
-        final var latestDetails = jobInvocationDetailsRepository.findFirstByJobNameAndStatusInOrderByExecutedAtDesc(TestJob.class.getSimpleName(), JobInvocationDetails.JobInvocationStatus.FAILURE);
+        final var latestDetails = jobInvocationDetailsRepository.findFirstByJobNameAndStatusInOrderByCreatedAtDesc(TestJob.class.getSimpleName(), JobInvocationDetails.JobInvocationStatus.FAILURE);
         Assertions.assertTrue(latestDetails.isPresent());
     }
 
@@ -70,7 +70,7 @@ public class JobRunnerIT extends AbstractCommonSpringIntegrationTest implements 
         givenJobInvocationDetailsExists(details -> {
             details.setJobName(TestJob.class.getSimpleName());
             details.setStatus(JobInvocationDetails.JobInvocationStatus.SUCCESS);
-            details.setExecutedAt(Instant.now().minus(Duration.ofMinutes(30)));
+            details.setCreatedAt(Instant.now().minus(Duration.ofMinutes(30)));
         });
 
         jobRunner.runJobsIfNecessary();
@@ -89,7 +89,7 @@ public class JobRunnerIT extends AbstractCommonSpringIntegrationTest implements 
         givenJobInvocationDetailsExists(details -> {
             details.setJobName(TestJob.class.getSimpleName());
             details.setStatus(JobInvocationDetails.JobInvocationStatus.SUCCESS);
-            details.setExecutedAt(Instant.now().minus(Duration.ofMinutes(90)));
+            details.setCreatedAt(Instant.now().minus(Duration.ofMinutes(90)));
         });
 
         jobRunner.runJobsIfNecessary();

@@ -15,7 +15,7 @@ public interface JobInvocationDetailsTestData {
         var jobInvocationDetails = new JobInvocationDetails();
         jobInvocationDetails.setJobName("job_name");
         jobInvocationDetails.setStatus(JobInvocationDetails.JobInvocationStatus.IN_PROGRESS);
-        jobInvocationDetails.setExecutedAt(Instant.EPOCH);
+        jobInvocationDetails.setCreatedAt(Instant.EPOCH);
         configure.accept(jobInvocationDetails);
         return jobInvocationDetailsRepository().saveAndFlush(jobInvocationDetails);
     }

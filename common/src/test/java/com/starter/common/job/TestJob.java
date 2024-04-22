@@ -30,7 +30,7 @@ public class TestJob implements Job {
             return true;
         }
         final var lastRun = details.get();
-        final var minutesSinceLastRun = Duration.between(lastRun.getExecutedAt(), Instant.now()).toMinutes();
+        final var minutesSinceLastRun = Duration.between(lastRun.getCreatedAt(), Instant.now()).toMinutes();
         return minutesSinceLastRun > minutesBetweenRuns.get();
     }
 }

@@ -11,10 +11,6 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
-import java.time.Instant;
-
-import static java.time.Instant.now;
-
 @Getter
 @Setter
 @Entity
@@ -28,10 +24,6 @@ public class JobInvocationDetails extends AbstractEntity {
     @NotNull
     @Column(name = "job_name")
     private String jobName;
-
-    @NotNull
-    @Column(name = "executed_at")
-    private Instant executedAt = now();
 
     @NotNull
     @Column(name = "status")

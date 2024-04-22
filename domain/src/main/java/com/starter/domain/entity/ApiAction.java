@@ -8,7 +8,6 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
-import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -36,9 +35,6 @@ public class ApiAction extends AbstractEntity {
     private String path;
 
     private String error;
-
-    @NotNull
-    private Instant executedAt = Instant.now();
 
     @NotNull
     @Column(columnDefinition = "TEXT")
