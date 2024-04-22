@@ -1,11 +1,13 @@
 package com.starter.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -26,6 +28,10 @@ public class AbstractEntity {
     @Column
     @Enumerated(EnumType.STRING)
     private State state = State.ACTIVE;
+
+    @NotNull
+    @Column(name = "created_at")
+    private Instant createdAt = Instant.now();
 
     public enum State {
         ACTIVE, DELETED

@@ -31,10 +31,6 @@ public class Bill extends AbstractEntity {
     @JoinColumn(name = "group_id", nullable = false, updatable = false)
     private Group group;
 
-    @NotNull
-    private Instant createdAt = Instant.now();
-
-
     @ManyToMany
     @JoinTable(name = "bills_to_tags",
             joinColumns = @JoinColumn(name = "bill_id", referencedColumnName = "id"),

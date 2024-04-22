@@ -8,8 +8,6 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
-import java.time.Instant;
-
 
 @Getter
 @Setter
@@ -34,7 +32,4 @@ public class Group extends AbstractEntity {
 
     @NotNull
     private String chatId;
-
-    @NotNull
-    private Instant createdAt = Instant.now();
 }
