@@ -59,7 +59,6 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
         }
     }
 
-
     private BillAssistantResponse response(String currency, Double amount) {
         final var response = BillAssistantResponse.EMPTY();
         response.setCurrency(currency);
