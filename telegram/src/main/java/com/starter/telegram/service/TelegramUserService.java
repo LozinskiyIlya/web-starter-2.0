@@ -27,8 +27,8 @@ public class TelegramUserService {
 
     @Transactional
     public User createUserIfNotExists(Update update) {
-        final var chat = update.message().chat();
-        final var chatId = chat.id();
+        final var chat = update.message().chat(); // can be a group;
+        final var chatId = update.message().from().id(); // sender telegram id
         log.info("Creating user with chatId: {}", chatId);
         final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseGet(() -> {
             final var created = User.randomPasswordTelegramUser(chatId + "@ai-counting.com");
@@ -48,7 +48,6 @@ public class TelegramUserService {
             ui.setLanguage(from.languageCode());
             ui.setIsTelegramPremium(from.isPremium());
             ui.setBio(chat.bio());
-            ui.setDescription(chat.description());
             ui.setDateOfBirth(chat.birthdate() != null ? chat.birthdate().toString() : null);
             ui.setAvatar(chat.photo() != null ? chat.photo().toString() : null);
             return userInfoRepository.save(ui);

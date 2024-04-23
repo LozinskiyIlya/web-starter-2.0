@@ -3,22 +3,26 @@ package com.starter.telegram.service.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
+import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
-import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.service.TelegramUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
-@Service
 public class GroupUpdateListener implements UpdateListener {
 
     private final GroupRepository groupRepository;
 
     private final TelegramUserService telegramUserService;
+
+    private final ApplicationEventPublisher publisher;
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
@@ -34,5 +38,6 @@ public class GroupUpdateListener implements UpdateListener {
                     newGroup.setTitle(groupTitle);
                     return groupRepository.save(newGroup);
                 });
+        publisher.publishEvent(new TelegramTextMessageEvent(this, Pair.of(group, update.message().text())));
     }
 }

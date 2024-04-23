@@ -1,9 +1,5 @@
 package com.starter.telegram.service.listener;
 
-import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.Chat;
-import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
@@ -14,22 +10,17 @@ import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
-import org.jeasy.random.EasyRandom;
-import org.jeasy.random.EasyRandomParameters;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-@SpringBootTest
-class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
+class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements UserTestData, UserInfoTestData {
 
     @Autowired
     private UserRepository userRepository;
@@ -43,8 +34,6 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
     @Autowired
     private CommandUpdateListener commandUpdateListener;
 
-    private final EasyRandom random = new EasyRandom(new EasyRandomParameters().seed(System.nanoTime()));
-
     @Nested
     @DisplayName("on start command")
     class OnStartCommand {
@@ -54,7 +43,7 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
         void shouldCreateUser() {
             // given
             final var chatId = random.nextLong();
-            final var update = mockUpdate("/start", chatId);
+            final var update = mockCommandUpdate("/start", chatId);
             final var bot = mockBot();
             // when
             commandUpdateListener.processUpdate(update, bot);
@@ -76,7 +65,7 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
         void shouldCreateUserWithoutOptionalFields() {
             // given
             final var chatId = random.nextLong();
-            final var update = mockUpdate("/start", chatId);
+            final var update = mockCommandUpdate("/start", chatId);
             when(update.message().from().firstName()).thenReturn(null);
             when(update.message().from().lastName()).thenReturn(null);
             final var bot = mockBot();
@@ -106,7 +95,7 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
                 it.setUser(user);
                 it.setTelegramChatId(chatId);
             });
-            final var update = mockUpdate("/start", chatId);
+            final var update = mockCommandUpdate("/start", chatId);
             final var bot = mockBot();
             // when
             commandUpdateListener.processUpdate(update, bot);
@@ -120,38 +109,13 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
         void shouldSendMessageWithReplyKeyboard() {
             // given
             final var chatId = random.nextLong();
-            final var update = mockUpdate("/start", chatId);
+            final var update = mockCommandUpdate("/start", chatId);
             final var bot = mockBot();
             // when
             commandUpdateListener.processUpdate(update, bot);
             // then
             Mockito.verify(bot, Mockito.times(1)).execute(Mockito.any(SendMessage.class));
         }
-    }
-
-    private Update mockUpdate(String command, Long chatId) {
-        Update update = mock(Update.class);
-        Message message = mock(Message.class);
-        Chat chat = mock(Chat.class);
-        com.pengrad.telegrambot.model.User user = mock(com.pengrad.telegrambot.model.User.class);
-        when(update.message()).thenReturn(message);
-        when(message.chat()).thenReturn(chat);
-        when(message.from()).thenReturn(user);
-        when(chat.id()).thenReturn(chatId);
-        when(user.id()).thenReturn(chatId);
-        when(user.username()).thenReturn("username");
-        when(user.firstName()).thenReturn("firstName");
-        when(user.lastName()).thenReturn("lastName");
-        when(user.languageCode()).thenReturn("en");
-        when(user.isPremium()).thenReturn(true);
-        when(message.text()).thenReturn(command);
-        return update;
-    }
-
-    private TelegramBot mockBot() {
-        final var bot = Mockito.mock(TelegramBot.class);
-        when(bot.execute(Mockito.any())).thenReturn(null);
-        return bot;
     }
 
     @Override

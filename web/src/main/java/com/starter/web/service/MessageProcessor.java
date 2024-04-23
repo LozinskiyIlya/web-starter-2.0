@@ -1,6 +1,7 @@
 package com.starter.web.service;
 
 
+import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.domain.entity.Group;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
@@ -8,6 +9,8 @@ import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -22,7 +25,10 @@ public class MessageProcessor {
 
 
     @Transactional
-    public void processMessage(Group group, String message) {
+    @EventListener(TelegramTextMessageEvent.class)
+    public void processMessage(Pair<Group, String> payload) {
+        final var group = payload.getFirst();
+        final var message = payload.getSecond();
         final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();
         if (isPayment) {
             final var response = openAiAssistant.runTextPipeline(message, group.getOwner().getId());

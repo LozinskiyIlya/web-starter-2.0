@@ -36,7 +36,7 @@ public class UserInfo extends AbstractEntity {
     @JoinColumn(name = "user_id", unique = true, nullable = false, updatable = false)
     private User user;
 
-    @Column(name = "telegram_chat_id")
+    @Column(name = "telegram_chat_id", unique = true)
     private Long telegramChatId;
     private String language = "en";
     private Boolean isTelegramPremium = false;
@@ -44,8 +44,6 @@ public class UserInfo extends AbstractEntity {
 
     @Column(columnDefinition = "TEXT")
     private String bio;
-    @Column(columnDefinition = "TEXT")
-    private String description;
     @Column(columnDefinition = "TEXT")
     private String avatar;
     @Column(columnDefinition = "TEXT")

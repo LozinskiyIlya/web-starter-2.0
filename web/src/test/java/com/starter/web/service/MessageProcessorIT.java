@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.util.Pair;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -47,7 +48,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             var user = userCreator.givenUserExists();
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));
             // when
-            messageProcessor.processMessage(group, message);
+            messageProcessor.processMessage(Pair.of(group, message));
             // then
             transactionTemplate.executeWithoutResult(tr -> {
                 var bill = billCreator.billRepository().findAll().get(0);
