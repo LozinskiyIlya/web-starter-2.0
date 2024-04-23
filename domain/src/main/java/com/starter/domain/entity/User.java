@@ -52,7 +52,7 @@ public class User extends AbstractEntity {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private UserType userType = UserType.REAL;
+    private UserType userType = UserType.TELEGRAM;
 
     public enum UserType {
         /**
@@ -63,7 +63,12 @@ public class User extends AbstractEntity {
         /**
          * Created by google auth
          */
-        GOOGLE
+        GOOGLE,
+
+        /**
+         * Created by telegram
+         */
+        TELEGRAM
     }
 
     public static User googleUser(String login) {
@@ -79,6 +84,14 @@ public class User extends AbstractEntity {
         random.setLogin(login);
         random.setPassword(UUID.randomUUID().toString());
         random.setUserType(UserType.REAL);
+        return random;
+    }
+
+    public static User randomPasswordTelegramUser(String login) {
+        var random = new User();
+        random.setLogin(login);
+        random.setPassword(UUID.randomUUID().toString());
+        random.setUserType(UserType.TELEGRAM);
         return random;
     }
 

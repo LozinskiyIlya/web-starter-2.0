@@ -42,6 +42,15 @@ public class UserInfo extends AbstractEntity {
     private Boolean isTelegramPremium = false;
     private String telegramUsername;
 
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    @Column(columnDefinition = "TEXT")
+    private String avatar;
+    @Column(columnDefinition = "TEXT")
+    private String dateOfBirth;
+
     @Transient
     public String getFullName() {
         return firstName + " " + lastName;

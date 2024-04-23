@@ -56,6 +56,10 @@ public class TelegramBotService {
         bot.setUpdatesListener(updates -> {
             updates.forEach(update -> {
                 try {
+                    if (update.message() != null && update.message().from().isBot()) {
+                        log.warn("Ignoring bot message: {}", update.message().text());
+                        return;
+                    }
                     final var listener = selectListener(update);
                     listener.processUpdate(update, bot);
                 } catch (Exception e) {
