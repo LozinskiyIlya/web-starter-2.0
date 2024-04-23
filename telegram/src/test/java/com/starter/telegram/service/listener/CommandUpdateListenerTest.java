@@ -16,7 +16,6 @@ import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,15 +44,6 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
     private CommandUpdateListener commandUpdateListener;
 
     private final EasyRandom random = new EasyRandom(new EasyRandomParameters().seed(System.nanoTime()));
-
-    @BeforeEach
-    void setup() {
-        roleRepository.findByName(Role.Roles.USER.getRoleName()).orElseGet(() -> {
-            Role newRole = new Role();
-            newRole.setName(Role.Roles.USER.getRoleName());
-            return roleRepository.save(newRole);
-        });
-    }
 
     @Nested
     @DisplayName("on start command")
