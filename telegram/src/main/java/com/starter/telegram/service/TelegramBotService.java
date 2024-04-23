@@ -68,18 +68,27 @@ public class TelegramBotService {
     }
 
     private UpdateListener selectListener(Update update) {
-        if(update.callbackQuery() != null) {
+        if (update.callbackQuery() != null) {
             return listeners.get(CallbackQueryUpdateListener.class);
         }
         final var message = update.message();
-        if (message.location() != null) {
-            return listeners.get(LocationUpdateListener.class);
-        } else if (message.text().startsWith("/")) {
-            return listeners.get(CommandUpdateListener.class);
-        } else if (KEYBOARD_BUTTONS.contains(message.text())) {
-            return listeners.get(KeyboardButtonUpdateListener.class);
-        } else {
+        if (message == null) {
             return listeners.get(NoopUpdateListener.class);
         }
+        final var chatType = message.chat().type();
+        if ("group".equals(chatType.name()) || "supergroup".equals(chatType.name())) {
+            return listeners.get(GroupUpdateListener.class);
+        }
+        if (message.location() != null) {
+            return listeners.get(LocationUpdateListener.class);
+        }
+        if (message.text() != null && message.text().startsWith("/")) {
+            return listeners.get(CommandUpdateListener.class);
+        }
+        if (message.text() != null && KEYBOARD_BUTTONS.contains(message.text())) {
+            return listeners.get(KeyboardButtonUpdateListener.class);
+        }
+        return listeners.get(NoopUpdateListener.class);
     }
+
 }

@@ -14,8 +14,13 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "groups",
         indexes = {
-                @Index(name = "group_owner_fk_index", columnList = "owner_id")
-        })
+                @Index(name = "group_owner_fk_index", columnList = "owner_id"),
+                @Index(name = "group_chat_id_index", columnList = "chat_id")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "group_owner_chat_id_unique", columnNames = {"owner_id", "chat_id"})
+        }
+)
 @SQLDelete(sql = "UPDATE groups SET state='DELETED' WHERE id=?")
 @Loader(namedQuery = "findNonDeletedGroupsById")
 @NamedQuery(name = "findNonDeletedGroupsById", query = "SELECT g FROM Group g WHERE g.id = ?1 AND g.state <> 'DELETED'")
@@ -31,5 +36,6 @@ public class Group extends AbstractEntity {
     private String title;
 
     @NotNull
-    private String chatId;
+    @Column(name = "chat_id")
+    private Long chatId;
 }

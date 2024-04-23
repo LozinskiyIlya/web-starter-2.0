@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.telegram.service.TelegramUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CommandUpdateListener implements UpdateListener {
+
+    private final TelegramUserService telegramUserService;
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
@@ -46,6 +49,7 @@ public class CommandUpdateListener implements UpdateListener {
                 .oneTimeKeyboard(false);
         // Send a message with the reply keyboard
         Long chatId = update.message().chat().id();
+        telegramUserService.createUserIfNotExists(update);
         final var message = new SendMessage(chatId, "Hello! Thanks for using a bot!")
                 .replyMarkup(keyboard);
         bot.execute(message);

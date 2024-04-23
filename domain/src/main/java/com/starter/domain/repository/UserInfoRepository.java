@@ -18,4 +18,6 @@ public interface UserInfoRepository extends Repository<UserInfo> {
     Optional<UserInfo> findOneByUser(User user);
 
     Collection<UserInfo> findAllByUser(User user);
+
+    Optional<UserInfo> findByTelegramChatId(Long chatId);
 }

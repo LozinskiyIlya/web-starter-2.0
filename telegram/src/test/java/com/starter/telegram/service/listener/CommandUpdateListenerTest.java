@@ -24,6 +24,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,16 +69,16 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
             // when
             commandUpdateListener.processUpdate(update, bot);
             // then
-//            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
-//            final var user = userInfo.getUser();
-//            assertNotNull(user);
-//            assertEquals(Role.Roles.USER.getRoleName(), user.getRole().getName());
-//            assertEquals(chatId + "@wegosty.ru", user.getLogin());
-//            assertEquals("username", userInfo.getTelegramUsername());
-//            assertEquals("firstName", userInfo.getFirstName());
-//            assertEquals("lastName", userInfo.getLastName());
-//            assertEquals("en", userInfo.getLanguage());
-//            assertTrue(userInfo.getIsTelegramPremium());
+            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
+            final var user = userInfo.getUser();
+            assertNotNull(user);
+            assertEquals(Role.Roles.USER.getRoleName(), user.getRole().getName());
+            assertEquals(chatId + "@ai-counting.com", user.getLogin());
+            assertEquals("username", userInfo.getTelegramUsername());
+            assertEquals("firstName", userInfo.getFirstName());
+            assertEquals("lastName", userInfo.getLastName());
+            assertEquals("en", userInfo.getLanguage());
+            assertTrue(userInfo.getIsTelegramPremium());
         }
 
         @Test
@@ -92,16 +93,16 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
             // when
             commandUpdateListener.processUpdate(update, bot);
             // then
-//            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
-//            final var user = userInfo.getUser();
-//            assertNotNull(user);
-//            assertEquals(Role.Roles.USER.getRoleName(), user.getRole().getName());
-//            assertEquals(chatId + "@wegosty.ru", user.getLogin());
-//            assertEquals("username", userInfo.getTelegramUsername());
-//            assertEquals("Unknown", userInfo.getFirstName());
-//            assertEquals("Unknown", userInfo.getLastName());
-//            assertEquals("en", userInfo.getLanguage());
-//            assertTrue(userInfo.getIsTelegramPremium());
+            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
+            final var user = userInfo.getUser();
+            assertNotNull(user);
+            assertEquals(Role.Roles.USER.getRoleName(), user.getRole().getName());
+            assertEquals(chatId + "@ai-counting.com", user.getLogin());
+            assertEquals("username", userInfo.getTelegramUsername());
+            assertEquals("Unknown", userInfo.getFirstName());
+            assertEquals("Unknown", userInfo.getLastName());
+            assertEquals("en", userInfo.getLanguage());
+            assertTrue(userInfo.getIsTelegramPremium());
         }
 
         @Test
@@ -111,17 +112,17 @@ class CommandUpdateListenerTest implements UserTestData, UserInfoTestData {
             final var chatId = random.nextLong();
             final var user = givenUserExists(it -> {
             });
-//            givenUserInfoExists(it -> {
-//                it.setUser(user);
-//                it.setTelegramChatId(chatId);
-//            });
-//            final var update = mockUpdate("/start", chatId);
-//            final var bot = mockBot();
-//            // when
-//            commandUpdateListener.processUpdate(update, bot);
-//            // then
-//            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
-//            assertEquals(user, userInfo.getUser());
+            givenUserInfoExists(it -> {
+                it.setUser(user);
+                it.setTelegramChatId(chatId);
+            });
+            final var update = mockUpdate("/start", chatId);
+            final var bot = mockBot();
+            // when
+            commandUpdateListener.processUpdate(update, bot);
+            // then
+            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
+            assertEquals(user, userInfo.getUser());
         }
 
         @Test

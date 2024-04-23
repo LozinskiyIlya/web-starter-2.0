@@ -5,6 +5,7 @@ import com.starter.domain.entity.Group;
 import com.starter.domain.entity.User;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author ilya
@@ -14,4 +15,6 @@ import java.util.List;
 public interface GroupRepository extends Repository<Group> {
 
    List<Group> findAllByOwner(User owner);
+
+   Optional<Group> findByOwnerAndChatId(User owner, Long chatId);
 }
