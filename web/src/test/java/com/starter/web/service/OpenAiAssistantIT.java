@@ -53,7 +53,7 @@ public class OpenAiAssistantIT {
 
                 Плюс эти банк комиссии сколько обычно? вроде 30 EUR ?\s
 
-                Тогда отправим 2026 EUR""";
+                Тогда отправим 2026.5 EUR""";
         final var response = openAiAssistant.runTextPipeline(message, UUID.randomUUID());
         System.out.println(response);
     }

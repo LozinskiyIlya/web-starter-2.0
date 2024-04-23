@@ -12,7 +12,7 @@ public class BillAssistantResponse {
     private String seller;
     private String purpose;
     private String currency;
-    private String amount;
+    private Double amount;
     private Instant mentionedDate;
     private String[] tags;
 
@@ -22,7 +22,7 @@ public class BillAssistantResponse {
         response.setSeller("");
         response.setPurpose("");
         response.setCurrency("");
-        response.setAmount("");
+        response.setAmount(0d);
         response.setMentionedDate(Instant.now());
         response.setTags(new String[0]);
         return response;

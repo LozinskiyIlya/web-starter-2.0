@@ -29,7 +29,7 @@ class AssistantResponseParserTest {
         var parsed = responseParser.parse(response);
         assertTrue(StringUtils.hasText(parsed.getBuyer()));
         assertTrue(StringUtils.hasText(parsed.getSeller()));
-        assertTrue(StringUtils.hasText(parsed.getAmount()));
+        assertTrue(parsed.getAmount() > 0);
         assertTrue(StringUtils.hasText(parsed.getPurpose()));
         assertTrue(StringUtils.hasText(parsed.getCurrency()));
         assertTrue(parsed.getTags().length > 0);
@@ -42,7 +42,7 @@ class AssistantResponseParserTest {
     void parsesSomeFieldsResponse() {
         var response = readResource("responses/open-ai/without_some_fields.txt");
         var parsed = responseParser.parse(response);
-        assertTrue(StringUtils.hasText(parsed.getAmount()));
+        assertTrue(parsed.getAmount() > 0);
         assertTrue(StringUtils.hasText(parsed.getPurpose()));
         assertTrue(StringUtils.hasText(parsed.getCurrency()));
         assertTrue(parsed.getTags().length > 0);

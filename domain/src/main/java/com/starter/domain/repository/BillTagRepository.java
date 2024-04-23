@@ -5,8 +5,9 @@ import com.starter.domain.entity.BillTag;
 import com.starter.domain.entity.BillTag.TagType;
 import com.starter.domain.entity.User;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author ilya
@@ -15,9 +16,9 @@ import java.util.Optional;
 
 public interface BillTagRepository extends Repository<BillTag> {
 
-    List<BillTag> findAllByUser(User user);
+    Set<BillTag> findAllByUser(User user);
 
-    List<BillTag> findAllByTagType(TagType tagType);
+    Set<BillTag> findAllByUserAndNameIn(User user, Collection<String> name);
 
     Optional<BillTag> findByNameAndTagType(String name, TagType tagType);
 }
