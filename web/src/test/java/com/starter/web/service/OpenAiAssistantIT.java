@@ -54,7 +54,7 @@ public class OpenAiAssistantIT {
                 Плюс эти банк комиссии сколько обычно? вроде 30 EUR ?\s
 
                 Тогда отправим 2026.5 EUR""";
-        final var response = openAiAssistant.runTextPipeline(message, UUID.randomUUID());
+        final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message);
         System.out.println(response);
     }
 
@@ -67,9 +67,11 @@ public class OpenAiAssistantIT {
         @Test
         @DisplayName("For some file extension")
         void forSomeFileExtension() {
+            final var additionalMessage = "Sending you an invoice for the last tasks";
             final var path = String.format("files/%s/Invoice2.%s", getExtension(), getExtension());
             var resource = resourceLoader.getResource("classpath:" + path);
-            final var response = openAiAssistant.runFilePipeline(resource.getFile().getAbsolutePath(), UUID.randomUUID());
+            final var fileExternalUrl = "https://api.telegram.org/file/bot6668502294:AAF76wN9Z8f5LRZ6YBNC5aIaY1pRLn7GPjE/documents/file_1.pdf";
+            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileExternalUrl, additionalMessage);
             System.out.println(response);
         }
     }

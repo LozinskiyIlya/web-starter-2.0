@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,6 +24,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
     @Nested
     @DisplayName("On text message")
     class OnTextMessage {
+
         @Test
         @DisplayName("create a group if not exists")
         void createGroupIfNotExist() {
@@ -36,10 +36,14 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             // when
             listener.processUpdate(update, mockBot());
             // then
-            final var all = groupRepository.findAll();
             final var group = groupRepository.findByOwnerAndChatId(user, update.message().chat().id());
             assertTrue(group.isPresent());
             assertEquals(update.message().chat().title(), group.get().getTitle());
         }
+    }
+
+    @Nested
+    @DisplayName("On file message")
+    class OnFileMessage {
     }
 }

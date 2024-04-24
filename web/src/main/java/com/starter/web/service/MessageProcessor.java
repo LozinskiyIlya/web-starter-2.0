@@ -2,6 +2,7 @@ package com.starter.web.service;
 
 
 import com.starter.common.events.BillCreatedEvent;
+import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
@@ -14,6 +15,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.Arrays;
 
 @Slf4j
@@ -26,7 +28,6 @@ public class MessageProcessor {
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
 
-
     @Async
     @Transactional
     @EventListener
@@ -36,7 +37,7 @@ public class MessageProcessor {
         final var message = payload.getSecond();
         final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();
         if (isPayment) {
-            final var response = openAiAssistant.runTextPipeline(message, group.getOwner().getId());
+            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message);
             if (shouldSave(response)) {
                 final var bill = billService.addBill(group, response);
                 log.info("Bill created: {}", bill);
@@ -45,7 +46,24 @@ public class MessageProcessor {
         }
     }
 
-    public boolean shouldSave(BillAssistantResponse response) {
+    @Async
+    @Transactional
+    @EventListener
+    public void processMessage(TelegramFileMessageEvent event) {
+        final var payload = event.getPayload();
+        final var group = payload.group();
+        final var caption = payload.caption();
+        final var fileUrl = payload.fileUrl();
+        final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption);
+        if (shouldSave(response)) {
+            final var bill = billService.addBill(group, response);
+            log.info("Bill created: {}", bill);
+            publisher.publishEvent(new BillCreatedEvent(this, bill));
+        }
+        deleteLocalFile(fileUrl);
+    }
+
+    private boolean shouldSave(BillAssistantResponse response) {
         // at least MIN_FIELDS_FILLED any fields should be filled
         return Arrays.stream(response.getClass().getDeclaredFields())
                 .peek(f -> f.setAccessible(true))
@@ -57,5 +75,14 @@ public class MessageProcessor {
                         return false;
                     }
                 }).count() >= MIN_FIELDS_FILLED;
+    }
+
+    private void deleteLocalFile(String filePath) {
+        File file = new File(filePath);
+        if (file.delete()) {
+            System.out.println("File deleted successfully: " + filePath);
+        } else {
+            System.out.println("Failed to delete the file: " + filePath);
+        }
     }
 }

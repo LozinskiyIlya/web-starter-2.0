@@ -52,7 +52,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(response("USD", 100.0))
-                    .when(openAiAssistant).runTextPipeline(Mockito.eq(message), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline( Mockito.any(), Mockito.eq(message));
             // given
             var user = userCreator.givenUserExists();
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));

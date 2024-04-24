@@ -13,6 +13,7 @@ import com.theokanning.openai.runs.CreateThreadAndRunRequest;
 import com.theokanning.openai.runs.Run;
 import com.theokanning.openai.service.OpenAiService;
 import com.theokanning.openai.threads.ThreadRequest;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,8 @@ public class OpenAiAssistant {
         return openAiService.createCompletion(completionRequest).getChoices().get(0).getText();
     }
 
-    public BillAssistantResponse runFilePipeline(String filePath, UUID userId) {
+    public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption) {
+        final var withedCaption = caption != null ? withMaxTextLength(caption) : "";
         final var uploaded = openAiFileManager.uploadFile(filePath);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
@@ -64,7 +66,11 @@ public class OpenAiAssistant {
                         .messages(List.of(MessageRequest.builder()
                                         .role("user")
                                         .fileIds(List.of(uploaded.getId()))
-                                        .content("Analyse the file according to your instructions")
+                                        .content(withedCaption + "\nAnalyse the file according to your instructions")
+                                        .build(),
+                                MessageRequest.builder()
+                                        .role("user")
+                                        .content("Respond with nothing more than a valid JSON")
                                         .build(),
                                 MessageRequest.builder()
                                         .role("user")
@@ -77,7 +83,7 @@ public class OpenAiAssistant {
         return responseParser.parse(response);
     }
 
-    public BillAssistantResponse runTextPipeline(String forwardedMessage, UUID userId) {
+    public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage) {
         final var withed = withMaxTextLength(forwardedMessage);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
