@@ -84,4 +84,10 @@ public class OpenAiFileManager {
             log.error("Exception occurred while deleting file: {}", processedFilePath.getFirst(), e);
         }
     }
+
+    public void deleteFile(String fileId) {
+        final var deleteResult = openAiService.deleteFile(fileId);
+        log.info("File delete result: {}", deleteResult);
+        // todo delete vector storage
+    }
 }

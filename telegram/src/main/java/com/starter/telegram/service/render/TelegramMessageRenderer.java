@@ -1,6 +1,7 @@
 package com.starter.telegram.service.render;
 
 
+import com.pengrad.telegrambot.model.LinkPreviewOptions;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.WebAppInfo;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
@@ -70,18 +71,24 @@ public class TelegramMessageRenderer {
     }
 
     private String renderId(UUID id) {
-        return id.toString().substring(0, 8);
+        return String.format("<code>#%s</code>", id.toString().substring(0, 8));
     }
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = templateReader.read(BILL_UPDATE_TEMPLATE)
                 .replaceAll("#id#", renderId(bill.getId()))
-                .replaceAll("#edit_url#", "https://example.com");
+                .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp");
         if (message instanceof Message) {
             // Update the original message instead of sending a new one
-            return new EditMessageText(chatId, message.messageId(), textPart).parseMode(ParseMode.HTML);
+            return new EditMessageText(chatId, message.messageId(), textPart)
+                    .parseMode(ParseMode.HTML)
+                    .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
+                    .disableWebPagePreview(true);
         }
         // Original message is not accessible, send a new one
-        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+        return new SendMessage(chatId, textPart)
+                .parseMode(ParseMode.HTML)
+                .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
+                .disableWebPagePreview(true);
     }
 }

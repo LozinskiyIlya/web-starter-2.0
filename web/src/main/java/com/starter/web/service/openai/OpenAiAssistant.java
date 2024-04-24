@@ -79,7 +79,8 @@ public class OpenAiAssistant {
                         .build())
                 .build()
         );
-        final var response = waitForMessage(threadRun);
+        final var response = waitForPipelineCompletion(threadRun);
+        openAiFileManager.deleteFile(uploaded.getId());
         return responseParser.parse(response);
     }
 
@@ -101,7 +102,7 @@ public class OpenAiAssistant {
                         .build())
                 .build()
         );
-        final var response = waitForMessage(threadRun);
+        final var response = waitForPipelineCompletion(threadRun);
         log.info("Text pipeline response: {}", response);
         return responseParser.parse(response);
     }
@@ -123,7 +124,7 @@ public class OpenAiAssistant {
         return responseParser.parseClassification(response);
     }
 
-    private String waitForMessage(Run run) {
+    private String waitForPipelineCompletion(Run run) {
         while (!"completed".equals(run.getStatus())) {
             run = openAiService.retrieveRun(run.getThreadId(), run.getId());
         }
