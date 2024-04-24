@@ -42,10 +42,19 @@ public class Bill extends AbstractEntity {
     )
     private Set<BillTag> tags = new HashSet<>();
 
+    @NotNull
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private BillStatus status = BillStatus.NEW;
+
     private String buyer;
     private String seller;
     private String purpose;
     private String currency;
     private Double amount;
     private Instant mentionedDate;
+
+    public enum BillStatus {
+        NEW, SENT, CONFIRMED
+    }
 }

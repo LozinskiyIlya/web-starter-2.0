@@ -113,6 +113,7 @@ public class OpenAiAssistant {
                 ))
                 .build();
         final var response = openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
+        log.info("Text classification response: {}", response);
         return responseParser.parseClassification(response);
     }
 

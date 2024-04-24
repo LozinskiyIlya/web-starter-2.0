@@ -2,6 +2,7 @@ package com.starter.web.service.bill;
 
 
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
@@ -32,6 +33,7 @@ public class BillService {
         bill.setMentionedDate(assistantResponse.getMentionedDate());
         final var tags = billTagRepository.findAllByUserAndNameIn(group.getOwner(), Set.of(assistantResponse.getTags()));
         bill.setTags(tags);
+        bill.setStatus(BillStatus.NEW);
         return billRepository.save(bill);
     }
 }
