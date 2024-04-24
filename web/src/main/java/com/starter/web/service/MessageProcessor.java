@@ -76,6 +76,4 @@ public class MessageProcessor {
                     }
                 }).count() >= MIN_FIELDS_FILLED;
     }
-
-
 }

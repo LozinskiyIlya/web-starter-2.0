@@ -1,4 +1,4 @@
-New bill#<code>#id#</code> from group <b>#group_name#</b>
+New bill #<code>#id#</code> from group <b>#group_name#</b>
 
 Details:
 <tg-spoiler>

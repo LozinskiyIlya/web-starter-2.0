@@ -4,10 +4,9 @@ package com.starter.telegram.service.listener;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.SendMessage;
-import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.repository.BillRepository;
+import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +20,7 @@ import java.util.UUID;
 public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String CONFIRM_BILL_PREFIX = "confirm_bill_";
     private final BillRepository billRepository;
+    private final TelegramMessageRenderer renderer;
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
@@ -32,11 +32,13 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     }
 
     private void confirmBill(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
+        final var message = callbackQuery.maybeInaccessibleMessage();
         final var billId = UUID.fromString(callbackQuery.data().substring(CONFIRM_BILL_PREFIX.length()));
         final var bill = billRepository.findById(billId).orElseThrow();
         bill.setStatus(BillStatus.CONFIRMED);
         billRepository.save(bill);
         log.info("Bill confirmed: {}", bill);
-        bot.execute(new SendMessage(chatId, "Bill saved"));
+        final var messageUpdate = renderer.renderBillUpdate(chatId, bill, message);
+        bot.execute(messageUpdate);
     }
 }
