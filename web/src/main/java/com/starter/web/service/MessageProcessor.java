@@ -1,16 +1,17 @@
 package com.starter.web.service;
 
 
+import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
-import com.starter.domain.entity.Group;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.util.Pair;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -20,10 +21,13 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class MessageProcessor {
     private static final int MIN_FIELDS_FILLED = 3;
+
+    private final ApplicationEventPublisher publisher;
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
 
 
+    @Async
     @Transactional
     @EventListener
     public void processMessage(TelegramTextMessageEvent event) {
@@ -34,7 +38,9 @@ public class MessageProcessor {
         if (isPayment) {
             final var response = openAiAssistant.runTextPipeline(message, group.getOwner().getId());
             if (shouldSave(response)) {
-                billService.addBill(group, response);
+                final var bill = billService.addBill(group, response);
+                log.info("Bill created: {}", bill);
+                publisher.publishEvent(new BillCreatedEvent(this, bill));
             }
         }
     }

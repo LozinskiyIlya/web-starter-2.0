@@ -1,6 +1,8 @@
 package com.starter.web.service;
 
 import com.starter.common.events.TelegramTextMessageEvent;
+import com.starter.domain.entity.Bill;
+import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
@@ -15,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doReturn;
 
 
@@ -26,6 +31,9 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
 
     @Autowired
     private BillTestDataCreator billCreator;
+
+    @Autowired
+    private BillRepository billRepository;
 
     @Autowired
     private MessageProcessor messageProcessor;
@@ -50,14 +58,13 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group, message)));
-            // then
-            transactionTemplate.executeWithoutResult(tr -> {
-                var bill = billCreator.billRepository().findAll().get(0);
-                assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
-                assertThat(bill.getAmount()).isEqualTo(100);
-                assertThat(bill.getCurrency()).isEqualTo("USD");
-            });
-
+            // then - bill is created asynchronously
+            await().atMost(2, TimeUnit.SECONDS).until(() -> billRepository.findAllByGroup(group).size() == 1);
+            var bill = billRepository.findAllByGroup(group).get(0);
+            assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
+            assertThat(bill.getAmount()).isEqualTo(100);
+            assertThat(bill.getCurrency()).isEqualTo("USD");
+            assertThat(bill.getStatus()).isEqualTo(Bill.BillStatus.NEW);
         }
     }
 
