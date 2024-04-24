@@ -14,8 +14,8 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "groups",
         indexes = {
-                @Index(name = "group_owner_fk_index", columnList = "owner_id"),
-                @Index(name = "group_chat_id_index", columnList = "chat_id")
+                @Index(name = "group_chat_id_index", columnList = "chat_id"),
+                @Index(name = "group_owner_fk_index", columnList = "owner_id")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "group_owner_chat_id_unique", columnNames = {"owner_id", "chat_id"})
@@ -29,7 +29,7 @@ public class Group extends AbstractEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "onwer_id", nullable = false, updatable = false)
+    @JoinColumn(name = "owner_id", nullable = false, updatable = false)
     private User owner;
 
     @NotNull

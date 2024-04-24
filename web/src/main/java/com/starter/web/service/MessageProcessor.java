@@ -25,8 +25,9 @@ public class MessageProcessor {
 
 
     @Transactional
-    @EventListener(TelegramTextMessageEvent.class)
-    public void processMessage(Pair<Group, String> payload) {
+    @EventListener
+    public void processMessage(TelegramTextMessageEvent event) {
+        final var payload = event.getPayload();
         final var group = payload.getFirst();
         final var message = payload.getSecond();
         final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();

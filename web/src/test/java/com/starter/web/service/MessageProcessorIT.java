@@ -1,5 +1,6 @@
 package com.starter.web.service;
 
+import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
@@ -48,7 +49,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             var user = userCreator.givenUserExists();
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));
             // when
-            messageProcessor.processMessage(Pair.of(group, message));
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group, message)));
             // then
             transactionTemplate.executeWithoutResult(tr -> {
                 var bill = billCreator.billRepository().findAll().get(0);
