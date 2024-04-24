@@ -18,7 +18,9 @@ public interface BillTagRepository extends Repository<BillTag> {
 
     Set<BillTag> findAllByUser(User user);
 
-    Set<BillTag> findAllByUserAndNameIn(User user, Collection<String> name);
+    Set<BillTag> findAllByUserAndNameIgnoreCaseIn(User user, Collection<String> name);
 
     Optional<BillTag> findByNameAndTagType(String name, TagType tagType);
+
+    Set<BillTag> findAllByTagType(TagType tagType);
 }

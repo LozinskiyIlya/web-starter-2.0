@@ -1,0 +1,12 @@
+New bill#<code>#id#</code> from group <b>#group_name#</b>
+
+Details:
+<tg-spoiler>
+Buyer: <b>#buyer#</b>
+Seller: <b>#seller#</b>
+Amount: <b>#amount#</b>
+Purpose: <b>#purpose#</b>
+Date: <b>#date#</b>
+
+#tags#
+</tg-spoiler>

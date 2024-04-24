@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class TelegramBotService {
-
     public static final Set<String> KEYBOARD_BUTTONS = Set.of();
 
     private final TelegramBot bot;
