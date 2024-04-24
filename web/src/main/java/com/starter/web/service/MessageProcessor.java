@@ -4,6 +4,7 @@ package com.starter.web.service;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
+import com.starter.common.utils.CustomFileUtils;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
@@ -15,7 +16,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.Arrays;
 
 @Slf4j
@@ -60,7 +60,7 @@ public class MessageProcessor {
             log.info("Bill created: {}", bill);
             publisher.publishEvent(new BillCreatedEvent(this, bill));
         }
-        deleteLocalFile(fileUrl);
+        CustomFileUtils.deleteLocalFile(fileUrl);
     }
 
     private boolean shouldSave(BillAssistantResponse response) {
@@ -77,12 +77,5 @@ public class MessageProcessor {
                 }).count() >= MIN_FIELDS_FILLED;
     }
 
-    private void deleteLocalFile(String filePath) {
-        File file = new File(filePath);
-        if (file.delete()) {
-            System.out.println("File deleted successfully: " + filePath);
-        } else {
-            System.out.println("Failed to delete the file: " + filePath);
-        }
-    }
+
 }

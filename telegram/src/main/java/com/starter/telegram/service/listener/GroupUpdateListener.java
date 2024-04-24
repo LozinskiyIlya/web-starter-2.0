@@ -1,10 +1,5 @@
 package com.starter.telegram.service.listener;
 
-import java.io.InputStream;
-import java.io.FileOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Document;
 import com.pengrad.telegrambot.model.File;
@@ -13,6 +8,7 @@ import com.pengrad.telegrambot.request.GetFile;
 import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramFileMessageEvent.TelegramFileMessagePayload;
 import com.starter.common.events.TelegramTextMessageEvent;
+import com.starter.common.utils.CustomFileUtils;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.service.TelegramUserService;
@@ -72,45 +68,9 @@ public class GroupUpdateListener implements UpdateListener {
                 String downloadUrl = bot.getFullFilePath(file);
                 // Use this URL to download the file
                 log.info("Download URL: {}", downloadUrl);
-                return downloadFileFromUrl(downloadUrl, document.fileName());
+                return CustomFileUtils.downloadFileFromUrl(downloadUrl, document.fileName());
             }
         }
         return null;
-    }
-
-
-    private String downloadFileFromUrl(String fileUrl, String outputFileName) {
-        try {
-            URL url = new URL(fileUrl);
-            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-            int responseCode = httpConn.getResponseCode();
-
-            // Check HTTP response code first
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                // Opens input stream from the HTTP connection
-                InputStream inputStream = httpConn.getInputStream();
-
-                // Opens an output stream to save into file
-                FileOutputStream outputStream = new FileOutputStream(outputFileName);
-
-                int bytesRead;
-                byte[] buffer = new byte[4096];
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-
-                outputStream.close();
-                inputStream.close();
-
-                System.out.println("File downloaded: " + outputFileName);
-                return outputFileName;
-            } else {
-                System.out.println("No file to download. Server replied HTTP code: " + responseCode);
-                return null;
-            }
-        } catch (Exception e) {
-            log.error("Error while downloading file from URL", e);
-            return null;
-        }
     }
 }
