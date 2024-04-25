@@ -22,7 +22,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import static com.starter.telegram.service.listener.CallbackQueryUpdateListener.CONFIRM_BILL_PREFIX;
+import static com.starter.telegram.listener.CallbackQueryUpdateListener.CONFIRM_BILL_PREFIX;
 
 @Slf4j
 @Service

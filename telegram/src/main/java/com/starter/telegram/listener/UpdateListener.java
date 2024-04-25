@@ -1,4 +1,4 @@
-package com.starter.telegram.service.listener;
+package com.starter.telegram.listener;
 
 
 import com.pengrad.telegrambot.TelegramBot;

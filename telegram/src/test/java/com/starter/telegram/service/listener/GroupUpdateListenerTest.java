@@ -8,6 +8,7 @@ import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.listener.GroupUpdateListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
