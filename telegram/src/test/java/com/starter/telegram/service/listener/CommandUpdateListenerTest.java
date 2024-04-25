@@ -1,6 +1,9 @@
 package com.starter.telegram.service.listener;
 
+import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.request.GetChat;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.GetChatResponse;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
@@ -17,6 +20,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -82,6 +86,27 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
             assertEquals("Unknown", userInfo.getLastName());
             assertEquals("en", userInfo.getLanguage());
             assertTrue(userInfo.getIsTelegramPremium());
+        }
+
+        @Test
+        @DisplayName("should add additional chat info to user")
+        void shouldAddAdditionalChatInfo() {
+            // given
+            final var chatId = random.nextLong();
+            final var bio = "bio";
+            final var update = mockCommandUpdate("/start", chatId);
+            final var bot = mockBot();
+            final var chat = mock(Chat.class);
+            final var chatResponse = mock(GetChatResponse.class);
+            when(chatResponse.chat()).thenReturn(chat);
+            when(chat.bio()).thenReturn(bio);
+            when(bot.execute(Mockito.any(GetChat.class))).thenReturn(chatResponse);
+
+            // when
+            commandUpdateListener.processUpdate(update, bot);
+            // then
+            final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
+            assertEquals(bio, userInfo.getBio());
         }
 
         @Test

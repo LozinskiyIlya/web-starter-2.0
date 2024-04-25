@@ -34,9 +34,18 @@ public class GroupUpdateListener implements UpdateListener {
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
         log.info("Processing group update: {}", update);
+        checkIdMigration(update);
+        final var group =  createOrFindGroup(update);
         final var text = update.message().text();
-        final var group = createOrFindGroup(update);
         doBillWork(bot, update, group, text);
+    }
+
+    private void checkIdMigration(Update update) {
+        final var currentChatId = update.message().chat().id();
+        final var oldChatId = update.message().migrateFromChatId();
+        if (oldChatId != null) {
+            groupRepository.updateChatId(oldChatId, currentChatId);
+        }
     }
 
     private Group createOrFindGroup(Update update) {

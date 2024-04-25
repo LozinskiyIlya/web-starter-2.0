@@ -1,6 +1,7 @@
 package com.starter.telegram.service;
 
 
+import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
@@ -20,6 +21,7 @@ import static com.starter.domain.entity.Role.Roles.USER;
 @Service
 public class TelegramUserService {
 
+    private final TelegramBot bot;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
@@ -27,8 +29,8 @@ public class TelegramUserService {
 
     @Transactional
     public User createOrFindUser(Update update) {
-        final var chat = update.message().chat(); // can be a group;
-        final var chatId = update.message().from().id(); // sender telegram id
+        final var from = update.message().from();
+        final var chatId = from.id();  // sender telegram id
         log.info("Creating user with chatId: {}", chatId);
         final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseGet(() -> {
             final var created = User.randomPasswordTelegramUser(chatId + "@ai-counting.com");
@@ -37,7 +39,7 @@ public class TelegramUserService {
             final var ui = new UserInfo();
             ui.setUser(user);
             ui.setTelegramChatId(chatId);
-            final var from = update.message().from();
+
             if (StringUtils.hasText(from.firstName())) {
                 ui.setFirstName(from.firstName());
             }
@@ -47,11 +49,21 @@ public class TelegramUserService {
             ui.setTelegramUsername(from.username());
             ui.setLanguage(from.languageCode());
             ui.setIsTelegramPremium(from.isPremium());
-            ui.setBio(chat.bio());
-            ui.setDateOfBirth(chat.birthdate() != null ? chat.birthdate().toString() : null);
-            ui.setAvatar(chat.photo() != null ? chat.photo().toString() : null);
+            tryCollectAdditionalInfo(ui, chatId);
             return userInfoRepository.save(ui);
         });
         return userInfo.getUser();
+    }
+
+    private void tryCollectAdditionalInfo(UserInfo userInfo, Long chatId) {
+        try {
+            final var response = bot.execute(new com.pengrad.telegrambot.request.GetChat(chatId));
+            final var chat = response.chat();
+            userInfo.setBio(chat.bio());
+            userInfo.setDateOfBirth(chat.birthdate() != null ? chat.birthdate().toString() : null);
+            userInfo.setAvatar(chat.photo() != null ? chat.photo().toString() : null);
+        } catch (Exception e) {
+            log.error("Error while getting additional chat info: {} skipping", e.getMessage());
+        }
     }
 }

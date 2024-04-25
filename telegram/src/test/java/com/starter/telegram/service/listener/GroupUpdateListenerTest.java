@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
@@ -155,6 +156,44 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             Executable action = () -> listener.processUpdate(update, mockBot());
             // then
             assertThrows(NoSuchElementException.class, action); // Assuming your method throws when chat ID is missing
+        }
+    }
+
+    @Nested
+    @DisplayName("On id changed")
+    class OnIdChanged {
+
+        @Test
+        @DisplayName("update chat ID")
+        void updateChatId() {
+            // given
+            final var oldChatId = random.nextLong();
+            final var newChatId = random.nextLong();
+            billTestDataCreator.givenGroupExists(g -> g.setChatId(oldChatId));
+            final var update = mockGroupUpdate(null, null, newChatId);
+            final var message = update.message();
+            when(message.migrateToChatId()).thenReturn(newChatId);
+            when(message.migrateFromChatId()).thenReturn(oldChatId);
+            // when
+            listener.processUpdate(update, mockBot());
+            // then
+            assertTrue(groupRepository.findByChatId(newChatId).isPresent());
+        }
+
+        @Test
+        @DisplayName("no chat ID migration")
+        void noChatIdMigration() {
+            // given
+            final var chatId = random.nextLong();
+            billTestDataCreator.givenGroupExists(g -> g.setChatId(chatId));
+            final var update = mockGroupUpdate(null, null, chatId);
+            final var message = update.message();
+            when(message.migrateToChatId()).thenReturn(null);
+            when(message.migrateFromChatId()).thenReturn(null);
+            // when
+            listener.processUpdate(update, mockBot());
+            // then
+            verify(groupRepository, never()).save(Mockito.any(Group.class));
         }
     }
 
