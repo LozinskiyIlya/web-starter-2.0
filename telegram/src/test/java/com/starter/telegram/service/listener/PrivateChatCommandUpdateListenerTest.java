@@ -13,7 +13,7 @@ import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
-import com.starter.telegram.listener.CommandUpdateListener;
+import com.starter.telegram.listener.PrivateChatCommandUpdateListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements UserTestData, UserInfoTestData {
+class PrivateChatCommandUpdateListenerTest extends AbstractUpdateListenerTest implements UserTestData, UserInfoTestData {
 
     @Autowired
     private UserRepository userRepository;
@@ -37,7 +37,7 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
     private RoleRepository roleRepository;
 
     @Autowired
-    private CommandUpdateListener commandUpdateListener;
+    private PrivateChatCommandUpdateListener privateChatCommandUpdateListener;
 
     @Nested
     @DisplayName("on start command")
@@ -51,7 +51,7 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
             final var update = mockCommandUpdate("/start", chatId);
             final var bot = mockBot();
             // when
-            commandUpdateListener.processUpdate(update, bot);
+            privateChatCommandUpdateListener.processUpdate(update, bot);
             // then
             final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
             final var user = userInfo.getUser();
@@ -75,7 +75,7 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
             when(update.message().from().lastName()).thenReturn(null);
             final var bot = mockBot();
             // when
-            commandUpdateListener.processUpdate(update, bot);
+            privateChatCommandUpdateListener.processUpdate(update, bot);
             // then
             final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
             final var user = userInfo.getUser();
@@ -104,7 +104,7 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
             when(bot.execute(Mockito.any(GetChat.class))).thenReturn(chatResponse);
 
             // when
-            commandUpdateListener.processUpdate(update, bot);
+            privateChatCommandUpdateListener.processUpdate(update, bot);
             // then
             final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
             assertEquals(bio, userInfo.getBio());
@@ -124,7 +124,7 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
             final var update = mockCommandUpdate("/start", chatId);
             final var bot = mockBot();
             // when
-            commandUpdateListener.processUpdate(update, bot);
+            privateChatCommandUpdateListener.processUpdate(update, bot);
             // then
             final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
             assertEquals(user, userInfo.getUser());
@@ -138,7 +138,7 @@ class CommandUpdateListenerTest extends AbstractUpdateListenerTest implements Us
             final var update = mockCommandUpdate("/start", chatId);
             final var bot = mockBot();
             // when
-            commandUpdateListener.processUpdate(update, bot);
+            privateChatCommandUpdateListener.processUpdate(update, bot);
             // then
             Mockito.verify(bot, Mockito.times(1)).execute(Mockito.any(SendMessage.class));
         }

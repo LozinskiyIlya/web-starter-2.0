@@ -8,14 +8,13 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.telegram.service.TelegramUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CommandUpdateListener implements UpdateListener {
+public class PrivateChatCommandUpdateListener extends AbstractCommandListener {
 
     private final TelegramUserService telegramUserService;
 
@@ -58,13 +57,5 @@ public class CommandUpdateListener implements UpdateListener {
 
     private void onInfoCommand(Update update, TelegramBot bot) {
         bot.execute(new SendMessage(update.message().chat().id(), "This is a simple bot"));
-    }
-
-    private Pair<String, String> parseCommand(String commandWithParameters) {
-        String[] commandParts = commandWithParameters.split(" ");
-        if (commandParts.length == 1) {
-            return Pair.of(commandParts[0], "");
-        }
-        return Pair.of(commandParts[0], commandParts[1]);
     }
 }
