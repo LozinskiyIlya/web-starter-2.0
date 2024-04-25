@@ -48,9 +48,9 @@ public class CommandUpdateListener implements UpdateListener {
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false);
         // Send a message with the reply keyboard
-        Long chatId = update.message().chat().id();
-        telegramUserService.createOrFindUser(update);
-        final var message = new SendMessage(chatId, "Hello! Thanks for using a bot!")
+        final var from = update.message().from();
+        telegramUserService.createOrFindUser(from, bot);
+        final var message = new SendMessage(from.id(), "Hello! Thanks for using a bot!")
                 .replyMarkup(keyboard);
         bot.execute(message);
     }

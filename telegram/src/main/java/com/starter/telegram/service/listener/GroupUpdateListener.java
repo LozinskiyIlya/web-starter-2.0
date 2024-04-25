@@ -35,7 +35,7 @@ public class GroupUpdateListener implements UpdateListener {
     public void processUpdate(Update update, TelegramBot bot) {
         log.info("Processing group update: {}", update);
         checkIdMigration(update);
-        final var group =  createOrFindGroup(update);
+        final var group = createOrFindGroup(update, bot);
         final var text = update.message().text();
         doBillWork(bot, update, group, text);
     }
@@ -48,7 +48,7 @@ public class GroupUpdateListener implements UpdateListener {
         }
     }
 
-    private Group createOrFindGroup(Update update) {
+    private Group createOrFindGroup(Update update, TelegramBot bot) {
         final var groupId = update.message().chat().id();
         final var hasNewChatMembers = update.message().newChatMembers() != null;
         final var weAreTheNewMember = hasNewChatMembers && Arrays.stream(update.message().newChatMembers())
@@ -61,7 +61,7 @@ public class GroupUpdateListener implements UpdateListener {
                 newGroup.setChatId(groupId);
                 newGroup.setTitle(update.message().chat().title());
                 // if user has not yet interacted with our bot and has just added it to the group
-                newGroup.setOwner(telegramUserService.createOrFindUser(update));
+                newGroup.setOwner(telegramUserService.createOrFindUser(update.message().from(), bot));
                 return groupRepository.save(newGroup);
             }
         }

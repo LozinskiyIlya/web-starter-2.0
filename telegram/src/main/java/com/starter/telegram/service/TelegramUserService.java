@@ -2,7 +2,6 @@ package com.starter.telegram.service;
 
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.Update;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.RoleRepository;
@@ -21,15 +20,12 @@ import static com.starter.domain.entity.Role.Roles.USER;
 @Service
 public class TelegramUserService {
 
-    private final TelegramBot bot;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
 
-
     @Transactional
-    public User createOrFindUser(Update update) {
-        final var from = update.message().from();
+    public User createOrFindUser(com.pengrad.telegrambot.model.User from, TelegramBot bot) {
         final var chatId = from.id();  // sender telegram id
         log.info("Creating user with chatId: {}", chatId);
         final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseGet(() -> {
@@ -49,13 +45,13 @@ public class TelegramUserService {
             ui.setTelegramUsername(from.username());
             ui.setLanguage(from.languageCode());
             ui.setIsTelegramPremium(from.isPremium());
-            tryCollectAdditionalInfo(ui, chatId);
+            tryCollectAdditionalInfo(bot, ui, chatId);
             return userInfoRepository.save(ui);
         });
         return userInfo.getUser();
     }
 
-    private void tryCollectAdditionalInfo(UserInfo userInfo, Long chatId) {
+    private void tryCollectAdditionalInfo(TelegramBot bot, UserInfo userInfo, Long chatId) {
         try {
             final var response = bot.execute(new com.pengrad.telegrambot.request.GetChat(chatId));
             final var chat = response.chat();
