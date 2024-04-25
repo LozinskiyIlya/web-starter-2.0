@@ -3,6 +3,7 @@ package com.starter.telegram.service.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.*;
+import com.starter.telegram.configuration.TelegramProperties;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.mockito.Mockito;
@@ -20,6 +21,8 @@ public abstract class AbstractUpdateListenerTest {
 
     @Autowired
     protected TransactionTemplate transactionTemplate;
+    @Autowired
+    protected TelegramProperties telegramProperties;
     protected final EasyRandom random = new EasyRandom(new EasyRandomParameters().seed(System.nanoTime()));
 
     protected TelegramBot mockBot() {
@@ -41,7 +44,7 @@ public abstract class AbstractUpdateListenerTest {
         return update;
     }
 
-    protected Update mockGroupUpdate(String text, Long userChatId) {
+    protected Update mockGroupUpdate(String text, Long userChatId, Long groupChatId) {
         Update update = mock(Update.class);
         Message message = mock(Message.class);
         Chat chat = mock(Chat.class);
@@ -49,7 +52,7 @@ public abstract class AbstractUpdateListenerTest {
         when(update.message()).thenReturn(message);
         when(message.chat()).thenReturn(chat);
         when(message.from()).thenReturn(user);
-        when(chat.id()).thenReturn(random.nextLong());
+        when(chat.id()).thenReturn(groupChatId);
         when(chat.title()).thenReturn(UUID.randomUUID().toString());
         when(message.text()).thenReturn(text);
         return update;
@@ -63,6 +66,13 @@ public abstract class AbstractUpdateListenerTest {
         when(callbackQuery.data()).thenReturn(spotId.toString());
         when(callbackQuery.from()).thenReturn(user);
         return update;
+    }
+
+    protected User mockBotUser() {
+        com.pengrad.telegrambot.model.User user = mock(com.pengrad.telegrambot.model.User.class);
+        when(user.isBot()).thenReturn(true);
+        when(user.username()).thenReturn(telegramProperties.getUsername());
+        return user;
     }
 
     private static User mockReturnedUserData(Long chatId) {
