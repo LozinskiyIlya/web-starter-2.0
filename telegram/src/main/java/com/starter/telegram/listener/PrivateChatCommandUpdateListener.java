@@ -22,20 +22,11 @@ public class PrivateChatCommandUpdateListener extends AbstractCommandListener {
     public void processUpdate(Update update, TelegramBot bot) {
         final var commandParts = parseCommand(update.message().text());
         switch (commandParts.getFirst()) {
-            case "/start":
-                onStartCommand(update, bot, commandParts.getSecond());
-                break;
-            case "/info":
-                onInfoCommand(update, bot);
-                break;
-            default:
-                onUnknownCommand(update, bot, commandParts.getFirst());
+            case "/start" -> onStartCommand(update, bot, commandParts.getSecond());
+            case "/info" -> onInfoCommand(update, bot);
+            default -> onUnknownCommand(update, bot, commandParts.getFirst());
         }
         log.info("Received command: {} parameter: {}", commandParts.getFirst(), commandParts.getSecond());
-    }
-
-    private void onUnknownCommand(Update update, TelegramBot bot, String command) {
-        bot.execute(new SendMessage(update.message().chat().id(), "Unknown command: " + command));
     }
 
     private void onStartCommand(Update update, TelegramBot bot, String startParameter) {

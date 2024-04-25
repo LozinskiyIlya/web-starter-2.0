@@ -19,6 +19,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String CONFIRM_BILL_PREFIX = "confirm_bill_";
+    public static final String ADDME_ACCEPT_PREFIX = "addme_accept_";
+    public static final String ADDME_REJECT_PREFIX = "addme_reject_";
+
     private final BillRepository billRepository;
     private final TelegramMessageRenderer renderer;
 

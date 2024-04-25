@@ -5,12 +5,15 @@ import com.pengrad.telegrambot.Cancellable;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.response.BaseResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 
+
+@Slf4j
 @Configuration
 @EnableConfigurationProperties({TelegramProperties.class})
 public class TelegramBotConfiguration {
@@ -30,7 +33,7 @@ public class TelegramBotConfiguration {
         public <T extends BaseRequest<T, R>, R extends BaseResponse> R execute(BaseRequest<T, R> request) {
             final var baseResult = super.execute(request);
             if (!baseResult.isOk()) {
-                throw new RuntimeException("Telegram request failed: " + baseResult.description());
+                log.error("Telegram request failed: {}", baseResult.description());
             }
             return baseResult;
         }
@@ -41,14 +44,17 @@ public class TelegramBotConfiguration {
                 @Override
                 public void onResponse(T t, R r) {
                     if (!r.isOk()) {
-                        throw new RuntimeException("Telegram request failed: " + r.description());
+                        log.error("Telegram request failed with response: {}", r.description());
+                        callback.onFailure(t, new IOException("Failed response: " + r.description()));
+                    } else {
+                        callback.onResponse(t, r);
                     }
-                    callback.onResponse(t, r);
                 }
 
                 @Override
                 public void onFailure(T t, IOException e) {
-                    throw new RuntimeException("Telegram request failed: " + e.getMessage());
+                    log.error("Telegram request failure: {}", e.getMessage());
+                    callback.onFailure(t, e);
                 }
             });
         }

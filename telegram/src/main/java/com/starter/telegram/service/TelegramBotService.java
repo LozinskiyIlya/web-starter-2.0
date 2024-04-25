@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -24,9 +25,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TelegramBotService {
     public static final Set<String> KEYBOARD_BUTTONS = Set.of();
+    private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
+    private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);
 
     private final TelegramBot bot;
-    private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
 
     @PreDestroy
     void stop() {
@@ -37,8 +39,10 @@ public class TelegramBotService {
             log.info("Bot stopped");
         });
         shutdownBotExecutor.shutdown();
+        updatesExecutor.shutdown();
         try {
             shutdownBotExecutor.awaitTermination(15, TimeUnit.SECONDS);
+            updatesExecutor.awaitTermination(15, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
             log.error("Failed to stop bot", ex);
             Thread.currentThread().interrupt();
@@ -53,18 +57,19 @@ public class TelegramBotService {
     @PostConstruct
     public void start() {
         bot.setUpdatesListener(updates -> {
-            updates.forEach(update -> {
-                try {
-                    if (update.message() != null && update.message().from().isBot()) {
-                        log.warn("Ignoring bot message: {}", update.message().text());
-                        return;
-                    }
-                    final var listener = selectListener(update);
-                    listener.processUpdate(update, bot);
-                } catch (Exception e) {
-                    log.error("Error while processing update: {}, updateObj: {}", e.getMessage(), update);
-                }
-            });
+            updates.forEach(update ->
+                    updatesExecutor.submit(() -> {
+                        try {
+                            if (update.message() != null && update.message().from().isBot()) {
+                                log.warn("Ignoring bot message: {}", update.message().text());
+                                return;
+                            }
+                            final var listener = selectListener(update);
+                            listener.processUpdate(update, bot);
+                        } catch (Exception e) {
+                            log.error("Error while processing update: {}, updateObj: {}", e.getMessage(), update);
+                        }
+                    }));
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         }, e -> log.error("Error while processing updates: {}", e.toString()));
         log.info("Bot started");
@@ -80,6 +85,9 @@ public class TelegramBotService {
         }
         final var chatType = message.chat().type();
         if ("group".equals(chatType.name()) || "supergroup".equals(chatType.name())) {
+            if (message.text() != null && message.text().startsWith("/")) {
+                return listeners.get(GroupCommandListener.class);
+            }
             return listeners.get(GroupUpdateListener.class);
         }
         if (message.location() != null) {
