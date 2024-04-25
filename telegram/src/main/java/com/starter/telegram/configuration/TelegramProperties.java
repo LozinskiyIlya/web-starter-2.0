@@ -11,4 +11,5 @@ import org.springframework.validation.annotation.Validated;
 public class TelegramProperties {
 
     private final String token;
+    private final String username;
 }

@@ -49,7 +49,7 @@ public class CommandUpdateListener implements UpdateListener {
                 .oneTimeKeyboard(false);
         // Send a message with the reply keyboard
         Long chatId = update.message().chat().id();
-        telegramUserService.createUserIfNotExists(update);
+        telegramUserService.createOrFindUser(update);
         final var message = new SendMessage(chatId, "Hello! Thanks for using a bot!")
                 .replyMarkup(keyboard);
         bot.execute(message);

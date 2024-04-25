@@ -16,9 +16,6 @@ import org.hibernate.annotations.Where;
         indexes = {
                 @Index(name = "group_chat_id_index", columnList = "chat_id"),
                 @Index(name = "group_owner_fk_index", columnList = "owner_id")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "group_owner_chat_id_unique", columnNames = {"owner_id", "chat_id"})
         }
 )
 @SQLDelete(sql = "UPDATE groups SET state='DELETED' WHERE id=?")
@@ -33,9 +30,9 @@ public class Group extends AbstractEntity {
     private User owner;
 
     @NotNull
-    private String title;
+    @Column(name = "chat_id", unique = true, nullable = false, updatable = false)
+    private Long chatId;
 
     @NotNull
-    @Column(name = "chat_id")
-    private Long chatId;
+    private String title;
 }

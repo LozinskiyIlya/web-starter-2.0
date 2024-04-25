@@ -22,9 +22,8 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
     private GroupRepository groupRepository;
 
     @Nested
-    @DisplayName("On text message")
-    class OnTextMessage {
-
+    @DisplayName("On bot added")
+    class OnBotAdded {
         @Test
         @DisplayName("create a group if not exists")
         void createGroupIfNotExist() {
@@ -36,10 +35,17 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             // when
             listener.processUpdate(update, mockBot());
             // then
-            final var group = groupRepository.findByOwnerAndChatId(user, update.message().chat().id());
+            final var group = groupRepository.findByChatId(update.message().chat().id());
             assertTrue(group.isPresent());
+            assertEquals(user.getId(), group.get().getOwner().getId());
             assertEquals(update.message().chat().title(), group.get().getTitle());
         }
+    }
+
+
+    @Nested
+    @DisplayName("On text message")
+    class OnTextMessage {
     }
 
     @Nested

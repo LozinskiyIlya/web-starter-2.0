@@ -26,7 +26,7 @@ public class TelegramUserService {
 
 
     @Transactional
-    public User createUserIfNotExists(Update update) {
+    public User createOrFindUser(Update update) {
         final var chat = update.message().chat(); // can be a group;
         final var chatId = update.message().from().id(); // sender telegram id
         log.info("Creating user with chatId: {}", chatId);

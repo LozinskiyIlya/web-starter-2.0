@@ -16,5 +16,5 @@ public interface GroupRepository extends Repository<Group> {
 
    List<Group> findAllByOwner(User owner);
 
-   Optional<Group> findByOwnerAndChatId(User owner, Long chatId);
+   Optional<Group> findByChatId(Long chatId);
 }

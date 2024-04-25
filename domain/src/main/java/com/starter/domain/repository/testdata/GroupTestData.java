@@ -13,7 +13,7 @@ public interface GroupTestData {
     default Group givenGroupExists(Consumer<Group> configure) {
         var group = new Group();
         group.setTitle("group-title");
-        group.setChatId(-1234567890L);
+        group.setChatId(System.currentTimeMillis());
         configure.accept(group);
         return groupRepository().saveAndFlush(group);
     }
