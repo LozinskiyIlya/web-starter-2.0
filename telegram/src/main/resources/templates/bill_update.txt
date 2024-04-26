@@ -1,1 +1,0 @@
-Bill #id# saved. <a href='#edit_url#'>Edit</a>

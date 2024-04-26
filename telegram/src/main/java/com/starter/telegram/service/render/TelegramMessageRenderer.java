@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -31,14 +30,11 @@ import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 @RequiredArgsConstructor
 public class TelegramMessageRenderer {
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
+    private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in #group_name#. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
-    private final static String BILL_UPDATE_TEMPLATE = "bill_update.txt";
+    private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
 
     private final TemplateReader templateReader;
-
-    public String renderMessage(String message) {
-        return message;
-    }
 
     public SendMessage renderBill(Long chatId, Bill bill) {
         final var textPart = templateReader.read(BILL_TEMPLATE)
@@ -54,44 +50,15 @@ public class TelegramMessageRenderer {
                 new InlineKeyboardButton("✏\uFE0F Edit").webApp(new WebAppInfo("https://example.com")),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
-
         return new SendMessage(chatId, textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
     }
 
-    private String renderDate(Instant date) {
-        // Define the time zone
-        ZoneId zoneId = ZoneId.systemDefault(); // Or specify a ZoneId like ZoneId.of("Europe/Paris")
-
-        // Convert Instant to ZonedDateTime
-        ZonedDateTime zonedDateTime = date.atZone(zoneId);
-
-        // Define the date time format
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd.MM.yyyy");
-
-        // Format the ZonedDateTime
-        return zonedDateTime.format(formatter);
-    }
-
-    private String renderId(UUID id) {
-        return String.format("<code>#%s</code>", id.toString().substring(0, 8));
-    }
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
-        final var textPart = templateReader.read(BILL_UPDATE_TEMPLATE)
+        final var textPart = BILL_UPDATE_TEMPLATE
                 .replaceAll("#id#", renderId(bill.getId()))
-                .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp");
-        if (message instanceof Message) {
-            // Update the original message instead of sending a new one
-            return new EditMessageText(chatId, message.messageId(), textPart)
-                    .parseMode(ParseMode.HTML)
-                    .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                    .disableWebPagePreview(true);
-        }
-        // Original message is not accessible, send a new one
-        return new SendMessage(chatId, textPart)
-                .parseMode(ParseMode.HTML)
-                .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                .disableWebPagePreview(true);
+                .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp?bill=" + bill.getId());
+        return tryUpdateMessage(chatId, message, textPart);
     }
 
     public SendMessage renderAddMeMessage(UserInfo owner, UserInfo requestingPermission, Group group) {
@@ -102,9 +69,52 @@ public class TelegramMessageRenderer {
                 .replaceAll("#owner_name#", owner.getFirstName())
                 .replaceAll("#user_name#", requestingPermission.getTelegramUsername());
         final var keyboard = new InlineKeyboardMarkup(
-                new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX + requestingPermission.getUser().getId()),
-                new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getUser().getId())
+                new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX),
+                new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getUser().getId()
+                        + ID_SEPARATOR + group.getId())
         );
-        return new SendMessage(owner.getTelegramChatId(), textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+        return linkPreviewOff(new SendMessage(owner.getTelegramChatId(), textPart).replyMarkup(keyboard));
+    }
+
+    public BaseRequest<?, ?> renderAddMeAcceptedUpdate(Long chatId, MaybeInaccessibleMessage message, UserInfo userInfo, Group group) {
+        final var textPart = ADD_ME_UPDATE_TEMPLATE
+                .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp?group=" + group.getId())
+                .replaceAll("#user_name#", userInfo.getTelegramUsername())
+                .replaceAll("#group_name#", group.getTitle());
+        return tryUpdateMessage(chatId, message, textPart);
+    }
+
+    public BaseRequest<?, ?> renderAddMeRejectedUpdate(Long chatId, MaybeInaccessibleMessage message) {
+        final var textPart = "Rejected";
+        return tryUpdateMessage(chatId, message, textPart);
+    }
+
+    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text){
+        if (message instanceof Message) {
+            // if the message is accessible, update it
+            return new EditMessageText(chatId, message.messageId(), text)
+                    .parseMode(ParseMode.HTML)
+                    .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
+                    .disableWebPagePreview(true);
+        }
+        // if the message is not accessible, send a new message
+        return linkPreviewOff(new SendMessage(chatId, text));
+    }
+
+    private static SendMessage linkPreviewOff(SendMessage request) {
+        return request.parseMode(ParseMode.HTML)
+                .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
+                .disableWebPagePreview(true);
+    }
+
+    private static String renderDate(Instant date) {
+        final var zoneId = ZoneId.systemDefault();
+        final var zonedDateTime = date.atZone(zoneId);
+        final var formatter = DateTimeFormatter.ofPattern("HH:mm dd.MM.yyyy");
+        return zonedDateTime.format(formatter);
+    }
+
+    private String renderId(UUID id) {
+        return String.format("<code>#%s</code>", id.toString().substring(0, 8));
     }
 }
