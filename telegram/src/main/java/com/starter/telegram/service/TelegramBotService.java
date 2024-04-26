@@ -51,7 +51,14 @@ public class TelegramBotService {
 
     @Autowired
     private void setListenersMap(Collection<UpdateListener> listeners) {
-        listeners.forEach(listener -> this.listeners.put(listener.getClass(), listener));
+        for (UpdateListener listener : listeners) {
+            Class<?> listenerClass = listener.getClass();
+            // If the listener is a CGLIB proxy, get the superclass (the original class)
+            if (org.springframework.aop.support.AopUtils.isCglibProxy(listener)) {
+                listenerClass = listenerClass.getSuperclass();
+            }
+            this.listeners.put((Class<? extends UpdateListener>) listenerClass, listener);
+        }
     }
 
     @PostConstruct
@@ -101,5 +108,4 @@ public class TelegramBotService {
         }
         return listeners.get(NoopUpdateListener.class);
     }
-
 }

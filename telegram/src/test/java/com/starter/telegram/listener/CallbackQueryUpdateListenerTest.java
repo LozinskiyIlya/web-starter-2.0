@@ -40,8 +40,8 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             });
             final var group = billTestDataCreator.givenGroupExists(g -> g.setOwner(owner.getUser()));
             final var newMember = userTestDataCreator.givenUserInfoExists(ui -> {
-            }).getUser();
-            final var query = ADDME_ACCEPT_PREFIX + newMember.getId() + ID_SEPARATOR + group.getId();
+            });
+            final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
             final var bot = mockBot();
 
@@ -50,7 +50,7 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
 
             // then
             final var groupWithUser = billTestDataCreator.groupRepository().findById(group.getId()).orElseThrow();
-            assertTrue(groupWithUser.contains(newMember));
+            assertTrue(groupWithUser.contains(newMember.getUser()));
             assertMessageSentToChatId(bot, owner.getTelegramChatId());
         }
 
@@ -62,12 +62,12 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             final var owner = userTestDataCreator.givenUserInfoExists(ui -> {
             });
             final var newMember = userTestDataCreator.givenUserInfoExists(ui -> {
-            }).getUser();
+            });
             final var group = billTestDataCreator.givenGroupExists(g -> {
                 g.setOwner(owner.getUser());
-                g.setMembers(List.of(owner.getUser(), newMember));
+                g.setMembers(List.of(owner.getUser(), newMember.getUser()));
             });
-            final var query = ADDME_ACCEPT_PREFIX + newMember.getId() + ID_SEPARATOR + group.getId();
+            final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
             final var bot = mockBot();
 
@@ -76,7 +76,7 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
 
             // then
             final var groupWithUser = billTestDataCreator.groupRepository().findById(group.getId()).orElseThrow();
-            assertTrue(groupWithUser.contains(newMember));
+            assertTrue(groupWithUser.contains(newMember.getUser()));
             assertMessageSentToChatId(bot, owner.getTelegramChatId());
         }
 

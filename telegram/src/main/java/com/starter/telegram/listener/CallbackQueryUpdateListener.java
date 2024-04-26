@@ -64,10 +64,10 @@ public class CallbackQueryUpdateListener implements UpdateListener {
         final var message = callbackQuery.maybeInaccessibleMessage();
         final var removedPrefix = callbackQuery.data().substring(ADDME_ACCEPT_PREFIX.length());
         final var parts = removedPrefix.split(ID_SEPARATOR);
-        final var userId = UUID.fromString(parts[0]);
-        final var groupId = UUID.fromString(parts[1]);
-        final var userInfo = userInfoRepository.findOneByUser_Id(userId).orElseThrow();
-        final var group = groupRepository.findById(groupId).orElseThrow();
+        final var userChatId = Long.valueOf(parts[0]);
+        final var groupChatId = Long.valueOf(parts[1]);
+        final var userInfo = userInfoRepository.findByTelegramChatId(userChatId).orElseThrow();
+        final var group = groupRepository.findByChatId(groupChatId).orElseThrow();
         if (!group.contains(userInfo.getUser())) {
             final var members = new LinkedList<>(group.getMembers());
             members.add(userInfo.getUser());

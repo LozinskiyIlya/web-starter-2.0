@@ -30,7 +30,7 @@ import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 @RequiredArgsConstructor
 public class TelegramMessageRenderer {
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
-    private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in #group_name#. <a href='#edit_url#'>Edit group</a>";
+    private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
 
@@ -70,8 +70,8 @@ public class TelegramMessageRenderer {
                 .replaceAll("#user_name#", renderTelegramUsername(requestingPermission));
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX),
-                new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getUser().getId()
-                        + ID_SEPARATOR + group.getId())
+                new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getTelegramChatId()
+                        + ID_SEPARATOR + group.getChatId())
         );
         return linkPreviewOff(new SendMessage(owner.getTelegramChatId(), textPart).replyMarkup(keyboard));
     }
