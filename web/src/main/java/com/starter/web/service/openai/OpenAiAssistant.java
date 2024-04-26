@@ -33,7 +33,7 @@ import java.util.UUID;
 public class OpenAiAssistant {
 
     private static final String ASSISTANT_MODEL = "gpt-4-1106-preview";
-    private static final String MESSAGE_CLASSIFIER_MODEL = "gpt-3.5-turbo-0125";
+    private static final String MESSAGE_CLASSIFIER_MODEL = "gpt-4-1106-preview";
     private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
@@ -93,10 +93,6 @@ public class OpenAiAssistant {
                         .messages(List.of(MessageRequest.builder()
                                         .role("user")
                                         .content(withed)
-                                        .build(),
-                                MessageRequest.builder()
-                                        .role("user")
-                                        .content("Analise the forwarded message with your instructions")
                                         .build()
                         ))
                         .build())
@@ -145,7 +141,7 @@ public class OpenAiAssistant {
 
     private static final String PRE_PROCESS_PROMPT = """
             Is this a payment related message?
-            Respond with nothing more than valid JSON of the format:
+            Respond with nothing more than valid JSON (WITHOUT ``` marks) of the format:
             {
                 "payment_related": true | false
             }

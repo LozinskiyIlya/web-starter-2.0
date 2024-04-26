@@ -69,6 +69,15 @@ public class MessageProcessor {
                 .peek(f -> f.setAccessible(true))
                 .filter(f -> {
                     try {
+                        if (f.getType().equals(String.class)) {
+                            return f.get(response) != null && !f.get(response).toString().isBlank();
+                        }
+                        if (f.getType().equals(Double.class)) {
+                            return f.get(response) != null && (Double) f.get(response) > 0;
+                        }
+                        if (f.getType().equals(String[].class)) {
+                            return f.get(response) != null && ((String[]) f.get(response)).length > 0;
+                        }
                         return f.get(response) != null;
                     } catch (IllegalAccessException e) {
                         log.error("Error while checking if field is filled", e);
