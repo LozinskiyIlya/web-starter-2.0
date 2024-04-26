@@ -1,6 +1,5 @@
-package com.starter.telegram.service.listener;
+package com.starter.telegram.listener;
 
-import com.starter.telegram.listener.CallbackQueryUpdateListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
 

@@ -1,4 +1,4 @@
-package com.starter.telegram.service.listener;
+package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.request.GetChat;
@@ -13,7 +13,6 @@ import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.testdata.UserInfoTestData;
 import com.starter.domain.repository.testdata.UserTestData;
-import com.starter.telegram.listener.PrivateChatCommandListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

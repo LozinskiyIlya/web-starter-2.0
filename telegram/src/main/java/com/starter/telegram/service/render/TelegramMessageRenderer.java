@@ -66,8 +66,8 @@ public class TelegramMessageRenderer {
         // message notifying an owner that a user wants to join the group with 2 buttons: accept and decline
         final var textPart = templateReader.read(ADD_ME_TEMPLATE)
                 .replaceAll("#group_name#", group.getTitle())
-                .replaceAll("#owner_name#", owner.getFirstName())
-                .replaceAll("#user_name#", requestingPermission.getTelegramUsername());
+                .replaceAll("#owner_name#", renderTelegramUsername(owner))
+                .replaceAll("#user_name#", renderTelegramUsername(requestingPermission));
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX),
                 new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getUser().getId()
@@ -79,7 +79,7 @@ public class TelegramMessageRenderer {
     public BaseRequest<?, ?> renderAddMeAcceptedUpdate(Long chatId, MaybeInaccessibleMessage message, UserInfo userInfo, Group group) {
         final var textPart = ADD_ME_UPDATE_TEMPLATE
                 .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp?group=" + group.getId())
-                .replaceAll("#user_name#", userInfo.getTelegramUsername())
+                .replaceAll("#user_name#", renderTelegramUsername(userInfo))
                 .replaceAll("#group_name#", group.getTitle());
         return tryUpdateMessage(chatId, message, textPart);
     }
@@ -89,7 +89,7 @@ public class TelegramMessageRenderer {
         return tryUpdateMessage(chatId, message, textPart);
     }
 
-    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text){
+    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text) {
         if (message instanceof Message) {
             // if the message is accessible, update it
             return new EditMessageText(chatId, message.messageId(), text)
@@ -116,5 +116,9 @@ public class TelegramMessageRenderer {
 
     private String renderId(UUID id) {
         return String.format("<code>#%s</code>", id.toString().substring(0, 8));
+    }
+
+    private String renderTelegramUsername(UserInfo userInfo) {
+        return userInfo.getTelegramUsername() != null ? userInfo.getTelegramUsername() : userInfo.getTelegramChatId().toString();
     }
 }
