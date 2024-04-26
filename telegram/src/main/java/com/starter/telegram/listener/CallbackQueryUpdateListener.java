@@ -14,7 +14,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 
 @Slf4j
@@ -59,16 +62,19 @@ public class CallbackQueryUpdateListener implements UpdateListener {
 
     private void acceptAddMe(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
         final var message = callbackQuery.maybeInaccessibleMessage();
-        final var parts = callbackQuery.data().split(ID_SEPARATOR);
-        final var userId = UUID.fromString(parts[0].substring(ADDME_ACCEPT_PREFIX.length()));
+        final var removedPrefix = callbackQuery.data().substring(ADDME_ACCEPT_PREFIX.length());
+        final var parts = removedPrefix.split(ID_SEPARATOR);
+        final var userId = UUID.fromString(parts[0]);
         final var groupId = UUID.fromString(parts[1]);
-        final var userInfo = userInfoRepository.findById(userId).orElseThrow();
+        final var userInfo = userInfoRepository.findOneByUser_Id(userId).orElseThrow();
         final var group = groupRepository.findById(groupId).orElseThrow();
-        if(!group.contains(userInfo.getUser())) {
-            group.getMembers().add(userInfo.getUser());
+        if (!group.contains(userInfo.getUser())) {
+            final var members = new LinkedList<>(group.getMembers());
+            members.add(userInfo.getUser());
+            group.setMembers(members);
             groupRepository.save(group);
+            log.info("User {} added to group {}", userInfo, group);
         }
-        log.info("User {} added to group {}", userInfo, group);
         final var messageUpdate = renderer.renderAddMeAcceptedUpdate(chatId, message, userInfo, group);
         bot.execute(messageUpdate);
     }

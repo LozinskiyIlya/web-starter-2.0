@@ -1,20 +1,17 @@
 package com.starter.telegram.listener;
 
-import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.domain.entity.UserInfo;
+import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 class GroupCommandListenerTest extends AbstractUpdateListenerTest {
 
@@ -51,12 +48,9 @@ class GroupCommandListenerTest extends AbstractUpdateListenerTest {
             // when
             groupCommandListener.processUpdate(update, bot);
 
-            //then
-            final var captor = ArgumentCaptor.forClass(SendMessage.class);
-            verify(bot, times(1)).execute(captor.capture());
-            final var actualRequest = captor.getValue();
-            final var sendTo = actualRequest.getParameters().get("chat_id").toString();
-            assertTrue(sendTo.contains(owner.getTelegramChatId().toString()));
+            // then
+            assertTrue(((UserInfoRepository) userTestDataCreator.userInfoRepository()).findByTelegramChatId(senderChatId).isPresent());
+            assertMessageSentToChatId(bot, owner.getTelegramChatId());
         }
     }
 

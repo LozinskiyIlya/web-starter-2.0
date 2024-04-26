@@ -12,6 +12,7 @@ public interface UserInfoTestData {
 
     default UserInfo givenUserInfoExists(Consumer<UserInfo> configure) {
         var userInfo = new UserInfo();
+        userInfo.setTelegramChatId(System.currentTimeMillis());
         userInfo.setLastName("last name");
         userInfo.setFirstName("first name");
         configure.accept(userInfo);

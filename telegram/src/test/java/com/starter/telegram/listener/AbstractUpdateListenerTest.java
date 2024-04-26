@@ -3,9 +3,11 @@ package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.*;
+import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.telegram.configuration.TelegramProperties;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,8 +15,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.UUID;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 @SpringBootTest
 public abstract class AbstractUpdateListenerTest {
@@ -58,12 +61,12 @@ public abstract class AbstractUpdateListenerTest {
         return update;
     }
 
-    protected Update mockCallbackQueryUpdate(UUID spotId, Long chatId) {
+    protected Update mockCallbackQueryUpdate(String data, Long chatId) {
         Update update = mock(Update.class);
         CallbackQuery callbackQuery = mock(CallbackQuery.class);
         User user = mockReturnedUserData(chatId);
         when(update.callbackQuery()).thenReturn(callbackQuery);
-        when(callbackQuery.data()).thenReturn(spotId.toString());
+        when(callbackQuery.data()).thenReturn(data);
         when(callbackQuery.from()).thenReturn(user);
         return update;
     }
@@ -75,7 +78,7 @@ public abstract class AbstractUpdateListenerTest {
         return user;
     }
 
-    private static User mockReturnedUserData(Long chatId) {
+    protected static User mockReturnedUserData(Long chatId) {
         com.pengrad.telegrambot.model.User user = mock(com.pengrad.telegrambot.model.User.class);
         when(user.id()).thenReturn(chatId);
         when(user.username()).thenReturn("username");
@@ -84,5 +87,13 @@ public abstract class AbstractUpdateListenerTest {
         when(user.languageCode()).thenReturn("en");
         when(user.isPremium()).thenReturn(true);
         return user;
+    }
+
+    protected static void assertMessageSentToChatId(TelegramBot bot, Long chatId) {
+        final var captor = ArgumentCaptor.forClass(SendMessage.class);
+        verify(bot, times(1)).execute(captor.capture());
+        final var actualRequest = captor.getValue();
+        final var sendTo = actualRequest.getParameters().get("chat_id").toString();
+        assertTrue(sendTo.contains(chatId.toString()));
     }
 }

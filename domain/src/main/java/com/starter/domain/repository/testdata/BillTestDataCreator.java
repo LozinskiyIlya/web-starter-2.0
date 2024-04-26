@@ -11,19 +11,19 @@ import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
-public class BillTestDataCreator implements UserTestData, GroupTestData, BillTestData, BillTagTestData {
+public class BillTestDataCreator implements GroupTestData, BillTestData, BillTagTestData {
 
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+
     private final GroupRepository groupRepository;
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
+    private final UserTestDataCreator userTestDataCreator;
 
     @Override
     public Group givenGroupExists(Consumer<Group> configure) {
         Consumer<Group> fullyConfigure = group -> {
-            final var owner = givenUserExists(u -> {
-            });
+            final var owner = userTestDataCreator.givenUserInfoExists(ui -> {
+            }).getUser();
             group.setOwner(owner);
             group.setMembers(List.of(owner));
             configure.accept(group);
@@ -46,8 +46,7 @@ public class BillTestDataCreator implements UserTestData, GroupTestData, BillTes
     @Override
     public BillTag givenBillTagExists(Consumer<BillTag> configure) {
         Consumer<BillTag> fullyConfigure = tag -> {
-            tag.setUser(givenUserExists(u -> {
-            }));
+            tag.setUser(userTestDataCreator.givenUserExists());
             configure.accept(tag);
         };
         return BillTagTestData.super.givenBillTagExists(fullyConfigure);
@@ -66,15 +65,5 @@ public class BillTestDataCreator implements UserTestData, GroupTestData, BillTes
     @Override
     public Repository<Group> groupRepository() {
         return groupRepository;
-    }
-
-    @Override
-    public Repository<User> userRepository() {
-        return userRepository;
-    }
-
-    @Override
-    public Repository<Role> roleRepository() {
-        return roleRepository;
     }
 }
