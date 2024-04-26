@@ -8,6 +8,8 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import java.util.List;
+
 
 @Getter
 @Setter
@@ -35,4 +37,19 @@ public class Group extends AbstractEntity {
 
     @NotNull
     private String title;
+
+    @ManyToMany
+    @JoinTable(name = "group_members",
+            joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
+            inverseJoinColumns = {
+                    @JoinColumn(name = "member_id", referencedColumnName = "id")
+            },
+            uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "member_id"}),
+            indexes = {@Index(columnList = "group_id"), @Index(columnList = "member_id")}
+    )
+    private List<User> members;
+
+    public boolean contains(User user) {
+        return members.contains(user);
+    }
 }

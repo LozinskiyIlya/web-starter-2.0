@@ -94,7 +94,7 @@ public class TelegramBotService {
             return listeners.get(LocationUpdateListener.class);
         }
         if (message.text() != null && message.text().startsWith("/")) {
-            return listeners.get(PrivateChatCommandUpdateListener.class);
+            return listeners.get(PrivateChatCommandListener.class);
         }
         if (message.text() != null && KEYBOARD_BUTTONS.contains(message.text())) {
             return listeners.get(KeyboardButtonUpdateListener.class);

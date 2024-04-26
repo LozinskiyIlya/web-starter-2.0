@@ -9,6 +9,7 @@ import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.telegram.listener.GroupUpdateListener;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
     class OnBotAdded {
 
         @Test
+        @Transactional
         @DisplayName("create a group if not exists")
         void createGroupIfNotExist() {
             // given
@@ -54,11 +56,11 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             // when
             listener.processUpdate(update, mockBot());
             // then
-            final var group = groupRepository.findByChatId(update.message().chat().id());
-            assertTrue(group.isPresent());
-            assertEquals(groupChatId, group.get().getChatId());
-            assertEquals(user.getId(), group.get().getOwner().getId());
-            assertEquals(update.message().chat().title(), group.get().getTitle());
+            final var group = groupRepository.findByChatId(update.message().chat().id()).orElseThrow();
+            assertTrue(group.contains(user));
+            assertEquals(groupChatId, group.getChatId());
+            assertEquals(user.getId(), group.getOwner().getId());
+            assertEquals(update.message().chat().title(), group.getTitle());
         }
 
         @Test

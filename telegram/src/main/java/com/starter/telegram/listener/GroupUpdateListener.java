@@ -13,6 +13,7 @@ import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.configuration.TelegramProperties;
 import com.starter.telegram.service.TelegramUserService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,6 +21,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -32,6 +34,7 @@ public class GroupUpdateListener implements UpdateListener {
     private final TelegramProperties telegramProperties;
 
     @Override
+    @Transactional
     public void processUpdate(Update update, TelegramBot bot) {
         log.info("Processing group update: {}", update);
         checkIdMigration(update);
@@ -61,7 +64,9 @@ public class GroupUpdateListener implements UpdateListener {
                 newGroup.setChatId(groupId);
                 newGroup.setTitle(update.message().chat().title());
                 // if user has not yet interacted with our bot and has just added it to the group
-                newGroup.setOwner(telegramUserService.createOrFindUser(update.message().from(), bot));
+                final var owner = telegramUserService.createOrFindUser(update.message().from(), bot);
+                newGroup.setOwner(owner);
+                newGroup.setMembers(List.of(owner));
                 return groupRepository.save(newGroup);
             }
         }

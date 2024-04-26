@@ -31,6 +31,10 @@ public class CallbackQueryUpdateListener implements UpdateListener {
         final var chatId = callbackQuery.from().id();
         if (callbackQuery.data().startsWith(CONFIRM_BILL_PREFIX)) {
             confirmBill(bot, callbackQuery, chatId);
+        } else if (callbackQuery.data().startsWith(ADDME_ACCEPT_PREFIX)) {
+            acceptAddMe(bot, callbackQuery, chatId);
+        } else if (callbackQuery.data().startsWith(ADDME_REJECT_PREFIX)) {
+            rejectAddMe(bot, callbackQuery, chatId);
         }
     }
 
@@ -43,5 +47,17 @@ public class CallbackQueryUpdateListener implements UpdateListener {
         log.info("Bill confirmed: {}", bill);
         final var messageUpdate = renderer.renderBillUpdate(chatId, bill, message);
         bot.execute(messageUpdate);
+    }
+
+    private void acceptAddMe(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
+        final var message = callbackQuery.maybeInaccessibleMessage();
+        final var userId = UUID.fromString(callbackQuery.data().substring(ADDME_ACCEPT_PREFIX.length()));
+        log.info("User accepted: {}", userId);
+    }
+
+    private void rejectAddMe(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
+        final var message = callbackQuery.maybeInaccessibleMessage();
+        final var userId = UUID.fromString(callbackQuery.data().substring(ADDME_REJECT_PREFIX.length()));
+        log.info("User rejected: {}", userId);
     }
 }

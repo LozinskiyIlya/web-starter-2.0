@@ -5,6 +5,7 @@ import com.starter.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -21,8 +22,10 @@ public class BillTestDataCreator implements UserTestData, GroupTestData, BillTes
     @Override
     public Group givenGroupExists(Consumer<Group> configure) {
         Consumer<Group> fullyConfigure = group -> {
-            group.setOwner(givenUserExists(u -> {
-            }));
+            final var owner = givenUserExists(u -> {
+            });
+            group.setOwner(owner);
+            group.setMembers(List.of(owner));
             configure.accept(group);
         };
         return GroupTestData.super.givenGroupExists(fullyConfigure);

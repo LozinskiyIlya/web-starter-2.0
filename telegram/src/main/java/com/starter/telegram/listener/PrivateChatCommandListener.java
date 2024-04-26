@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PrivateChatCommandUpdateListener extends AbstractCommandListener {
+public class PrivateChatCommandListener extends AbstractCommandListener {
 
     private final TelegramUserService telegramUserService;
 

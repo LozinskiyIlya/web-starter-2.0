@@ -102,8 +102,8 @@ public class TelegramMessageRenderer {
                 .replaceAll("#owner_name#", owner.getFirstName())
                 .replaceAll("#user_name#", requestingPermission.getTelegramUsername());
         final var keyboard = new InlineKeyboardMarkup(
-                new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getUser().getId()),
-                new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX + requestingPermission.getUser().getId())
+                new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX + requestingPermission.getUser().getId()),
+                new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getUser().getId())
         );
         return new SendMessage(owner.getTelegramChatId(), textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
     }
