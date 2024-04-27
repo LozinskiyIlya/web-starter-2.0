@@ -3,9 +3,11 @@ package com.starter.web.controller.user;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
+import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.*;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserInfoTestData;
+import com.starter.domain.repository.testdata.UserSettingsTestData;
 import com.starter.domain.repository.testdata.UserTestData;
 import com.starter.web.AbstractSpringIntegrationTest;
 import lombok.RequiredArgsConstructor;
@@ -289,7 +291,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
     @Nested
     @DisplayName("On user deletion")
     @TestComponent
-    class OnUserDeletion implements UserInfoTestData {
+    class OnUserDeletion implements UserInfoTestData, UserSettingsTestData {
 
         @Autowired
         private UserInfoRepository userInfoRepository;
@@ -300,12 +302,16 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         @Autowired
         private BillTestDataCreator billTestDataCreator;
 
+        @Autowired
+        private UserSettingsRepository userSettingsRepository;
+
         @TestFactory
         @SneakyThrows
         @DisplayName("All related entities are deleted")
         Stream<DynamicTest> relatedEntitiesAreDeleted() {
             var user = givenUserExists(u -> u.setPassword(passwordEncoder.encode("password")));
             var userInfo = givenUserInfoExists(ui -> ui.setUser(user));
+            var userSettings = givenUserSettingsExists(us -> us.setUser(user));
             var group = billTestDataCreator.givenGroupExists(g -> g.setOwner(user));
             var billTag = billTestDataCreator.givenBillTagExists(t -> t.setUser(user));
             var bill = billTestDataCreator.givenBillExists(b -> {
@@ -323,6 +329,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
             return Stream.<Pair<String, Runnable>>of(
                             Pair.of("user", () -> assertFalse(userRepository.existsById(user.getId()))),
                             Pair.of("userInfo", () -> assertFalse(userInfoRepository.existsById(userInfo.getId()))),
+                            Pair.of("userSettings", () -> assertFalse(userSettingsRepository.existsById(userSettings.getId()))),
                             Pair.of("group", () -> assertFalse(billTestDataCreator.groupRepository().existsById(group.getId()))),
                             Pair.of("bill", () -> assertFalse(billTestDataCreator.billRepository().existsById(bill.getId()))),
                             Pair.of("billTag", () -> assertFalse(billTestDataCreator.billTagRepository().existsById(billTag.getId())))
@@ -356,6 +363,11 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
         @Override
         public Repository<UserInfo> userInfoRepository() {
             return userInfoRepository;
+        }
+
+        @Override
+        public Repository<UserSettings> userSettingsRepository() {
+            return userSettingsRepository;
         }
     }
 

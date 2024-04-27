@@ -4,10 +4,8 @@ package com.starter.domain.repository.testdata;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
-import com.starter.domain.repository.Repository;
-import com.starter.domain.repository.RoleRepository;
-import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserRepository;
+import com.starter.domain.entity.UserSettings;
+import com.starter.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +13,10 @@ import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
-public class UserTestDataCreator implements UserTestData, UserInfoTestData {
+public class UserTestDataCreator implements UserTestData, UserInfoTestData, UserSettingsTestData {
 
     private final UserInfoRepository userInfoRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     private final UserRepository userRepository;
 
@@ -37,6 +36,15 @@ public class UserTestDataCreator implements UserTestData, UserInfoTestData {
         return UserInfoTestData.super.givenUserInfoExists(fullyConfigure);
     }
 
+    public UserSettings givenUserSettingsExists(Consumer<UserSettings> configure) {
+        Consumer<UserSettings> fullyConfigure = us -> {
+            us.setUser(givenUserExists(u -> {
+            }));
+            configure.accept(us);
+        };
+        return UserSettingsTestData.super.givenUserSettingsExists(fullyConfigure);
+    }
+
     @Override
     public Repository<UserInfo> userInfoRepository() {
         return userInfoRepository;
@@ -50,5 +58,10 @@ public class UserTestDataCreator implements UserTestData, UserInfoTestData {
     @Override
     public Repository<Role> roleRepository() {
         return roleRepository;
+    }
+
+    @Override
+    public Repository<UserSettings> userSettingsRepository() {
+        return userSettingsRepository;
     }
 }

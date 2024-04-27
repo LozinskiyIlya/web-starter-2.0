@@ -18,6 +18,7 @@ public class PurgeUserService {
 
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
+    private final UserSettingsRepository userSettingsRepository;
     private final GroupRepository groupRepository;
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
@@ -27,6 +28,7 @@ public class PurgeUserService {
         userRepository.findById(userId).ifPresent(u -> {
             var tombstone = Instant.now();
             userInfoRepository.deleteAll(userInfoRepository.findAllByUser(u));
+            userSettingsRepository.deleteAll(userSettingsRepository.findAllByUser(u));
             groupRepository.findAllByOwner(u).forEach(g -> {
                 billRepository.deleteAll(billRepository.findAllByGroup(g));
                 groupRepository.delete(g);

@@ -50,6 +50,10 @@ public class User extends AbstractEntity {
     @OneToOne(mappedBy = "user")
     private UserInfo userInfo;
 
+    @Setter(AccessLevel.NONE)
+    @OneToOne(mappedBy = "user")
+    private UserSettings userSettings;
+
     @Column
     @Enumerated(EnumType.STRING)
     private UserType userType = UserType.TELEGRAM;
