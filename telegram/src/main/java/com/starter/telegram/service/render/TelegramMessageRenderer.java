@@ -35,7 +35,7 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
-    private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp?startapp=");
+    private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     private final TemplateReader templateReader;
 
@@ -128,9 +128,10 @@ public class TelegramMessageRenderer {
     }
 
     private String renderWebAppDirectUrl(String paramName, UUID id) {
-        return WEB_APP_DIRECT_URL.resolve(paramName + "_" + id).toString();
+        return WEB_APP_DIRECT_URL + "?startapp=" + paramName + "_" + id;
     }
-    private String renderWebAppUrl(String paramName, UUID id) {
-        return serverProperties.getFrontendHost().resolve("?" + paramName + "=" + id).toString();
+
+    private String renderWebAppUrl(String path, UUID id) {
+        return serverProperties.getFrontendHost().resolve(path).resolve(id.toString()).toString();
     }
 }
