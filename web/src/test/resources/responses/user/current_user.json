@@ -8,5 +8,10 @@
   "enabled": true,
   "accountNonExpired": true,
   "accountNonLocked": true,
-  "credentialsNonExpired": true
+  "credentialsNonExpired": true,
+  "pinCodeSet": true,
+  "telegramUser": {
+    "id": "%TELEGRAM_CHAT_ID%",
+    "username": "current user telegram username"
+  }
 }

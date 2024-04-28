@@ -1,16 +1,19 @@
 package com.starter.web.controller.user;
 
 import com.starter.domain.entity.User;
+import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
 import com.starter.common.aspect.logging.LogApiAction;
 import com.starter.common.service.CurrentUserService;
+import com.starter.domain.repository.UserSettingsRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +31,7 @@ public class CurrentUserController {
     private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @GetMapping("")
     @Operation(summary = "Отобразить данные пользователя")
@@ -39,7 +43,15 @@ public class CurrentUserController {
                 .ifPresent(currentUserInfo -> {
                     dto.setFirstName(currentUserInfo.getFirstName());
                     dto.setLastName(currentUserInfo.getLastName());
+                    final var telegramUser = new TelegramUserDto();
+                    telegramUser.setId(currentUserInfo.getTelegramChatId());
+                    telegramUser.setUsername(currentUserInfo.getTelegramUsername());
+                    dto.setTelegramUser(telegramUser);
                 });
+        userSettingsRepository.findOneByUser(current)
+                .map(UserSettings::getPinCode)
+                .map(StringUtils::hasText)
+                .ifPresent(dto::setPinCodeSet);
         dto.setAccountNonExpired(userDetails.isAccountNonExpired());
         dto.setAccountNonLocked(userDetails.isAccountNonLocked());
         dto.setCredentialsNonExpired(userDetails.isCredentialsNonExpired());
@@ -63,7 +75,13 @@ public class CurrentUserController {
         private boolean isAccountNonLocked;
         private boolean isCredentialsNonExpired;
         private boolean isEnabled;
+        private boolean isPinCodeSet;
+        private TelegramUserDto telegramUser;
+    }
 
-        //todo: add telegram related fields and isPinSet flag
+    @Data
+    public static class TelegramUserDto {
+        private Long id;
+        private String username;
     }
 }

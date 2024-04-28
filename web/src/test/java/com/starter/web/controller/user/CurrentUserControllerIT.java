@@ -1,12 +1,9 @@
 package com.starter.web.controller.user;
 
-import com.starter.domain.entity.Role;
-import com.starter.domain.entity.User;
-import com.starter.domain.entity.UserInfo;
-import com.starter.domain.repository.*;
-import com.starter.domain.repository.testdata.UserInfoTestData;
-import com.starter.domain.repository.testdata.UserTestData;
+import com.starter.domain.repository.ApiActionRepository;
+import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
+import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,16 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements UserTestData, UserInfoTestData {
+class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
 
     @Autowired
-    private UserInfoRepository userInfoRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
+    private UserTestDataCreator userCreator;
 
     @Autowired
     private ApiActionRepository apiActionRepository;
@@ -39,17 +30,25 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
     void returnCurrentUser() throws Exception {
         var login = "current user login";
         var pass = "current user password";
-        final var user = givenUserInfoExists(ui -> {
-            ui.setUser(givenUserExists(u -> {
+        var chatId = new EasyRandom().nextObject(Long.class);
+        final var user = userCreator.givenUserInfoExists(ui -> {
+            ui.setUser(userCreator.givenUserExists(u -> {
                 u.setLogin(login);
                 u.setPassword(pass);
             }));
             ui.setFirstName("current user first name");
             ui.setLastName("current user last name");
+            ui.setTelegramUsername("current user telegram username");
+            ui.setTelegramChatId(chatId);
         }).getUser();
+        userCreator.givenUserSettingsExists(us -> {
+            us.setUser(user);
+            us.setPinCode("123456");
+        });
         var header = userAuthHeader(login);
         var serializedUser = readResource("responses/user/current_user.json")
-                .replace("%USER_ID%", user.getId().toString());
+                .replace("%USER_ID%", user.getId().toString())
+                .replace("\"%TELEGRAM_CHAT_ID%\"", chatId.toString());
         mockMvc.perform(getRequest("")
                         .header(header.getFirst(), header.getSecond()))
                 .andExpect(status().is2xxSuccessful())
@@ -59,7 +58,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
     @Test
     @DisplayName("Return 200 when userInfo is missing")
     void whenUserInfoIsMissingReturn200() throws Exception {
-        var user = givenUserExists(u -> {
+        var user = userCreator.givenUserExists(u -> {
         });
         var header = userAuthHeader(user);
         mockMvc.perform(getRequest("")
@@ -86,7 +85,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
     @Test
     @DisplayName("Save api action")
     void saveApiAction() throws Exception {
-        var user = givenUserExists(u -> {
+        var user = userCreator.givenUserExists(u -> {
         });
         var header = userAuthHeader(user);
         mockMvc.perform(getRequest("")
@@ -99,21 +98,6 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest implements U
         assertEquals(user.getLogin(), actions.get(0).getUserQualifier());
         assertEquals("/api/user/current", actions.get(0).getPath());
         assertEquals("GET", actions.get(0).getMetadata().getHttpMethod());
-    }
-
-    @Override
-    public Repository<UserInfo> userInfoRepository() {
-        return userInfoRepository;
-    }
-
-    @Override
-    public Repository<User> userRepository() {
-        return userRepository;
-    }
-
-    @Override
-    public Repository<Role> roleRepository() {
-        return roleRepository;
     }
 
     @Override
