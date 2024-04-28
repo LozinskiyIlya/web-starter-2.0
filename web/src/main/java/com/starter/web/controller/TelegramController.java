@@ -1,25 +1,17 @@
 package com.starter.web.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.starter.common.exception.Exceptions;
-import com.starter.telegram.configuration.TelegramProperties;
-import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Hex;
-import org.springframework.web.bind.annotation.*;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import com.starter.common.service.JwtProvider;
+import com.starter.web.controller.auth.AuthController;
+import com.starter.web.service.auth.TelegramAuthService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriUtils;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -28,56 +20,26 @@ import org.springframework.web.util.UriUtils;
 @Schema(title = "Теlegram-related requests")
 public class TelegramController {
 
-    private final TelegramProperties telegramProperties;
+    private final TelegramAuthService authService;
+    private final JwtProvider jwtProvider;
 
     @SneakyThrows
-    @PostMapping("/webapp/auth")
-    public void verifyInitData(@RequestParam("initData") String initDataEncoded) {
-        if (!isValid(initDataEncoded)) {
-            throw new Exceptions.UnauthorizedException("Invalid init data");
-        }
+    @PostMapping("/auth/webapp")
+    public AuthController.AuthResponse login(@RequestBody @Valid WebAppAuthRequest request) {
+        final var user = authService.login(request.getChatId(), request.getInitDataEncoded());
+        final var token = jwtProvider.generateToken(user.getLogin());
+        return new AuthController.AuthResponse(token, user.getFirstLogin());
     }
 
-    private boolean isValid(String initDataEncoded) {
-        try {
-            String initDataDecoded = UriUtils.decode(initDataEncoded, StandardCharsets.UTF_8);
+    @Data
+    @Schema(description = "DTO for exchanging telegram id to token")
+    public static class WebAppAuthRequest {
+        @NotNull
+        @Schema(description = "Telegram id", example = "123456")
+        private Long chatId;
 
-            // Parse the query string
-            Map<String, String> params = Arrays.stream(initDataDecoded.split("&"))
-                    .map(param -> param.split("="))
-                    .collect(Collectors.toMap(p -> p[0], p -> UriUtils.decode(p[1], StandardCharsets.UTF_8)));
-
-            // Extract hash and remove it from params
-            String hash = params.remove("hash");
-
-            // Create data check string
-            String dataCheckString = params.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .map(entry -> entry.getKey() + "=" + entry.getValue())
-                    .collect(Collectors.joining("\n"));
-
-            // Generate the secret key
-            SecretKeySpec secretKey = new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(secretKey);
-            byte[] botTokenHmac = mac.doFinal(telegramProperties.getToken().getBytes(StandardCharsets.UTF_8));
-
-            // Compute HMAC using the bot token HMAC as the secret key
-            secretKey = new SecretKeySpec(botTokenHmac, "HmacSHA256");
-            mac.init(secretKey);
-            byte[] hmacBytes = mac.doFinal(dataCheckString.getBytes(StandardCharsets.UTF_8));
-            String expectedHash = bytesToHex(hmacBytes);
-            return hash.equals(expectedHash);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
+        @NotEmpty
+        @Schema(description = "Init data", example = "initData")
+        private String initDataEncoded;
     }
 }

@@ -2,7 +2,7 @@ package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.EditMessageText;
+import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.telegram.service.TelegramUserService;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +55,8 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
                 final var userSettings = telegramUserService.createOrFindUserSettings(chatId);
                 userSettings.setPinCode(pinParameter);
                 telegramUserService.saveUserSettings(userSettings);
-                bot.execute(new EditMessageText(chatId, update.message().messageId(), "Pin code saved"));
+                bot.execute(new DeleteMessage(chatId, update.message().messageId()));
+                bot.execute(new SendMessage(chatId, "Pin code saved"));
             }
         }
     }
