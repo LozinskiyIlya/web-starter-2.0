@@ -1,9 +1,8 @@
 package com.starter.telegram.listener;
 
-
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.*;
-import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.BaseRequest;
 import com.starter.telegram.configuration.TelegramProperties;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
@@ -17,7 +16,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 @SpringBootTest
 public abstract class AbstractUpdateListenerTest {
@@ -89,11 +87,22 @@ public abstract class AbstractUpdateListenerTest {
         return user;
     }
 
-    protected static void assertMessageSentToChatId(TelegramBot bot, Long chatId) {
-        final var captor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(bot, times(1)).execute(captor.capture());
+    @SuppressWarnings("unchecked")
+    protected static BaseRequest<?, ?> assertMessageSentToChatId(TelegramBot bot, Long chatId) {
+        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
+        verify(bot).execute(captor.capture());
         final var actualRequest = captor.getValue();
         final var sendTo = actualRequest.getParameters().get("chat_id").toString();
         assertTrue(sendTo.contains(chatId.toString()));
+        return actualRequest;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static BaseRequest<?, ?> assertSentMessageContainsText(TelegramBot bot, String shouldContain) {
+        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
+        Mockito.verify(bot).execute(captor.capture());
+        final var actualRequest = captor.getValue();
+        assertTrue(actualRequest.getParameters().get("text").toString().contains(shouldContain));
+        return actualRequest;
     }
 }

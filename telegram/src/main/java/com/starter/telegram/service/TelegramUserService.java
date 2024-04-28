@@ -4,9 +4,11 @@ package com.starter.telegram.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
+import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
+import com.starter.domain.repository.UserSettingsRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class TelegramUserService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @Transactional
     public User createOrFindUser(com.pengrad.telegrambot.model.User from, TelegramBot bot) {
@@ -61,5 +64,21 @@ public class TelegramUserService {
         } catch (Exception e) {
             log.error("Error while getting additional chat info: {} skipping", e.getMessage());
         }
+    }
+
+    @Transactional
+    public UserSettings createOrFindUserSettings(Long id) {
+        return userInfoRepository.findByTelegramChatId(id)
+                .map(UserInfo::getUser)
+                .map(user -> userSettingsRepository.findOneByUser(user)
+                        .orElseGet(() -> {
+                            final var settings = new UserSettings();
+                            settings.setUser(user);
+                            return userSettingsRepository.save(settings);
+                        })).orElseThrow();
+    }
+
+    public void saveUserSettings(UserSettings userSettings) {
+        userSettingsRepository.save(userSettings);
     }
 }

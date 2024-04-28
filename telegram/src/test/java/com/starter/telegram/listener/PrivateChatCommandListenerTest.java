@@ -5,35 +5,29 @@ import com.pengrad.telegrambot.request.GetChat;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.GetChatResponse;
 import com.starter.domain.entity.Role;
-import com.starter.domain.entity.User;
-import com.starter.domain.entity.UserInfo;
-import com.starter.domain.repository.Repository;
-import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserRepository;
-import com.starter.domain.repository.testdata.UserInfoTestData;
-import com.starter.domain.repository.testdata.UserTestData;
+import com.starter.domain.repository.UserSettingsRepository;
+import com.starter.domain.repository.testdata.UserTestDataCreator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestComponent;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest implements UserTestData, UserInfoTestData {
+class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
 
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private UserInfoRepository userInfoRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private UserTestDataCreator userTestDataCreator;
 
     @Autowired
     private PrivateChatCommandListener privateChatCommandListener;
@@ -114,9 +108,9 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest implemen
         void worksIfUserExists() {
             // given
             final var chatId = random.nextLong();
-            final var user = givenUserExists(it -> {
+            final var user = userTestDataCreator.givenUserExists(it -> {
             });
-            givenUserInfoExists(it -> {
+            userTestDataCreator.givenUserInfoExists(it -> {
                 it.setUser(user);
                 it.setTelegramChatId(chatId);
             });
@@ -143,18 +137,87 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest implemen
         }
     }
 
-    @Override
-    public Repository<UserInfo> userInfoRepository() {
-        return userInfoRepository;
-    }
+    @TestComponent
+    @Nested
+    @DisplayName("on pin command")
+    class OnPinCommand {
 
-    @Override
-    public Repository<User> userRepository() {
-        return userRepository;
-    }
+        @Autowired
+        private UserSettingsRepository userSettingsRepository;
 
-    @Override
-    public Repository<Role> roleRepository() {
-        return roleRepository;
+        @Test
+        @DisplayName("should send message with pin code request")
+        void shouldSendMessageWithPinCodeRequest() {
+            // given
+            final var chatId = random.nextLong();
+            userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
+            final var update = mockCommandUpdate("/pin", chatId);
+            final var bot = mockBot();
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            assertSentMessageContainsText(bot, "Pin code is used to additionally protect your financial data. Store it in a safe place!");
+        }
+
+        @Test
+        @DisplayName("should send validation if pin code is not 6 characters long")
+        void shouldSendValidationIfTooShort() {
+            // given
+            final var chatId = random.nextLong();
+            userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
+            final var update = mockCommandUpdate("/pin 1234", chatId);
+            final var bot = mockBot();
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            assertSentMessageContainsText(bot, "Pin code must be 6 characters long");
+        }
+
+        @Test
+        @DisplayName("should send validation if pin code contains non-numeric characters")
+        void shouldSendValidationIfContainsNonNumeric() {
+            // given
+            final var chatId = random.nextLong();
+            userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
+            final var update = mockCommandUpdate("/pin 1234a6", chatId);
+            final var bot = mockBot();
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            assertSentMessageContainsText(bot, "Pin code must contain only numbers");
+        }
+
+        @Test
+        @DisplayName("should save pin code")
+        void shouldSavePinCode() {
+            // given
+            final var chatId = random.nextLong();
+            final var user = userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId)).getUser();
+            final var userSettings = userTestDataCreator.givenUserSettingsExists(it -> it.setUser(user));
+            final var update = mockCommandUpdate("/pin 123456", chatId);
+            final var bot = mockBot();
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            final var settings = userSettingsRepository.findById(userSettings.getId()).orElseThrow();
+            assertNotEquals(userSettings.getPinCode(), settings.getPinCode());
+            assertEquals("123456", settings.getPinCode());
+        }
+
+        @Test
+        @DisplayName("should create user settings if not exists")
+        void shouldCreateUserSettings() {
+            // given
+            final var chatId = random.nextLong();
+            final var user = userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId)).getUser();
+            final var update = mockCommandUpdate("/pin 123456", chatId);
+            final var bot = mockBot();
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            final var settings = userSettingsRepository.findOneByUser(user);
+            assertTrue(settings.isPresent());
+            assertEquals("123456", settings.get().getPinCode());
+        }
     }
 }

@@ -4,6 +4,9 @@ package com.starter.telegram.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.request.Keyboard;
+import com.pengrad.telegrambot.model.request.KeyboardButton;
+import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.starter.telegram.listener.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -80,6 +83,15 @@ public class TelegramBotService {
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         }, e -> log.error("Error while processing updates: {}", e.toString()));
         log.info("Bot started");
+    }
+
+    public static Keyboard latestKeyboard() {
+        return new ReplyKeyboardMarkup(
+                new KeyboardButton("Button 1").requestLocation(true))
+                .addRow(new KeyboardButton("Button 2"))
+                .addRow(new KeyboardButton("Button 3"))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(false);
     }
 
     private UpdateListener selectListener(Update update) {

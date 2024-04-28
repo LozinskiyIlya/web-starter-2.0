@@ -2,13 +2,17 @@ package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.model.request.KeyboardButton;
-import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
+import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.telegram.service.TelegramUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
+import java.util.Set;
+
+import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 
 
 @Slf4j
@@ -17,30 +21,57 @@ import org.springframework.stereotype.Component;
 public class PrivateChatCommandListener extends AbstractCommandListener {
 
     private final TelegramUserService telegramUserService;
+    public static final String START_COMMAND = "/start";
+    public static final String INFO_COMMAND = "/info";
+    public static final String PIN_COMMAND = "/pin";
+    public static final Set<String> COMMANDS = Set.of(START_COMMAND, INFO_COMMAND, PIN_COMMAND);
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
         final var commandParts = parseCommand(update.message().text());
         switch (commandParts.getFirst()) {
-            case "/start" -> onStartCommand(update, bot, commandParts.getSecond());
-            case "/info" -> onInfoCommand(update, bot);
+            case START_COMMAND -> onStartCommand(update, bot, commandParts.getSecond());
+            case INFO_COMMAND -> onInfoCommand(update, bot);
+            case PIN_COMMAND -> onPinCommand(update, bot, commandParts.getSecond());
             default -> onUnknownCommand(update, bot, commandParts.getFirst());
         }
         log.info("Received command: {} parameter: {}", commandParts.getFirst(), commandParts.getSecond());
     }
 
+    private void onPinCommand(Update update, TelegramBot bot, String pinParameter) {
+        final var chatId = update.message().chat().id();
+        if (!StringUtils.hasText(pinParameter)) {
+            bot.execute(new SendMessage(chatId,
+                    """
+                            Pin code is used to additionally protect your financial data. Store it in a safe place!
+                            Please send me your new 6-digit pin code like this: /pin 123456
+                            """));
+        } else {
+            if (pinParameter.length() != 6) {
+                bot.execute(new SendMessage(chatId, "Pin code must be 6 characters long"));
+            } else if (!pinParameter.matches("[0-9]+")) {
+                bot.execute(new SendMessage(chatId, "Pin code must contain only numbers"));
+            } else {
+                final var userSettings = telegramUserService.createOrFindUserSettings(chatId);
+                userSettings.setPinCode(pinParameter);
+                telegramUserService.saveUserSettings(userSettings);
+                bot.execute(new EditMessageText(chatId, update.message().messageId(), "Pin code saved"));
+            }
+        }
+    }
+
     private void onStartCommand(Update update, TelegramBot bot, String startParameter) {
         // Create a reply keyboard that remains visible after use
-        final var keyboard = new ReplyKeyboardMarkup(
-                new KeyboardButton("Button 1").requestLocation(true))
-                .addRow(new KeyboardButton("Button 2"))
-                .addRow(new KeyboardButton("Button 3"))
-                .resizeKeyboard(true)
-                .oneTimeKeyboard(false);
+        final var keyboard = latestKeyboard();
         // Send a message with the reply keyboard
         final var from = update.message().from();
         telegramUserService.createOrFindUser(from, bot);
-        final var message = new SendMessage(from.id(), "Hello! Thanks for using a bot!")
+        final var message = new SendMessage(from.id(), """
+                                Hello! Thanks for using a bot!
+                You can use the following commands:
+                /pin - set a pin code for additional protection of your data
+                /info - get information about the bot
+                                """)
                 .replyMarkup(keyboard);
         bot.execute(message);
     }

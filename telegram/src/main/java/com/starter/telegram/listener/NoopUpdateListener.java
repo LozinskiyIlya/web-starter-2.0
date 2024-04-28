@@ -5,11 +5,17 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import org.springframework.stereotype.Component;
 
+import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+
 
 @Component
 public class NoopUpdateListener implements UpdateListener {
     @Override
     public void processUpdate(Update update, final TelegramBot bot) {
-        bot.execute(new SendMessage(update.message().chat().id(), "Please use one of the available commands or buttons to interact with the bot."));
+        bot.execute(
+                new SendMessage(update.message().chat().id(),
+                        "Please use one of the available commands or buttons to interact with the bot.")
+                        .replyMarkup(latestKeyboard())
+        );
     }
 }
