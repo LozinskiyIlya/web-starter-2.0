@@ -5,7 +5,6 @@ import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.telegram.configuration.TelegramProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,6 @@ public class TelegramAuthService {
 
     private final TelegramProperties telegramProperties;
     private final UserInfoRepository userInfoRepository;
-    private final UserSettingsRepository userSettingsRepository;
 
     public User login(Long chatId, String initDataEncoded) {
         if (!isInitDataValid(initDataEncoded)) {
@@ -39,10 +37,10 @@ public class TelegramAuthService {
     public boolean verifyPin(Long chatId, String pin) {
         return userInfoRepository.findByTelegramChatId(chatId)
                 .map(UserInfo::getUser)
-                .flatMap(userSettingsRepository::findOneByUser)
+                .map(User::getUserSettings)
                 .map(UserSettings::getPinCode)
                 .map(pin::equals)
-                .orElseThrow();
+                .orElseThrow(Exceptions.UserNotFoundException::new);
     }
 
     private boolean isInitDataValid(String initDataEncoded) {

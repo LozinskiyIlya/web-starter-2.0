@@ -63,5 +63,7 @@ public class CurrentUserController {
         private boolean isAccountNonLocked;
         private boolean isCredentialsNonExpired;
         private boolean isEnabled;
+
+        //todo: add telegram related fields and isPinSet flag
     }
 }

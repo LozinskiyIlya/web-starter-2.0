@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class TelegramControllerIT extends AbstractSpringIntegrationTest {
@@ -79,6 +80,85 @@ class TelegramControllerIT extends AbstractSpringIntegrationTest {
             final var request = new TelegramController.WebAppAuthRequest();
             request.setChatId(chatId);
             request.setInitDataEncoded(initData);
+            return request;
+        }
+    }
+
+    @Nested
+    @DisplayName("pin code")
+    class PinCode {
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 400 if empty")
+        void returns4xxIfEmpty() {
+            final var pinAuthRequest = pinAuthRequest("", 123456L);
+            mockMvc.perform(postRequest("/auth/pin")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(pinAuthRequest)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 400 if invalid pin")
+        void returns4xxIfInvalidPin() {
+            var pinAuthRequest = pinAuthRequest("12345", 123456L);
+            mockMvc.perform(postRequest("/auth/pin")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(pinAuthRequest)))
+                    .andExpect(status().isBadRequest());
+
+            pinAuthRequest = pinAuthRequest("12345a", 123456L);
+            mockMvc.perform(postRequest("/auth/pin")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(pinAuthRequest)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 401 if user not found")
+        void returns4xxIfUserNotFound() {
+            final var pinAuthRequest = pinAuthRequest("123456", 123456L);
+            mockMvc.perform(postRequest("/auth/pin")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(pinAuthRequest)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns false if pin is not equal")
+        void returnsFalseIfPinIsNotEqual() {
+            final var userSettings = userCreator.givenUserSettingsExists(us -> us.setPinCode("123456"));
+            final var userInfo = userCreator.givenUserInfoExists(ui -> ui.setUser(userSettings.getUser()));
+            final var pinAuthRequest = pinAuthRequest("654321", userInfo.getTelegramChatId());
+            mockMvc.perform(postRequest("/auth/pin")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(pinAuthRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(Boolean.FALSE.toString()));
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns true if pin is equal")
+        void returnsTrueIfPinIsEqual() {
+            final var userSettings = userCreator.givenUserSettingsExists(us -> us.setPinCode("123456"));
+            final var userInfo = userCreator.givenUserInfoExists(ui -> ui.setUser(userSettings.getUser()));
+            final var pinAuthRequest = pinAuthRequest("123456", userInfo.getTelegramChatId());
+            mockMvc.perform(postRequest("/auth/pin")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(pinAuthRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(Boolean.TRUE.toString()));
+        }
+
+        private static TelegramController.PinAuthRequest pinAuthRequest(String pin, Long chatId) {
+            final var request = new TelegramController.PinAuthRequest();
+            request.setChatId(chatId);
+            request.setPin(pin);
             return request;
         }
     }
