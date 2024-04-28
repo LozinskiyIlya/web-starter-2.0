@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
         return Collections.singletonMap("error", e.getMessage());
     }
 
-    @ExceptionHandler({UserNotFoundException.class})
+    @ExceptionHandler({UserNotFoundException.class, ResourceNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
     public Map<String, String> handleNotFoundException(Exception e) {

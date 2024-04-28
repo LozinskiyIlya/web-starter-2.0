@@ -38,6 +38,14 @@ public class Exceptions {
         }
     }
 
+    public static class ResourceNotFoundException extends RuntimeException {
+
+        @Override
+        public String getMessage() {
+            return "Resource not found";
+        }
+    }
+
 
     public static class InvalidOtpException extends RuntimeException {
 

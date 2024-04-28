@@ -21,6 +21,7 @@ public class BillDto {
     private Instant mentionedDate;
     private Set<BillTagDto> tags;
 
+    @Data
     public static class BillTagDto {
         private UUID id;
         private String name;

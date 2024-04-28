@@ -53,7 +53,8 @@ public abstract class AbstractSpringIntegrationTest {
     @Autowired
     protected TransactionTemplate transactionTemplate;
 
-    protected static final ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    protected ObjectMapper mapper;
 
     protected String controllerPath() {
         throw new UnsupportedOperationException("Define controller path for this test");

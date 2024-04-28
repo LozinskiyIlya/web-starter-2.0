@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasAnyRole(ADMIN.getName(), INTERNAL_ADMIN.getName())
                         .requestMatchers("/api/auth/password/change").hasRole(USER.getName())
                         .requestMatchers("/api/users/delete/*").authenticated()
+                        .requestMatchers("/api/bill/**").authenticated()
                         // Continue with more matchers as needed...
                         .anyRequest().permitAll()
                 )
