@@ -1,6 +1,8 @@
 package com.starter.web.controller;
 
+import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.service.JwtProvider;
+import com.starter.domain.repository.BillRepository;
 import com.starter.web.controller.auth.AuthController;
 import com.starter.web.service.auth.TelegramAuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,10 +16,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -28,6 +30,8 @@ public class TelegramController {
 
     private final TelegramAuthService authService;
     private final JwtProvider jwtProvider;
+    private final ApplicationEventPublisher publisher;
+    private final BillRepository billRepository;
 
     @Operation(summary = "Exchange telegram id to token", description = "Exchange telegram id to token")
     @PostMapping("/auth/webapp")
@@ -40,6 +44,11 @@ public class TelegramController {
     @PostMapping("/auth/pin")
     public boolean verifyPin(@RequestBody @Valid PinAuthRequest request) {
         return authService.verifyPin(request.getChatId(), request.getPin());
+    }
+
+    @PostMapping("/bills/{billId}/confirm")
+    public void confirmBill(@PathVariable UUID billId) {
+        billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill)));
     }
 
     @Data

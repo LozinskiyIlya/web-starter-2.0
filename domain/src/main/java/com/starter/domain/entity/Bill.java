@@ -27,11 +27,11 @@ import java.util.Set;
 public class Bill extends AbstractEntity {
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "group_id", nullable = false, updatable = false)
     private Group group;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "bills_to_tags",
             joinColumns = @JoinColumn(name = "bill_id", referencedColumnName = "id"),
             inverseJoinColumns = {

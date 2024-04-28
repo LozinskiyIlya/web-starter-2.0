@@ -1,4 +1,4 @@
-package com.starter.web.configuration;
+package com.starter.common.config;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

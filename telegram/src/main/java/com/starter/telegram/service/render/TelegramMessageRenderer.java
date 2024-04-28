@@ -11,6 +11,7 @@ import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.common.config.ServerProperties;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -33,8 +35,11 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
+    private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp?startapp=");
 
     private final TemplateReader templateReader;
+
+    private final ServerProperties serverProperties;
 
     public SendMessage renderBill(Long chatId, Bill bill) {
         final var textPart = templateReader.read(BILL_TEMPLATE)
@@ -47,7 +52,7 @@ public class TelegramMessageRenderer {
                 .replaceAll("#date#", renderDate(bill.getMentionedDate()))
                 .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName()).reduce("", String::concat));
         final var keyboard = new InlineKeyboardMarkup(
-                new InlineKeyboardButton("✏\uFE0F Edit").webApp(new WebAppInfo("https://example.com")),
+                new InlineKeyboardButton("✏\uFE0F Edit").webApp(new WebAppInfo(renderWebAppUrl("bill", bill.getId()))),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
         return new SendMessage(chatId, textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
@@ -57,7 +62,7 @@ public class TelegramMessageRenderer {
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_UPDATE_TEMPLATE
                 .replaceAll("#id#", renderId(bill.getId()))
-                .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp?bill=" + bill.getId());
+                .replaceAll("#edit_url#", renderWebAppDirectUrl("bill", bill.getId()));
         return tryUpdateMessage(chatId, message, textPart);
     }
 
@@ -78,7 +83,7 @@ public class TelegramMessageRenderer {
 
     public BaseRequest<?, ?> renderAddMeAcceptedUpdate(Long chatId, MaybeInaccessibleMessage message, UserInfo userInfo, Group group) {
         final var textPart = ADD_ME_UPDATE_TEMPLATE
-                .replaceAll("#edit_url#", "https://t.me/ai_counting_bot/webapp?group=" + group.getId())
+                .replaceAll("#edit_url#", renderWebAppDirectUrl("group", group.getId()))
                 .replaceAll("#user_name#", renderTelegramUsername(userInfo))
                 .replaceAll("#group_name#", group.getTitle());
         return tryUpdateMessage(chatId, message, textPart);
@@ -120,5 +125,12 @@ public class TelegramMessageRenderer {
 
     private String renderTelegramUsername(UserInfo userInfo) {
         return userInfo.getTelegramUsername() != null ? userInfo.getTelegramUsername() : userInfo.getTelegramChatId().toString();
+    }
+
+    private String renderWebAppDirectUrl(String paramName, UUID id) {
+        return WEB_APP_DIRECT_URL.resolve(paramName + "_" + id).toString();
+    }
+    private String renderWebAppUrl(String paramName, UUID id) {
+        return serverProperties.getFrontendHost().resolve("?" + paramName + "=" + id).toString();
     }
 }
