@@ -1,6 +1,6 @@
 package com.starter.common.events;
 
-import com.starter.domain.entity.Group;
+import java.util.UUID;
 
 
 public class TelegramFileMessageEvent extends AbstractEvent<TelegramFileMessageEvent.TelegramFileMessagePayload> {
@@ -8,6 +8,6 @@ public class TelegramFileMessageEvent extends AbstractEvent<TelegramFileMessageE
         super(source, payload);
     }
 
-    public record TelegramFileMessagePayload(Group group, String fileUrl, String caption) {
+    public record TelegramFileMessagePayload(UUID groupId, String fileUrl, String caption) {
     }
 }

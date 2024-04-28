@@ -57,7 +57,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             var user = userCreator.givenUserExists();
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));
             // when
-            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group, message)));
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then - bill is created asynchronously
             await().atMost(2, TimeUnit.SECONDS).until(() -> billRepository.findAllByGroup(group).size() == 1);
             var bill = billRepository.findAllByGroup(group).get(0);

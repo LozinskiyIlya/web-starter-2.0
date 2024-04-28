@@ -77,11 +77,11 @@ public class GroupUpdateListener implements UpdateListener {
     private void doBillWork(TelegramBot bot, Update update, Group group, String text) {
         final var fileUrl = extractFileFromUpdate(update, bot);
         if (fileUrl != null) {
-            publisher.publishEvent(new TelegramFileMessageEvent(this, new TelegramFileMessagePayload(group, fileUrl, text)));
+            publisher.publishEvent(new TelegramFileMessageEvent(this, new TelegramFileMessagePayload(group.getId(), fileUrl, text)));
             return;
         }
         if (text != null) {
-            publisher.publishEvent(new TelegramTextMessageEvent(this, Pair.of(group, text)));
+            publisher.publishEvent(new TelegramTextMessageEvent(this, Pair.of(group.getId(), text)));
             return;
         }
         log.info("No text or file found in the update: {}", update);

@@ -5,6 +5,7 @@ import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.common.utils.CustomFileUtils;
+import com.starter.domain.repository.GroupRepository;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
@@ -27,21 +28,23 @@ public class MessageProcessor {
     private final ApplicationEventPublisher publisher;
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
+    private final GroupRepository groupRepository;
 
     @Async
     @Transactional
     @EventListener
     public void processMessage(TelegramTextMessageEvent event) {
         final var payload = event.getPayload();
-        final var group = payload.getFirst();
+        final var groupId = payload.getFirst();
         final var message = payload.getSecond();
         final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();
         if (isPayment) {
+            final var group = groupRepository.findById(groupId).orElseThrow();
             final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message);
             if (shouldSave(response)) {
                 final var bill = billService.addBill(group, response);
                 log.info("Bill created: {}", bill);
-                publisher.publishEvent(new BillCreatedEvent(this, bill));
+                publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));
             }
         }
     }
@@ -51,14 +54,15 @@ public class MessageProcessor {
     @EventListener
     public void processMessage(TelegramFileMessageEvent event) {
         final var payload = event.getPayload();
-        final var group = payload.group();
+        final var groupId = payload.groupId();
         final var caption = payload.caption();
         final var fileUrl = payload.fileUrl();
+        final var group = groupRepository.findById(groupId).orElseThrow();
         final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption);
         if (shouldSave(response)) {
             final var bill = billService.addBill(group, response);
             log.info("Bill created: {}", bill);
-            publisher.publishEvent(new BillCreatedEvent(this, bill));
+            publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));
         }
         CustomFileUtils.deleteLocalFile(fileUrl);
     }

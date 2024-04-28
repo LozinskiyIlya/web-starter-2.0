@@ -2,11 +2,9 @@ package com.starter.telegram.service;
 
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.repository.BillRepository;
-import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,16 +21,16 @@ public class TelegramBillService {
     private final TelegramBot bot;
     private final TelegramMessageRenderer renderer;
     private final BillRepository billRepository;
-    private final UserInfoRepository userInfoRepository;
 
     @Async
     @Transactional
     @EventListener
     public void onBillCreated(BillCreatedEvent event) {
-        final var bill = event.getPayload();
-        log.info("Sending bill to confirmation: {}", bill);
+        final var billId = event.getPayload();
+        log.info("Sending bill to confirmation: {}", billId);
         // send to tg
-        final var ownerInfo = userInfoRepository.findOneByUser(bill.getGroup().getOwner()).orElseThrow();
+        final var bill = billRepository.findById(billId).orElseThrow();
+        final var ownerInfo = bill.getGroup().getOwner().getUserInfo();
         final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill);
         bot.execute(billMessage);
         // change status and save

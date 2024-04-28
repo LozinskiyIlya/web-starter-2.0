@@ -48,7 +48,7 @@ public class TelegramController {
 
     @PostMapping("/bills/{billId}/confirm")
     public void confirmBill(@PathVariable UUID billId) {
-        billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill)));
+        billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill.getId())));
     }
 
     @Data
