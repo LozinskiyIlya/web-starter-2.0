@@ -1,5 +1,6 @@
 package com.starter.web.controller;
 
+import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
 import lombok.SneakyThrows;
@@ -31,7 +32,6 @@ class TelegramControllerIT extends AbstractSpringIntegrationTest {
                             .contentType(APPLICATION_JSON)
                             .content(mapper.writeValueAsString(authRequest)))
                     .andExpect(status().isBadRequest());
-
         }
 
         @SneakyThrows
@@ -39,27 +39,13 @@ class TelegramControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("returns 401 if based on some foreign telegram token")
         void returns4xxIfBasedOnForeignToken() {
             final var notSignedInitData = "query_id=AAEdElIZAAAAAB0SUhmMLJx-&user=%7B%22id%22%3A424808989%2C%22first_name%22%3A%22Ilya%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22ilialoz%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%7D&auth_date=1714133271&hash=52785bed7aefd6c757762e1a08b4a213e7b359ddd458017d5a79ce0c857da042";
-            final var authRequest = authRequest(notSignedInitData, 123456L);
+            final var userInfo = userCreator.givenUserInfoExists(ui -> {
+            });
+            final var authRequest = authRequest(notSignedInitData, userInfo.getTelegramChatId());
             mockMvc.perform(postRequest("/auth/webapp")
                             .contentType(APPLICATION_JSON)
                             .content(mapper.writeValueAsString(authRequest)))
                     .andExpect(status().isUnauthorized());
-        }
-
-        @SneakyThrows
-        @Test
-        @DisplayName("returns 2xx if signed with our telegram token")
-        void successfulLogin() {
-            // given
-            final var validInitData = "user=%7B%22id%22%3A424808989%2C%22first_name%22%3A%22Ilya%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22ilialoz%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%7D&chat_instance=8865578296467838294&chat_type=sender&auth_date=1714134067&hash=f82a194643761180598c1d80512d07458114240983e0e3e7e2112cda86e7bc41";
-            final var userInfo = userCreator.givenUserInfoExists(ui -> {
-            });
-            final var authRequest = authRequest(validInitData, userInfo.getTelegramChatId());
-            // when and then
-            mockMvc.perform(postRequest("/auth/webapp")
-                            .contentType(APPLICATION_JSON)
-                            .content(mapper.writeValueAsString(authRequest)))
-                    .andExpect(status().is2xxSuccessful());
         }
 
         @SneakyThrows
@@ -75,6 +61,40 @@ class TelegramControllerIT extends AbstractSpringIntegrationTest {
                             .content(mapper.writeValueAsString(authRequest)))
                     .andExpect(status().isNotFound());
         }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 401 if signed with our telegram token but chat id is incorrect")
+        void wrongChatId() {
+            // given
+            final var validInitData = "user=%7B%22id%22%3A424808989%2C%22first_name%22%3A%22Ilya%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22ilialoz%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%7D&chat_instance=8865578296467838294&chat_type=sender&auth_date=1714134067&hash=f82a194643761180598c1d80512d07458114240983e0e3e7e2112cda86e7bc41";
+            final var userInfo = userCreator.givenUserInfoExists(ui -> {
+            });
+            final var authRequest = authRequest(validInitData, userInfo.getTelegramChatId());
+            // when and then
+            mockMvc.perform(postRequest("/auth/webapp")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(authRequest)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 2xx if signed with our telegram token and chat id is correct")
+        void successfulLogin() {
+            // given
+            final var validInitData = "user=%7B%22id%22%3A424808989%2C%22first_name%22%3A%22Ilya%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22ilialoz%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%7D&chat_instance=8865578296467838294&chat_type=sender&auth_date=1714134067&hash=f82a194643761180598c1d80512d07458114240983e0e3e7e2112cda86e7bc41";
+
+            final var userInfo = ((UserInfoRepository) userCreator.userInfoRepository()).findByTelegramChatId(424808989L)
+                    .orElse(userCreator.givenUserInfoExists(ui -> ui.setTelegramChatId(424808989L)));
+            final var authRequest = authRequest(validInitData, userInfo.getTelegramChatId());
+            // when and then
+            mockMvc.perform(postRequest("/auth/webapp")
+                            .contentType(APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(authRequest)))
+                    .andExpect(status().is2xxSuccessful());
+        }
+
 
         private static TelegramController.WebAppAuthRequest authRequest(String initData, Long chatId) {
             final var request = new TelegramController.WebAppAuthRequest();

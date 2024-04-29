@@ -1,5 +1,6 @@
 package com.starter.web.service.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.starter.common.exception.Exceptions;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
@@ -25,13 +26,15 @@ public class TelegramAuthService {
 
     private final TelegramProperties telegramProperties;
     private final UserInfoRepository userInfoRepository;
+    private final ObjectMapper objectMapper;
 
     public User login(Long chatId, String initDataEncoded) {
-        if (!isInitDataValid(initDataEncoded)) {
-            throw new Exceptions.UnauthorizedException("Invalid telegram credentials");
-        }
-        return userInfoRepository.findByTelegramChatId(chatId)
+        final var user = userInfoRepository.findByTelegramChatId(chatId)
                 .orElseThrow(Exceptions.UserNotFoundException::new).getUser();
+        if (initDataIsValid(chatId, initDataEncoded)) {
+            return user;
+        }
+        throw new Exceptions.UnauthorizedException("Invalid telegram credentials");
     }
 
     public boolean verifyPin(Long chatId, String pin) {
@@ -43,7 +46,7 @@ public class TelegramAuthService {
                 .orElseThrow(Exceptions.UserNotFoundException::new);
     }
 
-    private boolean isInitDataValid(String initDataEncoded) {
+    private boolean initDataIsValid(Long chatId, String initDataEncoded) {
         try {
             String initDataDecoded = UriUtils.decode(initDataEncoded, StandardCharsets.UTF_8);
 
@@ -52,6 +55,10 @@ public class TelegramAuthService {
                     .map(param -> param.split("="))
                     .collect(Collectors.toMap(p -> p[0], p -> UriUtils.decode(p[1], StandardCharsets.UTF_8)));
 
+            // Check if chat id belongs to the user which is trying to log in
+            if (!chatIdBelongsToUser(chatId, params.get("user"))) {
+                return false;
+            }
             // Extract hash and remove it from params
             String hash = params.remove("hash");
 
@@ -86,4 +93,13 @@ public class TelegramAuthService {
         return sb.toString();
     }
 
+    private boolean chatIdBelongsToUser(Long actualChatId, String userJsonDecoded) {
+        try {
+            final var jsonUser = objectMapper.readTree(userJsonDecoded);
+            final var chatId = jsonUser.get("id").asLong();
+            return actualChatId.equals(chatId);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
