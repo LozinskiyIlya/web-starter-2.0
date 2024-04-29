@@ -18,7 +18,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/bill")
+@RequestMapping("api/bills")
 @Schema(title = "Bill-related requests")
 public class BillController {
 

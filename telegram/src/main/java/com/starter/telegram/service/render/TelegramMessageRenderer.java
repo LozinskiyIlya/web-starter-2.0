@@ -132,6 +132,6 @@ public class TelegramMessageRenderer {
     }
 
     private String renderWebAppUrl(String path, UUID id) {
-        return serverProperties.getFrontendHost().resolve(path).resolve(id.toString()).toString();
+        return serverProperties.getFrontendHost().resolve(path) + "/" + id;
     }
 }

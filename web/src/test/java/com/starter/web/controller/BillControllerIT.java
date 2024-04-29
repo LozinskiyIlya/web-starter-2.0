@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +75,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
 
     @Override
     protected String controllerPath() {
-        return "/api/bill";
+        return "/api/bills";
     }
 }
