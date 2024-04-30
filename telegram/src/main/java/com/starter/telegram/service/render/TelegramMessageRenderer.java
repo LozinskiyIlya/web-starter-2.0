@@ -37,7 +37,7 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
-    private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped";
+    private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     private final TemplateReader templateReader;
@@ -55,12 +55,12 @@ public class TelegramMessageRenderer {
                 .replaceAll("#date#", renderDate(bill.getMentionedDate()))
                 .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName()).reduce("", String::concat));
         final var keyboard = new InlineKeyboardMarkup(
+                new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 new InlineKeyboardButton("✏\uFE0F Edit").webApp(new WebAppInfo(renderWebAppUrl("bill", bill.getId()))),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
         return new SendMessage(chatId, textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
     }
-
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_UPDATE_TEMPLATE
@@ -71,9 +71,9 @@ public class TelegramMessageRenderer {
 
     public BaseRequest<?, ?> renderBillSkipped(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_SKIP_TEMPLATE
-                .replaceAll("#id#", renderId(bill.getId()));
-        final var button = new InlineKeyboardButton("\uD83D\uDD19 Restore").callbackData(RESTORE_BILL_PREFIX + bill.getId());
-        return tryUpdateMessage(chatId, message, textPart, button);
+                .replaceAll("#id#", renderId(bill.getId()))
+                .replaceAll("#archive_url#", renderWebAppDirectUrl("archive", bill.getId()));
+        return tryUpdateMessage(chatId, message, textPart);
     }
 
     public SendMessage renderAddMeMessage(UserInfo owner, UserInfo requestingPermission, Group group) {

@@ -27,9 +27,9 @@ public class CallbackQueryUpdateListener implements UpdateListener {
 
     public static final String ID_SEPARATOR = "_";
     public static final String CONFIRM_BILL_PREFIX = "confirm_bill_";
+    public static final String SKIP_BILL_PREFIX = "skip_bill_";
     public static final String ADDME_ACCEPT_PREFIX = "addme_accept_";
     public static final String ADDME_REJECT_PREFIX = "addme_reject_";
-    public static final String RESTORE_BILL_PREFIX = "restore_bill_";
 
     private final BillRepository billRepository;
     private final GroupRepository groupRepository;
@@ -43,6 +43,8 @@ public class CallbackQueryUpdateListener implements UpdateListener {
         final var chatId = callbackQuery.from().id();
         if (callbackQuery.data().startsWith(CONFIRM_BILL_PREFIX)) {
             confirmBill(bot, callbackQuery, chatId);
+        } else if (callbackQuery.data().startsWith(SKIP_BILL_PREFIX)) {
+            skipBill(bot, callbackQuery, chatId);
         } else if (callbackQuery.data().startsWith(ADDME_ACCEPT_PREFIX)) {
             acceptAddMe(bot, callbackQuery, chatId);
         } else if (callbackQuery.data().startsWith(ADDME_REJECT_PREFIX)) {
@@ -58,6 +60,17 @@ public class CallbackQueryUpdateListener implements UpdateListener {
         billRepository.save(bill);
         log.info("Bill confirmed: {}", bill);
         final var messageUpdate = renderer.renderBillUpdate(chatId, bill, message);
+        bot.execute(messageUpdate);
+    }
+
+    private void skipBill(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
+        final var message = callbackQuery.maybeInaccessibleMessage();
+        final var billId = UUID.fromString(callbackQuery.data().substring(SKIP_BILL_PREFIX.length()));
+        final var bill = billRepository.findById(billId).orElseThrow();
+        bill.setStatus(BillStatus.SKIPPED);
+        billRepository.save(bill);
+        log.info("Bill skipped: {}", bill);
+        final var messageUpdate = renderer.renderBillSkipped(chatId, bill, message);
         bot.execute(messageUpdate);
     }
 
