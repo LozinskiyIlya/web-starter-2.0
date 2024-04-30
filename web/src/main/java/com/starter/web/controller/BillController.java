@@ -49,14 +49,33 @@ public class BillController {
     public void updateBill(@PathVariable UUID billId, @RequestBody @Valid BillDto billDto) {
         final var bill = billRepository.findById(billId)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        if (!bill.getGroup().getOwner().getId().equals(currentUser.getId())) {
+            throw new Exceptions.WrongUserException("You can't update this bill");
+        }
         final var updated = billMapper.updateEntityFromDto(billDto, bill);
         updated.setStatus(Bill.BillStatus.CONFIRMED);
         billRepository.save(updated);
+        //todo: refactor this
+        if (updated.getMessageId() == null) {
+            return;
+        }
         final var tgMessage = new SelfMadeMessage();
-        tgMessage.setMessageId(bill.getMessageId());
-        final var currentUser = currentUserService.getUser().orElseThrow();
+        tgMessage.setMessageId(updated.getMessageId());
         final var message = messageRenderer.renderBillUpdate(currentUser.getUserInfo().getTelegramChatId(), updated, tgMessage);
         telegramBot.execute(message);
+        //todo: refactor this
+    }
+
+    @DeleteMapping("/{billId}")
+    public void deleteBill(@PathVariable UUID billId) {
+        final var bill = billRepository.findById(billId)
+                .orElseThrow(Exceptions.ResourceNotFoundException::new);
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        if (!bill.getGroup().getOwner().getId().equals(currentUser.getId())) {
+            throw new Exceptions.WrongUserException("You can't delete this bill");
+        }
+        billRepository.delete(bill);
     }
 
     @GetMapping("/tags")
@@ -70,6 +89,8 @@ public class BillController {
                 .toList();
     }
 
+
+    @Deprecated
     @Data
     @EqualsAndHashCode(callSuper = true)
     public static class SelfMadeMessage extends Message {

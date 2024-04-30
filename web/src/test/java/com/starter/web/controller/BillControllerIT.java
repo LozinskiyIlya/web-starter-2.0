@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class BillControllerIT extends AbstractSpringIntegrationTest {
@@ -101,6 +102,20 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
 
         @SneakyThrows
         @Test
+        @DisplayName("returns 403 if not bill owner")
+        void returns403IfNotOwner() {
+            final var bill = billTestDataCreator.givenBillExists(b -> {
+            });
+            final var token = testUserAuthHeader(); // not bill owner
+            mockMvc.perform(postRequest("/" + bill.getId())
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType("application/json")
+                            .content("{}"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
         @DisplayName("returns 404 if not found")
         void returns404() {
             final var token = testUserAuthHeader();
@@ -130,7 +145,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                     .replaceAll("#NEW_TAG_ID#", newTag.getId().toString())
                     .replaceAll("#NEW_TAG_NAME#", newTag.getId().toString());
             // when
-            final var token = testUserAuthHeader();
+            final var token = userAuthHeader(bill.getGroup().getOwner());
             mockMvc.perform(postRequest("/" + bill.getId())
                             .header(token.getFirst(), token.getSecond())
                             .contentType("application/json")
@@ -147,6 +162,59 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("Delete Bill")
+    class DeleteBill {
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 without token")
+        void returns403() {
+            final var bill = billTestDataCreator.givenBillExists(b -> {
+            });
+            mockMvc.perform(deleteRequest("/" + bill.getId()))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 if not bill owner")
+        void returns403IfNotOwner() {
+            final var bill = billTestDataCreator.givenBillExists(b -> {
+            });
+            final var token = testUserAuthHeader(); // not bill owner
+            mockMvc.perform(deleteRequest("/" + bill.getId())
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 404 if not found")
+        void returns404() {
+            final var token = testUserAuthHeader();
+            mockMvc.perform(deleteRequest("/" + UUID.randomUUID())
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isNotFound());
+        }
+
+        @SneakyThrows
+        @Transactional
+        @Test
+        @DisplayName("bill deleted")
+        void billDeleted() {
+            // given
+            final var bill = billTestDataCreator.givenBillExists(b -> {
+            });
+            // when
+            final var token = userAuthHeader(bill.getGroup().getOwner());
+            mockMvc.perform(deleteRequest("/" + bill.getId())
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isOk());
+            // then
+            assertTrue(billTestDataCreator.billRepository().findById(bill.getId()).isEmpty());
+        }
+    }
 
     @Nested
     @DisplayName("Get Tags")

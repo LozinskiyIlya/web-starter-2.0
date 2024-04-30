@@ -16,9 +16,12 @@ public class Exceptions {
 
     public static class WrongUserException extends RuntimeException {
 
-        @Override
-        public String getMessage() {
-            return "Wrong user";
+        public WrongUserException() {
+            super("Wrong user");
+        }
+
+        public WrongUserException(String message) {
+            super(message);
         }
     }
 
