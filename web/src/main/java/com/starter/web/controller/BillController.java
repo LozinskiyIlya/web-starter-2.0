@@ -1,16 +1,21 @@
 package com.starter.web.controller;
 
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.Message;
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
+import com.starter.telegram.service.render.TelegramMessageRenderer;
 import com.starter.web.dto.BillDto;
 import com.starter.web.mapper.BillMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +35,8 @@ public class BillController {
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
     private final BillMapper billMapper;
+    private final TelegramMessageRenderer messageRenderer;
+    private final TelegramBot telegramBot;
 
     @GetMapping("/{billId}")
     public BillDto getBill(@PathVariable UUID billId) {
@@ -45,6 +52,11 @@ public class BillController {
         final var updated = billMapper.updateEntityFromDto(billDto, bill);
         updated.setStatus(Bill.BillStatus.CONFIRMED);
         billRepository.save(updated);
+        final var tgMessage = new SelfMadeMessage();
+        tgMessage.setMessageId(bill.getMessageId());
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        final var message = messageRenderer.renderBillUpdate(currentUser.getUserInfo().getTelegramChatId(), updated, tgMessage);
+        telegramBot.execute(message);
     }
 
     @GetMapping("/tags")
@@ -56,5 +68,13 @@ public class BillController {
         return Stream.concat(userTags.stream(), defaultTags.stream())
                 .map(billMapper::toTagDto)
                 .toList();
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    public static class SelfMadeMessage extends Message {
+        public void setMessageId(int messageId) {
+            super.message_id = messageId;
+        }
     }
 }
