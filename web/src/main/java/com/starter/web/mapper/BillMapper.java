@@ -14,10 +14,12 @@ import java.util.Set;
 @Mapper(componentModel = "spring")
 public interface BillMapper {
 
+    @Mapping(target = "date", source = "mentionedDate")
     BillDto toDto(Bill bill);
 
     BillTagDto toTagDto(BillTag tag);
 
+    @Mapping(target = "mentionedDate", source = "date")
     @Mapping(target = "tags", expression = "java(toTagEntities(billDto.getTags()))")
     Bill updateEntityFromDto(BillDto billDto, @MappingTarget Bill bill);
 

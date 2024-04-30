@@ -5,7 +5,6 @@ import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
 import lombok.Data;
 
-import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,8 +16,8 @@ public class BillDto {
     private String purpose;
     private Double amount;
     private String currency;
+    private String date;
     private Bill.BillStatus status;
-    private Instant mentionedDate;
     private Set<BillTagDto> tags;
 
     @Data
