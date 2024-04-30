@@ -5,11 +5,25 @@ import com.starter.domain.entity.BillTag;
 import com.starter.web.dto.BillDto;
 import com.starter.web.dto.BillDto.BillTagDto;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
-@Mapper
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Mapper(componentModel = "spring")
 public interface BillMapper {
 
     BillDto toDto(Bill bill);
 
     BillTagDto toTagDto(BillTag tag);
+
+    @Mapping(target = "tags", expression = "java(toTagEntities(billDto.getTags()))")
+    Bill updateEntityFromDto(BillDto billDto, @MappingTarget Bill bill);
+
+    default Set<BillTag> toTagEntities(Set<BillTagDto> tags) {
+        return new LinkedHashSet<>(tags.stream().map(this::toTagEntity).toList());
+    }
+
+    BillTag toTagEntity(BillTagDto dto);
 }

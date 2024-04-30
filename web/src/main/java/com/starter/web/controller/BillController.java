@@ -3,18 +3,17 @@ package com.starter.web.controller;
 
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
+import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.web.dto.BillDto;
 import com.starter.web.mapper.BillMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Set;
@@ -37,6 +36,15 @@ public class BillController {
         return billRepository.findById(billId)
                 .map(billMapper::toDto)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
+    }
+
+    @PostMapping("/{billId}")
+    public void updateBill(@PathVariable UUID billId, @RequestBody @Valid BillDto billDto) {
+        final var bill = billRepository.findById(billId)
+                .orElseThrow(Exceptions.ResourceNotFoundException::new);
+        final var updated = billMapper.updateEntityFromDto(billDto, bill);
+        updated.setStatus(Bill.BillStatus.CONFIRMED);
+        billRepository.save(updated);
     }
 
     @GetMapping("/tags")

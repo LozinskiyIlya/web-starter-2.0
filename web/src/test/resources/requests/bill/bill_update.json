@@ -1,0 +1,24 @@
+{
+  "id": "#BILL_ID#",
+  "buyer": "Buyer",
+  "seller": "Seller",
+  "purpose": "#NEW_PURPOSE#",
+  "amount": 2026.5,
+  "currency": "EUR",
+  "status": "SENT",
+  "mentionedDate": 1698796800,
+  "tags": [
+    {
+      "id": "#OLD_TAG_ID#",
+      "name": "Work",
+      "hexColor": "#27A81E",
+      "tagType": "DEFAULT"
+    },
+    {
+      "id": "#NEW_TAG_ID#",
+      "name": "#NEW_TAG_NAME#",
+      "hexColor": "#FFFFFF",
+      "tagType": "USER_DEFINED"
+    }
+  ]
+}
