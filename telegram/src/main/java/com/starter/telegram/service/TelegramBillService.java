@@ -32,9 +32,11 @@ public class TelegramBillService {
         final var bill = billRepository.findById(billId).orElseThrow();
         final var ownerInfo = bill.getGroup().getOwner().getUserInfo();
         final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill);
-        bot.execute(billMessage);
-        // change status and save
+        final var message = bot.execute(billMessage);
+        // change status, message id and save
+        bill.setMessageId(message.message().messageId());
         bill.setStatus(BillStatus.SENT);
         billRepository.save(bill);
+        log.info("Bill sent, message id: {}", message.message().messageId());
     }
 }

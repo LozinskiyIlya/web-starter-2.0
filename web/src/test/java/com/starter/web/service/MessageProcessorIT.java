@@ -1,5 +1,7 @@
 package com.starter.web.service;
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.response.SendResponse;
 import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.repository.BillRepository;
@@ -22,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 
 class MessageProcessorIT extends AbstractSpringIntegrationTest {
@@ -41,6 +44,9 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
     @SpyBean
     private OpenAiAssistant openAiAssistant;
 
+    @SpyBean
+    private TelegramBot bot;
+
     @Nested
     @DisplayName("Text messages")
     class TextMessages {
@@ -49,12 +55,19 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
         @DisplayName("Creates a bill if a message is payment-related")
         void createsBillIfMessageIsPaymentRelated() {
             final var message = "I owe you $100";
+            final var tgMessageId = 1;
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(response("USD", 100.0))
-                    .when(openAiAssistant).runTextPipeline( Mockito.any(), Mockito.eq(message));
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message));
+            final var responseMocked = Mockito.mock(SendResponse.class);
+            final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
+            when(messageMocked.messageId()).thenReturn(tgMessageId);
+            when(responseMocked.message()).thenReturn(messageMocked);
+            doReturn(responseMocked).when(bot).execute(Mockito.any());
             // given
-            var user = userCreator.givenUserExists();
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
@@ -64,7 +77,8 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
             assertThat(bill.getAmount()).isEqualTo(100);
             assertThat(bill.getCurrency()).isEqualTo("USD");
-            assertThat(bill.getStatus()).isEqualTo(Bill.BillStatus.NEW);
+            assertThat(bill.getStatus()).isEqualTo(Bill.BillStatus.SENT);
+            assertThat(bill.getMessageId()).isEqualTo(tgMessageId);
         }
     }
 

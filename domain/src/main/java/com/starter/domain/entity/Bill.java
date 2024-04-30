@@ -53,7 +53,7 @@ public class Bill extends AbstractEntity {
     private String currency;
     private Double amount;
     private Instant mentionedDate;
-
+    private Integer messageId;
     public enum BillStatus {
         NEW, SENT, CONFIRMED
     }
