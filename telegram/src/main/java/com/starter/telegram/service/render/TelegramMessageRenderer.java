@@ -7,6 +7,7 @@ import com.pengrad.telegrambot.model.WebAppInfo;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
@@ -15,6 +16,7 @@ import com.starter.common.config.ServerProperties;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,7 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
+    private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped";
     private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     private final TemplateReader templateReader;
@@ -66,6 +69,13 @@ public class TelegramMessageRenderer {
         return tryUpdateMessage(chatId, message, textPart);
     }
 
+    public BaseRequest<?, ?> renderBillSkipped(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
+        final var textPart = BILL_SKIP_TEMPLATE
+                .replaceAll("#id#", renderId(bill.getId()));
+        final var button = new InlineKeyboardButton("\uD83D\uDD19 Restore").callbackData(RESTORE_BILL_PREFIX + bill.getId());
+        return tryUpdateMessage(chatId, message, textPart, button);
+    }
+
     public SendMessage renderAddMeMessage(UserInfo owner, UserInfo requestingPermission, Group group) {
         log.info("Rendering add me message for user {} in group {}", requestingPermission, group);
         // message notifying an owner that a user wants to join the group with 2 buttons: accept and decline
@@ -94,13 +104,17 @@ public class TelegramMessageRenderer {
         return tryUpdateMessage(chatId, message, textPart);
     }
 
-    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text) {
+    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
         if (message instanceof Message) {
             // if the message is accessible, update it
-            return new EditMessageText(chatId, message.messageId(), text)
+            final var editRequest = new EditMessageText(chatId, message.messageId(), text)
                     .parseMode(ParseMode.HTML)
                     .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
                     .disableWebPagePreview(true);
+            if (buttons != null && buttons.length > 0) {
+                editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
+            }
+            return editRequest;
         }
         // if the message is not accessible, send a new message
         return linkPreviewOff(new SendMessage(chatId, text));

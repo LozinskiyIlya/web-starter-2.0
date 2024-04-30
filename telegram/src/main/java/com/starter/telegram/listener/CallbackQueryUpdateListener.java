@@ -29,6 +29,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String CONFIRM_BILL_PREFIX = "confirm_bill_";
     public static final String ADDME_ACCEPT_PREFIX = "addme_accept_";
     public static final String ADDME_REJECT_PREFIX = "addme_reject_";
+    public static final String RESTORE_BILL_PREFIX = "restore_bill_";
 
     private final BillRepository billRepository;
     private final GroupRepository groupRepository;

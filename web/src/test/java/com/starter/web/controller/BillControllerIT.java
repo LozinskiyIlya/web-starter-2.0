@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class BillControllerIT extends AbstractSpringIntegrationTest {
@@ -163,8 +162,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
     }
 
     @Nested
-    @DisplayName("Delete Bill")
-    class DeleteBill {
+    @DisplayName("Skip Bill")
+    class SkipBill {
 
         @SneakyThrows
         @Test
@@ -199,10 +198,9 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         }
 
         @SneakyThrows
-        @Transactional
         @Test
-        @DisplayName("bill deleted")
-        void billDeleted() {
+        @DisplayName("bill skipped")
+        void billSkipped() {
             // given
             final var bill = billTestDataCreator.givenBillExists(b -> {
             });
@@ -212,7 +210,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .header(token.getFirst(), token.getSecond()))
                     .andExpect(status().isOk());
             // then
-            assertTrue(billTestDataCreator.billRepository().findById(bill.getId()).isEmpty());
+            final var skippedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            assertThat(skippedBill.getStatus()).isEqualTo(Bill.BillStatus.SKIPPED);
         }
     }
 

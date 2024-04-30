@@ -12,6 +12,7 @@ import com.starter.domain.repository.BillTagRepository;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import com.starter.web.dto.BillDto;
 import com.starter.web.mapper.BillMapper;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
@@ -68,14 +69,25 @@ public class BillController {
     }
 
     @DeleteMapping("/{billId}")
-    public void deleteBill(@PathVariable UUID billId) {
+    @Operation(summary = "Skip bill", description = "Mark bill as skipped, NOT deleting it entirely")
+    public void skipBill(@PathVariable UUID billId) {
         final var bill = billRepository.findById(billId)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
         final var currentUser = currentUserService.getUser().orElseThrow();
         if (!bill.getGroup().getOwner().getId().equals(currentUser.getId())) {
-            throw new Exceptions.WrongUserException("You can't delete this bill");
+            throw new Exceptions.WrongUserException("You can't skip this bill");
         }
-        billRepository.delete(bill);
+        bill.setStatus(Bill.BillStatus.SKIPPED);
+        billRepository.save(bill);
+        //todo: refactor this
+        if (bill.getMessageId() == null) {
+            return;
+        }
+        final var tgMessage = new SelfMadeMessage();
+        tgMessage.setMessageId(bill.getMessageId());
+        final var message = messageRenderer.renderBillSkipped(currentUser.getUserInfo().getTelegramChatId(), bill, tgMessage);
+        telegramBot.execute(message);
+        //todo: refactor this
     }
 
     @GetMapping("/tags")
