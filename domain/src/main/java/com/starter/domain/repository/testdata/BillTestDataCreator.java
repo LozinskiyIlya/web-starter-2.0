@@ -46,6 +46,7 @@ public class BillTestDataCreator implements GroupTestData, BillTestData, BillTag
     @Override
     public BillTag givenBillTagExists(Consumer<BillTag> configure) {
         Consumer<BillTag> fullyConfigure = tag -> {
+            tag.setTagType(BillTag.TagType.USER_DEFINED);
             tag.setUser(userTestDataCreator.givenUserExists());
             configure.accept(tag);
         };

@@ -41,7 +41,9 @@ public class BillController {
 
     @GetMapping("/tags")
     public List<BillDto.BillTagDto> getTags() {
-        final var userTags = currentUserService.getUser().map(billTagRepository::findAllByUser).orElse(Set.of());
+        final var userTags = currentUserService.getUser()
+                .map(billTagRepository::findAllByUser)
+                .orElse(Set.of());
         final var defaultTags = billTagRepository.findAllByTagType(BillTag.TagType.DEFAULT);
         return Stream.concat(userTags.stream(), defaultTags.stream())
                 .map(billMapper::toTagDto)

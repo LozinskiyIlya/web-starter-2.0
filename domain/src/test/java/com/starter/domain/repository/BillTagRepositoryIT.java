@@ -9,11 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 class BillTagRepositoryIT extends AbstractRepositoryTest<BillTag> {
 
     @Autowired
-    private BillTestDataCreator groupCreator;
+    private BillTestDataCreator billTestDataCreator;
 
     @Override
     BillTag createEntity() {
-        return groupCreator.givenBillTagExists(b -> {
+        return billTestDataCreator.givenBillTagExists(b -> {
         });
     }
 }

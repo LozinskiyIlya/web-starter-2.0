@@ -20,11 +20,14 @@ public class BillTagPopulator implements Populator {
 
     @Override
     public void populate() {
-        for (String billTag : assistantProperties.getBillTags()) {
+        for (int i = 0; i < assistantProperties.getBillTags().length; i++) {
+            final var billTag = assistantProperties.getBillTags()[i];
+            final var color = assistantProperties.getTagsColors()[i];
             billTagRepository.findByNameAndTagType(billTag, TagType.DEFAULT).ifPresentOrElse(r -> {
             }, () -> {
                 BillTag newBillTag = new BillTag();
                 newBillTag.setName(billTag);
+                newBillTag.setHexColor(color);
                 billTagRepository.save(newBillTag);
             });
         }
