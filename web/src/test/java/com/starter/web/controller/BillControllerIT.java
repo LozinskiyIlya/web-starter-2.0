@@ -63,9 +63,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             // given
             final var group = billTestDataCreator.givenGroupExists(g -> {
             });
-            final var bill = billTestDataCreator.givenBillExists(b -> {
-                b.setGroup(group);
-            });
+            final var bill = billTestDataCreator.givenBillExists(b -> b.setGroup(group));
             final var token = testUserAuthHeader();
 
             // when
