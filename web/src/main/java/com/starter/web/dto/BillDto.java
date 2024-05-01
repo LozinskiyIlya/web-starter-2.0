@@ -19,6 +19,7 @@ public class BillDto {
     private String date;
     private Bill.BillStatus status;
     private Set<BillTagDto> tags;
+    private String groupTitle;
 
     @Data
     public static class BillTagDto {

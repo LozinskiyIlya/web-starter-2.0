@@ -61,7 +61,10 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("bill mapped properly")
         void billMappedProperly() {
             // given
+            final var group = billTestDataCreator.givenGroupExists(g -> {
+            });
             final var bill = billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(group);
             });
             final var token = testUserAuthHeader();
 
@@ -81,6 +84,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(dto.getCurrency()).isEqualTo(bill.getCurrency());
             assertThat(dto.getStatus()).isEqualTo(bill.getStatus());
             assertThat(dto.getDate()).isEqualTo(bill.getMentionedDate().toString());
+            assertThat(dto.getGroupTitle()).isEqualTo(group.getTitle());
             dto.getTags().forEach(tag -> assertThat(bill.getTags()).anyMatch(t -> t.getName().equals(tag.getName())));
         }
     }

@@ -15,6 +15,7 @@ import java.util.Set;
 public interface BillMapper {
 
     @Mapping(target = "date", source = "mentionedDate")
+    @Mapping(target= "groupTitle", source = "group.title")
     BillDto toDto(Bill bill);
 
     BillTagDto toTagDto(BillTag tag);

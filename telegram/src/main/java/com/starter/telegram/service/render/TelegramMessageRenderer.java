@@ -53,7 +53,7 @@ public class TelegramMessageRenderer {
                 .replaceAll("#amount#", bill.getAmount() + " " + bill.getCurrency())
                 .replaceAll("#purpose#", bill.getPurpose())
                 .replaceAll("#date#", renderDate(bill.getMentionedDate()))
-                .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName()).reduce("", String::concat));
+                .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat));
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 new InlineKeyboardButton("✏\uFE0F Edit").webApp(new WebAppInfo(renderWebAppUrl("bill", bill.getId()))),
