@@ -85,15 +85,6 @@ public class TelegramBotService {
         log.info("Bot started");
     }
 
-    public static Keyboard latestKeyboard() {
-        return new ReplyKeyboardMarkup(
-                new KeyboardButton("Button 1").requestLocation(true))
-                .addRow(new KeyboardButton("Button 2"))
-                .addRow(new KeyboardButton("Button 3"))
-                .resizeKeyboard(true)
-                .oneTimeKeyboard(false);
-    }
-
     private UpdateListener selectListener(Update update) {
         if (update.callbackQuery() != null) {
             return listeners.get(CallbackQueryUpdateListener.class);
@@ -119,5 +110,14 @@ public class TelegramBotService {
             return listeners.get(KeyboardButtonUpdateListener.class);
         }
         return listeners.get(NoopUpdateListener.class);
+    }
+
+    public static Keyboard latestKeyboard() {
+        return new ReplyKeyboardMarkup(
+                new KeyboardButton("Button 1").requestLocation(true))
+                .addRow(new KeyboardButton("Button 2"))
+                .addRow(new KeyboardButton("Button 3"))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(false);
     }
 }
