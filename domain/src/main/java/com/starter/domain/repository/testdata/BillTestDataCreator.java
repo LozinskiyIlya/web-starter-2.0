@@ -19,6 +19,22 @@ public class BillTestDataCreator implements GroupTestData, BillTestData, BillTag
     private final BillTagRepository billTagRepository;
     private final UserTestDataCreator userTestDataCreator;
 
+
+    public Group givenGroupExists() {
+        return givenGroupExists(g -> {
+        });
+    }
+
+    public Bill givenBillExists() {
+        return givenBillExists(b -> {
+        });
+    }
+
+    public BillTag givenBillTagExists() {
+        return givenBillTagExists(t -> {
+        });
+    }
+
     @Override
     public Group givenGroupExists(Consumer<Group> configure) {
         Consumer<Group> fullyConfigure = group -> {
