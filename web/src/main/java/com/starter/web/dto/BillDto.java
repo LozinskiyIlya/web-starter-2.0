@@ -19,7 +19,7 @@ public class BillDto {
     private String date;
     private Bill.BillStatus status;
     private Set<BillTagDto> tags;
-    private GroupDto group;
+    private GroupDto.GroupLightDto group;
 
     @Data
     public static class BillTagDto {
@@ -27,13 +27,6 @@ public class BillDto {
         private String name;
         private String hexColor;
         private BillTag.TagType tagType;
-    }
-
-
-    @Data
-    public static class GroupDto {
-        private UUID id;
-        private String title;
     }
 }
 

@@ -14,4 +14,5 @@ import java.util.List;
 public interface BillRepository extends Repository<Bill> {
 
     List<Bill> findAllByGroup(Group group);
+    List<Bill> findAllByGroupOrderByMentionedDateDesc(Group group);
 }

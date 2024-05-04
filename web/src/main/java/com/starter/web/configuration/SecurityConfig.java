@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/password/change").hasRole(USER.getName())
                         .requestMatchers("/api/users/delete/*").authenticated()
                         .requestMatchers("/api/bills/**").authenticated()
+                        .requestMatchers("/api/groups/**").authenticated()
                         // Continue with more matchers as needed...
                         .anyRequest().permitAll()
                 )
