@@ -220,4 +220,23 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             assertEquals("123456", settings.get().getPinCode());
         }
     }
+
+    @Nested
+    @DisplayName("on settings command")
+    class OnSettingsCommand {
+
+        @Test
+        @DisplayName("should send message with settings")
+        void shouldSendMessageWithSettings() {
+            // given
+            final var chatId = random.nextLong();
+            userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
+            final var update = mockCommandUpdate("/settings", chatId);
+            final var bot = mockBot();
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            assertSentMessageContainsText(bot, "Settings");
+        }
+    }
 }

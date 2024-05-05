@@ -7,7 +7,6 @@ import com.pengrad.telegrambot.model.WebAppInfo;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
@@ -16,7 +15,6 @@ import com.starter.common.config.ServerProperties;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
-import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,7 +54,7 @@ public class TelegramMessageRenderer {
                 .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat));
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
-                new InlineKeyboardButton("✏\uFE0F Edit").webApp(new WebAppInfo(renderWebAppUrl("bill", bill.getId()))),
+                new InlineKeyboardButton("✏\uFE0F Edit").webApp(renderWebApp("bill", bill.getId().toString())),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
         return new SendMessage(chatId, textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
@@ -104,6 +102,12 @@ public class TelegramMessageRenderer {
         return tryUpdateMessage(chatId, message, textPart);
     }
 
+    public SendMessage renderSettings(Long chatId) {
+        return new SendMessage(chatId, "Settings").replyMarkup(new InlineKeyboardMarkup(
+                new InlineKeyboardButton("View and edit").webApp(renderWebApp("settings", ""))
+        ));
+    }
+
     private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
         if (message instanceof Message) {
             // if the message is accessible, update it
@@ -145,7 +149,7 @@ public class TelegramMessageRenderer {
         return WEB_APP_DIRECT_URL + "?startapp=" + paramName + "_" + id;
     }
 
-    private String renderWebAppUrl(String path, UUID id) {
-        return serverProperties.getFrontendHost().resolve(path) + "/" + id;
+    private WebAppInfo renderWebApp(String path, String pathVariable) {
+        return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
     }
 }
