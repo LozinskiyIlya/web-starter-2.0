@@ -9,6 +9,8 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @Entity
@@ -27,9 +29,15 @@ public class UserSettings extends AbstractEntity {
     @JoinColumn(name = "user_id", unique = true, nullable = false, updatable = false)
     private User user;
 
-    private String pinCode;
     @NotNull
-    private Boolean alwaysConfirmBills = false;
+    private Boolean autoConfirmBills = false;
+
     @NotNull
     private Boolean spoilerBills = false;
+
+    @NotNull
+    @Column(name = "last_updated_at", nullable = false)
+    private Instant lastUpdatedAt = Instant.now();
+
+    private String pinCode;
 }

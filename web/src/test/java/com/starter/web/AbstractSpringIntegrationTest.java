@@ -156,6 +156,10 @@ public abstract class AbstractSpringIntegrationTest {
         return userAuthHeader(user.getLogin());
     }
 
+    protected final Pair<String, String> userAuthHeaderUnchecked() {
+        return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(UUID.randomUUID().toString()));
+    }
+
     protected final Pair<String, String> userAuthHeaderUnchecked(String login) {
         return Pair.of("Authorization", "Bearer " + jwtProvider.generateToken(login));
     }

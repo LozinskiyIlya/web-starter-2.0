@@ -11,13 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import static com.starter.common.service.JwtProvider.AUTHORIZATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,15 +34,16 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     @RequiredArgsConstructor
     abstract class GetGroup {
         protected Supplier<Group> group;
-        protected Supplier<String> token;
+        protected Supplier<Pair<String, String>> token;
         protected Supplier<ResultMatcher> expectedStatus;
 
         @SneakyThrows
         @Test
         @DisplayName("is expected GET result")
         void returnsExpectedResult() {
+            final var auth = token.get();
             mockMvc.perform(getRequest("/" + group.get().getId())
-                            .header(AUTHORIZATION, token.get()))
+                            .header(auth.getFirst(), auth.getSecond()))
                     .andExpect(expectedStatus.get());
         }
     }
@@ -54,7 +55,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             final var notPersisted = new Group();
             notPersisted.setId(UUID.randomUUID());
             group = () -> notPersisted;
-            token = testUserAuthHeader()::getSecond;
+            token = GroupControllerIT.this::testUserAuthHeader;
             expectedStatus = status()::isNotFound;
         }
     }
@@ -64,7 +65,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     public class AsNonExistingUser extends GetGroup {
         {
             group = billTestDataCreator::givenGroupExists;
-            token = UUID.randomUUID()::toString;
+            token = GroupControllerIT.this::userAuthHeaderUnchecked;
             expectedStatus = status()::isForbidden;
         }
     }
@@ -74,7 +75,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     public class AsSomeUser extends GetGroup {
         {
             group = billTestDataCreator::givenGroupExists;
-            token = testUserAuthHeader()::getSecond;
+            token = GroupControllerIT.this::testUserAuthHeader;
             expectedStatus = status()::isForbidden;
         }
     }
@@ -91,7 +92,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
                 g.setOwner(owner);
                 g.setMembers(List.of(owner, member));
             });
-            token = () -> userAuthHeader(owner).getSecond();
+            token = () -> userAuthHeader(owner);
             expectedStatus = status()::is2xxSuccessful;
         }
     }
@@ -106,7 +107,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
                 g.setOwner(owner);
                 g.setMembers(List.of(owner));
             });
-            token = () -> userAuthHeader(owner).getSecond();
+            token = () -> userAuthHeader(owner);
             expectedStatus = status()::is2xxSuccessful;
         }
 
@@ -117,9 +118,10 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             // given
             final var group = this.group.get();
             final var bill = billTestDataCreator.givenBillExists(b -> b.setGroup(group));
+            final var auth = token.get();
             // when
             final var response = mockMvc.perform(getRequest("/" + group.getId())
-                            .header(AUTHORIZATION, token.get()))
+                            .header(auth.getFirst(), auth.getSecond()))
                     .andExpect(expectedStatus.get())
                     .andReturn().getResponse().getContentAsString();
             final var dto = mapper.readValue(response, GroupDto.class);
