@@ -35,9 +35,9 @@ public class CustomFileUtils {
     public static void deleteLocalFile(String filePath) {
         File file = new File(filePath);
         if (file.delete()) {
-            System.out.println("File deleted successfully: " + filePath);
+            log.info("File deleted successfully: " + filePath);
         } else {
-            System.out.println("Failed to delete the file: " + filePath);
+            log.info("Failed to delete the file: " + filePath);
         }
     }
 
