@@ -29,12 +29,11 @@ pipelines:
                     SERVER: '35.198.176.46'
                     PORT: 22
                     COMMAND: >-
-                      set -x &&
                       cd /var/www/ai-counting/back &&
-                      echo "I am in the directory" &&
                       ls -al &&
+                      git fetch --all &&
                       git checkout ${BITBUCKET_BRANCH:-'develop'} &&
-                      git pull --verbose &&
+                      git pull &&
                       ./mvnw clean package -DskipTests -Dmaven.test.skip=true -P dev spring-boot:build-image &&
                       docker image prune -f &&
                       docker-compose up -d --build web &&
