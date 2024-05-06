@@ -47,8 +47,9 @@ pipelines:
       - step: *dev_deploy
   branches:
     develop:
-      - step: *build_java
-      - step: *dev_deploy
+      - parallel:
+        - step: *build_java
+        - step: *dev_deploy
 definitions:
   services:
     docker:
