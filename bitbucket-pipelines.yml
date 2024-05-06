@@ -1,0 +1,54 @@
+# For advanced cases, please, follow examples from the pipe's README https://bitbucket.org/atlassian/aws-elasticbeanstalk-deploy/src/master/README.md
+
+image: atlassian/default-image:3
+
+pipelines:
+  pull-requests:
+    '**':
+      - parallel:
+          - step: &build_java
+              name: build
+              clone:
+                depth: full
+              #https://www.testcontainers.org/supported_docker_environment/continuous_integration/bitbucket_pipelines/
+              script:
+                - ./mvnw clean verify
+              services:
+                - docker
+              caches:
+                - maven
+          - step: &dev_deploy
+              name: deploy to dev
+              deployment: dev
+              trigger: manual
+              script:
+                - pipe: atlassian/ssh-run:0.4.1
+                  variables:
+                    SSH_USER: 'inbtrhope'
+                    SERVER: '35.198.176.46'
+                    PORT: 22
+                    COMMAND: >-
+                      cd /var/www/ai-counting &&
+                      git fetch --all &&
+                      git checkout ${BITBUCKET_BRANCH:-'develop'} &&
+                      git pull &&
+                      ./mvnw clean package -DskipTests -Dmaven.test.skip=true -P dev spring-boot:build-image &&
+                      docker image prune -f &&
+                      docker-compose up -d --build web &&
+                      (timeout 30s docker-compose logs -f web; echo "Stop following logs after timeout reached"; exit 0 )
+                    ENV_VARS: >-
+                      BITBUCKET_BRANCH=${BITBUCKET_BRANCH}
+    hotfix/*:
+      - step: &echo
+          name: start hotfix pipeline
+          script:
+            - echo "Starting hotfix pipeline"
+      - step: *dev_deploy
+  branches:
+    develop:
+      - step: *build_java
+      - step: *dev_deploy
+definitions:
+  services:
+    docker:
+      memory: 2048

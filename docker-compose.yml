@@ -1,0 +1,38 @@
+version: "3.9"
+
+
+services:
+  db:
+    image: postgres:14
+    volumes:
+      - test_postgres:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    container_name: ai_counting_database
+    restart: always
+
+  web:
+    image: docker.io/library/web-starter:latest
+    container_name: ai_counting_backend
+    volumes:
+      - ./:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8002:8888"
+      - "5005:5005"
+    environment:
+      #https://merikan.com/2019/04/jvm-in-a-container/
+      JAVA_TOOL_OPTIONS: >-
+        -XX:MaxRAMPercentage=70
+        -XX:+HeapDumpOnOutOfMemoryError
+        -XX:HeapDumpPath=/var/jvm/threaddumps
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      JAVA_VERSION_RELEASE: Vm9sZWUgdGVhbSBjb2RlIG93bmVyc2hpcCBjYW4gYmUgdmVyaWZpZWQgd2l0aCBjb2RlIGJhY2tlZCB1cCBieSBHbGViIFphYm9yb3Zza2l5IFBQMDI2Nzc3MQ==
+    env_file:
+      - .env
+    depends_on:
+      - db
+volumes:
+  test_postgres:
