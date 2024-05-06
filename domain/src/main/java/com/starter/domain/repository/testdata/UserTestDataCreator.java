@@ -27,6 +27,16 @@ public class UserTestDataCreator implements UserTestData, UserInfoTestData, User
         });
     }
 
+    public UserInfo givenUserInfoExists() {
+        return givenUserInfoExists(ui -> {
+        });
+    }
+
+    public UserSettings givenUserSettingsExists() {
+        return givenUserSettingsExists(us -> {
+        });
+    }
+
     public UserInfo givenUserInfoExists(Consumer<UserInfo> configure) {
         Consumer<UserInfo> fullyConfigure = ui -> {
             ui.setUser(givenUserExists(u -> {

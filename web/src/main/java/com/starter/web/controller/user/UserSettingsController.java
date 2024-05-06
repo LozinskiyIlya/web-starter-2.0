@@ -37,7 +37,7 @@ public class UserSettingsController {
         dto.setPinCode(settings.getPinCode());
         dto.setSpoilerBills(settings.getSpoilerBills());
         dto.setAutoConfirmBills(settings.getAutoConfirmBills());
-        dto.setLastUpdatedAt(settings.getLastUpdatedAt());
+        dto.setLastUpdatedAt(settings.getLastUpdatedAt().toString());
         return dto;
     }
 }

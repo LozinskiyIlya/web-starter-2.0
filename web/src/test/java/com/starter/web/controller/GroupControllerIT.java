@@ -30,7 +30,6 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     @Autowired
     private UserTestDataCreator userTestDataCreator;
 
-
     @RequiredArgsConstructor
     abstract class GetGroup {
         protected Supplier<Group> group;

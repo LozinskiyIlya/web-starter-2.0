@@ -12,5 +12,5 @@ public class UserSettingsDto {
     @NotNull
     private Boolean spoilerBills;
     private String pinCode;
-    private Instant lastUpdatedAt;
+    private String lastUpdatedAt;
 }
