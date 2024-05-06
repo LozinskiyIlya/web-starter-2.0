@@ -1,6 +1,6 @@
 # For advanced cases, please, follow examples from the pipe's README https://bitbucket.org/atlassian/aws-elasticbeanstalk-deploy/src/master/README.md
 
-image: atlassian/default-image:3
+image: amazoncorretto:17
 
 pipelines:
   pull-requests:
@@ -12,6 +12,7 @@ pipelines:
                 depth: full
               #https://www.testcontainers.org/supported_docker_environment/continuous_integration/bitbucket_pipelines/
               script:
+                - export TESTCONTAINERS_RYUK_DISABLED=true
                 - ./mvnw clean verify
               services:
                 - docker
