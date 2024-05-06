@@ -22,6 +22,7 @@ public interface BillMapper {
     @Mapping(target = "mentionedDate", source = "date")
     @Mapping(target = "tags", expression = "java(toTagEntities(billDto.getTags()))")
     @Mapping(target = "group", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     Bill updateEntityFromDto(BillDto billDto, @MappingTarget Bill bill);
 
     default Set<BillTag> toTagEntities(Set<BillTagDto> tags) {

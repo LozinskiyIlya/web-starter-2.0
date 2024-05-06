@@ -82,6 +82,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(dto.getCurrency()).isEqualTo(bill.getCurrency());
             assertThat(dto.getStatus()).isEqualTo(bill.getStatus());
             assertThat(dto.getDate()).isEqualTo(bill.getMentionedDate().toString());
+            assertThat(dto.getCreatedAt()).isEqualTo(bill.getCreatedAt().toString());
             assertThat(dto.getGroup().getTitle()).isEqualTo(group.getTitle());
             assertThat(dto.getGroup().getId()).isEqualTo(group.getId());
             dto.getTags().forEach(tag -> assertThat(bill.getTags()).anyMatch(t -> t.getName().equals(tag.getName())));

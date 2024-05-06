@@ -17,6 +17,7 @@ public class BillDto {
     private Double amount;
     private String currency;
     private String date;
+    private String createdAt;
     private Bill.BillStatus status;
     private Set<BillTagDto> tags;
     private GroupDto.GroupLightDto group;
