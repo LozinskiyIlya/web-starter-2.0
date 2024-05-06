@@ -31,7 +31,9 @@ pipelines:
                     COMMAND: >-
                       set -x &&
                       cd /var/www/ai-counting/back &&
-                      git fetch --all --verbose &&
+                      echo "I am in the directory" &&
+                      ls -al &&
+#                      git fetch --all --verbose &&
                       git checkout ${BITBUCKET_BRANCH:-'develop'} &&
                       git pull --verbose &&
                       ./mvnw clean package -DskipTests -Dmaven.test.skip=true -P dev spring-boot:build-image &&
