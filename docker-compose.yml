@@ -10,7 +10,7 @@ services:
       - "5432:5432"
     env_file:
       - .env
-    container_name: ai_counting_database
+    container_name: db_ai_counting
     restart: always
 
   web:
@@ -19,7 +19,7 @@ services:
       resources:
         limits:
           memory: 800M
-    container_name: ai_counting_backend
+    container_name: back_ai_counting
     volumes:
       - ./:/app
       - ~/.m2:/root/.m2
