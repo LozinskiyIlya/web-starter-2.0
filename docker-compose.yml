@@ -15,6 +15,10 @@ services:
 
   web:
     image: docker.io/library/web-starter:latest
+    deploy:
+      resources:
+        limits:
+          memory: 800M
     container_name: ai_counting_backend
     volumes:
       - ./:/app
