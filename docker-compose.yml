@@ -23,6 +23,7 @@ services:
     volumes:
       - ./:/app
       - ~/.m2:/root/.m2
+      - /host/downloads:/downloads
     ports:
       - "8003:8888"
       - "5006:5005"
