@@ -29,19 +29,27 @@ public class AssistantResponseParser {
 
     private BillAssistantResponse preparse(final String response) {
         try {
-            return mapper.readValue(response, BillAssistantResponse.class);
+            return mapper.readValue(getRidOfOpenAiJsonFormatting(response), BillAssistantResponse.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse response: {}", response, e);
             return BillAssistantResponse.EMPTY();
         }
     }
 
-    public MessageClassificationResponse parseClassification(String response) {
+    public MessageClassificationResponse parseClassification(final String response) {
         try {
-            return mapper.readValue(response, MessageClassificationResponse.class);
+            return mapper.readValue(getRidOfOpenAiJsonFormatting(response), MessageClassificationResponse.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse classification response: {}", response, e);
             return new MessageClassificationResponse();
+        }
+    }
+
+    private String getRidOfOpenAiJsonFormatting(String response) {
+        if (response.startsWith("```json")) {
+            return response.substring(7, response.length() - 3);
+        } else {
+            return response;
         }
     }
 }
