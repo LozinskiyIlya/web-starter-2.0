@@ -43,7 +43,6 @@ class GroupCommandListenerTest extends AbstractUpdateListenerTest {
                 g.setOwner(owner.getUser());
             });
             final var update = mockGroupUpdate("/addme", senderChatId, groupChatId);
-            final var bot = mockBot();
 
             // when
             groupCommandListener.processUpdate(update, bot);
