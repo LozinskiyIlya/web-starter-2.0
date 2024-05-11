@@ -33,6 +33,7 @@ public class TelegramBotService {
 
     private final TelegramBot bot;
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @PreDestroy
     void stop() {
         final var shutdownBotExecutor = Executors.newSingleThreadExecutor();
@@ -52,6 +53,7 @@ public class TelegramBotService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Autowired
     private void setListenersMap(Collection<UpdateListener> listeners) {
         for (UpdateListener listener : listeners) {

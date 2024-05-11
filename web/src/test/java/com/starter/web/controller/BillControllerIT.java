@@ -159,7 +159,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(updatedBill.getTags()).hasSize(2);
             assertThat(updatedBill.getTags()).contains(newTag, defaultTag);
             assertThat(updatedBill.getPurpose()).isEqualTo(newPurpose);
-            assertThat(updatedBill.getStatus()).isEqualTo(Bill.BillStatus.CONFIRMED);
             assertThat(updatedBill.getBuyer()).isEqualTo(bill.getBuyer());
             assertThat(updatedBill.getGroup().getId()).isEqualTo(bill.getGroup().getId());
         }

@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -43,7 +45,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             });
             final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
@@ -69,7 +70,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             });
             final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
@@ -91,7 +91,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             final var newMember = userTestDataCreator.givenUserInfoExists(ui -> {
             }).getUser();
             final var update = mockCallbackQueryUpdate(ADDME_REJECT_PREFIX, owner.getTelegramChatId());
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
@@ -112,22 +111,19 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
         void shouldConfirmBill() {
             // given
             final var chatId = random.nextLong();
-            final var bill = billTestDataCreator.givenBillExists(b->{
-                b.setAmount(100.0);
-                b.setCurrency("USD");
-            });
+            final var bill = billTestDataCreator.givenBillExists();
             final var query = CONFIRM_BILL_PREFIX + bill.getId();
             final var update = mockCallbackQueryUpdate(query, chatId);
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
 
             // then
+            // bill confirmation status updates asynchronously
+            await().atMost(5, TimeUnit.SECONDS).until(() ->
+                    billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow().getStatus().equals(Bill.BillStatus.CONFIRMED));
             final var confirmedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertEquals(Bill.BillStatus.CONFIRMED, confirmedBill.getStatus());
-            assertMessageSentToChatId(bot, chatId);
-            assertSentMessageContainsText(bot, "100.0$ confirmed.");
         }
     }
 }

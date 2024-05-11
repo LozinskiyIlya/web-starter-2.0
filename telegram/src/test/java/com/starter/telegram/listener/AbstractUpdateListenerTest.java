@@ -6,10 +6,15 @@ import com.pengrad.telegrambot.request.BaseRequest;
 import com.starter.telegram.configuration.TelegramProperties;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.UUID;
@@ -18,19 +23,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
+@ContextConfiguration(classes = AbstractUpdateListenerTest.AbstractUpdateListenerTestConfig.class)
 public abstract class AbstractUpdateListenerTest {
 
     @Autowired
     protected TransactionTemplate transactionTemplate;
     @Autowired
     protected TelegramProperties telegramProperties;
-    protected final EasyRandom random = new EasyRandom(new EasyRandomParameters().seed(System.nanoTime()));
+    @Autowired
+    protected TelegramBot bot;
 
-    protected TelegramBot mockBot() {
-        final var bot = Mockito.mock(TelegramBot.class);
-        when(bot.execute(Mockito.any())).thenReturn(null);
-        return bot;
+    @BeforeEach
+    void setUp() {
+        clearInvocations(bot);
     }
+
+    protected final EasyRandom random = new EasyRandom(new EasyRandomParameters().seed(System.nanoTime()));
 
     protected Update mockCommandUpdate(String command, Long chatId) {
         Update update = mock(Update.class);
@@ -87,13 +95,17 @@ public abstract class AbstractUpdateListenerTest {
         return user;
     }
 
+    protected TelegramBot mockBot() {
+        return bot;
+    }
+
     @SuppressWarnings("unchecked")
     protected static BaseRequest<?, ?> assertMessageSentToChatId(TelegramBot bot, Long chatId) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
         verify(bot, atLeastOnce()).execute(captor.capture());
         final var actualRequest = captor.getValue();
         final var sendTo = actualRequest.getParameters().get("chat_id").toString();
-        assertTrue(sendTo.contains(chatId.toString()));
+        assertTrue(sendTo.contains(chatId.toString()), "Expected to send message to chatId: " + chatId + ", but was: " + sendTo);
         return actualRequest;
     }
 
@@ -102,7 +114,19 @@ public abstract class AbstractUpdateListenerTest {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
         Mockito.verify(bot).execute(captor.capture());
         final var actualRequest = captor.getValue();
-        assertTrue(actualRequest.getParameters().get("text").toString().contains(shouldContain));
+        final var text = actualRequest.getParameters().get("text").toString();
+        assertTrue(text.contains(shouldContain), "Expected to send message containing: " + shouldContain + ", but was: " + text);
         return actualRequest;
+    }
+
+    @TestConfiguration
+    static class AbstractUpdateListenerTestConfig {
+        @Bean
+        @Primary
+        protected TelegramBot mockBot() {
+            final var bot = Mockito.mock(TelegramBot.class);
+            when(bot.execute(Mockito.any())).thenReturn(null);
+            return bot;
+        }
     }
 }
