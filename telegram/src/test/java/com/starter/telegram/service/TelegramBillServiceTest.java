@@ -12,10 +12,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -84,8 +82,8 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
             //then
             verify(bot, never()).execute(Mockito.any(EditMessageText.class));
             assertMessageNotSentToChatId(bot, ownerInfo.getTelegramChatId());
-            assertSentMessageToChatIdContainsText(bot, memberInfo.getTelegramChatId(), bill.getPurpose());
-            assertSentMessageToChatIdContainsText(bot, otherMemberInfo.getTelegramChatId(), bill.getPurpose());
+            assertSentMessageToChatIdContainsText(bot, bill.getPurpose(), memberInfo.getTelegramChatId());
+            assertSentMessageToChatIdContainsText(bot, bill.getPurpose(), otherMemberInfo.getTelegramChatId());
         }
 
         @Test

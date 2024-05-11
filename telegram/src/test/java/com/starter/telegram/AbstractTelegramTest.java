@@ -21,9 +21,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -107,30 +110,16 @@ public abstract class AbstractTelegramTest {
         return user;
     }
 
-    protected TelegramBot mockBot() {
-        return bot;
-    }
-
-    @SuppressWarnings("unchecked")
     protected static void assertMessageNotSentToChatId(TelegramBot bot, Long chatId) {
-        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
-        verify(bot, atLeast(0)).execute(captor.capture());
-        final var actualRequests = captor.getAllValues();
-        final var wasNotSend = actualRequests.stream()
-                .map(BaseRequest::getParameters)
+        final var wasNotSend = getCapturedRequestParams(bot)
                 .map(params -> params.get("chat_id"))
                 .noneMatch(chatId::equals);
         assertTrue(wasNotSend, "Unexpected message to " + chatId + " was found");
     }
 
-    @SuppressWarnings("unchecked")
     protected static void assertMessageSentToChatId(TelegramBot bot, Long chatId) {
-        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
-        verify(bot, atLeastOnce()).execute(captor.capture());
         final var foundIds = new LinkedList<>();
-        final var actualRequests = captor.getAllValues();
-        final var wasSentTimes = actualRequests.stream()
-                .map(BaseRequest::getParameters)
+        final var wasSentTimes = getCapturedRequestParams(bot)
                 .map(params -> params.get("chat_id"))
                 .peek(foundIds::add)
                 .filter(chatId::equals)
@@ -138,14 +127,9 @@ public abstract class AbstractTelegramTest {
         assertEquals(1, wasSentTimes, "Message to " + chatId + " was not found. Present ids: " + foundIds);
     }
 
-    @SuppressWarnings("unchecked")
     protected static void assertSentMessageContainsText(TelegramBot bot, String shouldContain) {
-        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
-        Mockito.verify(bot, atLeastOnce()).execute(captor.capture());
         final var foundTexts = new LinkedList<>();
-        final var actualRequests = captor.getAllValues();
-        final var containsTimes = actualRequests.stream()
-                .map(BaseRequest::getParameters)
+        final var containsTimes = getCapturedRequestParams(bot)
                 .map(params -> params.get("text"))
                 .peek(foundTexts::add)
                 .filter(text -> ((String) text).contains(shouldContain))
@@ -153,14 +137,9 @@ public abstract class AbstractTelegramTest {
         assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
     }
 
-    @SuppressWarnings("unchecked")
-    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
-        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
-        Mockito.verify(bot, atLeastOnce()).execute(captor.capture());
+    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, String shouldContain, Long chatId) {
         final var foundTexts = new LinkedList<>();
-        final var actualRequests = captor.getAllValues();
-        final var containsTimes = actualRequests.stream()
-                .map(BaseRequest::getParameters)
+        final var containsTimes = getCapturedRequestParams(bot)
                 .filter(params -> params.get("chat_id").equals(chatId))
                 .map(params -> params.get("text"))
                 .peek(foundTexts::add)
@@ -169,11 +148,20 @@ public abstract class AbstractTelegramTest {
         assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Stream<Map> getCapturedRequestParams(TelegramBot bot) {
+        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
+        verify(bot, atLeast(0)).execute(captor.capture());
+        return captor.getAllValues()
+                .stream()
+                .map(BaseRequest::getParameters);
+    }
+
     @TestConfiguration
     static class AbstractUpdateListenerTestConfig {
         @Bean
         @Primary
-        protected TelegramBot mockBot() {
+        protected TelegramBot telegramBot() {
             final var bot = Mockito.mock(TelegramBot.class);
             when(bot.execute(Mockito.any())).thenReturn(null);
             return bot;
