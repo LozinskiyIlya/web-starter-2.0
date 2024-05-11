@@ -1,8 +1,7 @@
 package com.starter.telegram.listener;
 
 import com.starter.domain.entity.Bill;
-import com.starter.domain.repository.testdata.BillTestDataCreator;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.AbstractTelegramTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,23 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
+class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private CallbackQueryUpdateListener listener;
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
-
-    @Autowired
-    private BillTestDataCreator billTestDataCreator;
 
 
     @Nested
@@ -119,9 +110,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             listener.processUpdate(update, bot);
 
             // then
-            // bill confirmation status updates asynchronously
-            await().atMost(5, TimeUnit.SECONDS).until(() ->
-                    billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow().getStatus().equals(Bill.BillStatus.CONFIRMED));
             final var confirmedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertEquals(Bill.BillStatus.CONFIRMED, confirmedBill.getStatus());
         }

@@ -6,8 +6,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
-import com.starter.domain.repository.testdata.BillTestDataCreator;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.AbstractTelegramTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -23,16 +22,10 @@ import java.util.NoSuchElementException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
+class GroupUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private GroupUpdateListener listener;
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
-
-    @Autowired
-    private BillTestDataCreator billTestDataCreator;
 
     @SpyBean
     private GroupRepository groupRepository;

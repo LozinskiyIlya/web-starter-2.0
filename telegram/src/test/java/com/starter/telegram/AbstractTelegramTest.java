@@ -1,8 +1,10 @@
-package com.starter.telegram.listener;
+package com.starter.telegram;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.*;
 import com.pengrad.telegrambot.request.BaseRequest;
+import com.starter.domain.repository.testdata.BillTestDataCreator;
+import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.telegram.configuration.TelegramProperties;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
@@ -14,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -23,13 +26,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-@ContextConfiguration(classes = AbstractUpdateListenerTest.AbstractUpdateListenerTestConfig.class)
-public abstract class AbstractUpdateListenerTest {
+@ContextConfiguration(classes = AbstractTelegramTest.AbstractUpdateListenerTestConfig.class)
+public abstract class AbstractTelegramTest {
+
+    @Autowired
+    protected BillTestDataCreator billTestDataCreator;
+
+    @Autowired
+    protected UserTestDataCreator userTestDataCreator;
 
     @Autowired
     protected TransactionTemplate transactionTemplate;
+
     @Autowired
     protected TelegramProperties telegramProperties;
+
     @Autowired
     protected TelegramBot bot;
 
@@ -127,6 +138,13 @@ public abstract class AbstractUpdateListenerTest {
             final var bot = Mockito.mock(TelegramBot.class);
             when(bot.execute(Mockito.any())).thenReturn(null);
             return bot;
+        }
+
+        //todo: probably add sync task executor for tests
+        @Bean
+        @Primary
+        public SyncTaskExecutor taskExecutor() {
+            return new SyncTaskExecutor(); // Executes tasks synchronously
         }
     }
 }

@@ -7,7 +7,7 @@ import com.pengrad.telegrambot.response.GetChatResponse;
 import com.starter.domain.entity.Role;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserSettingsRepository;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.AbstractTelegramTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,14 +20,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
-
+class PrivateChatCommandListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private UserInfoRepository userInfoRepository;
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
 
     @Autowired
     private PrivateChatCommandListener privateChatCommandListener;

@@ -61,14 +61,14 @@ public class TelegramBillService {
         billRepository.save(bill);
         final var group = bill.getGroup();
         final var ownerInfo = group.getOwner().getUserInfo();
-        if (bill.getMessageId() == null) {
-            return;
+        if (bill.getMessageId() != null) {
+            // update message in owner chat
+            final var tgMessage = new SelfMadeMessage();
+            tgMessage.setMessageId(bill.getMessageId());
+            final var message = renderer.renderBillUpdate(ownerInfo.getTelegramChatId(), bill, tgMessage);
+            bot.execute(message);
         }
-        // update message in owner chat
-        final var tgMessage = new SelfMadeMessage();
-        tgMessage.setMessageId(bill.getMessageId());
-        final var message = renderer.renderBillUpdate(ownerInfo.getTelegramChatId(), bill, tgMessage);
-        bot.execute(message);
+
         // send to all members
         log.info("Status and message updated. Sending bill to all members");
         group.getMembers()

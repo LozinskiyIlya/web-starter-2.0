@@ -2,8 +2,7 @@ package com.starter.telegram.listener;
 
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.testdata.BillTestDataCreator;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.AbstractTelegramTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,13 +12,7 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GroupCommandListenerTest extends AbstractUpdateListenerTest {
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
-
-    @Autowired
-    private BillTestDataCreator billTestDataCreator;
+class GroupCommandListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private GroupCommandListener groupCommandListener;
