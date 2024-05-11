@@ -1,5 +1,6 @@
 package com.starter.telegram.listener;
 
+import com.starter.domain.entity.Bill;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import jakarta.transaction.Transactional;
@@ -11,8 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
@@ -100,6 +100,34 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             final var groupWithUser = billTestDataCreator.groupRepository().findById(group.getId()).orElseThrow();
             assertFalse(groupWithUser.contains(newMember));
             assertMessageSentToChatId(bot, owner.getTelegramChatId());
+        }
+    }
+
+    @Nested
+    @DisplayName("on confirm bill callback")
+    class OnConfirmBillCallback {
+
+        @Test
+        @DisplayName("should confirm bill")
+        void shouldConfirmBill() {
+            // given
+            final var chatId = random.nextLong();
+            final var bill = billTestDataCreator.givenBillExists(b->{
+                b.setAmount(100.0);
+                b.setCurrency("USD");
+            });
+            final var query = CONFIRM_BILL_PREFIX + bill.getId();
+            final var update = mockCallbackQueryUpdate(query, chatId);
+            final var bot = mockBot();
+
+            // when
+            listener.processUpdate(update, bot);
+
+            // then
+            final var confirmedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            assertEquals(Bill.BillStatus.CONFIRMED, confirmedBill.getStatus());
+            assertMessageSentToChatId(bot, chatId);
+            assertSentMessageContainsText(bot, "100.0$ confirmed.");
         }
     }
 }

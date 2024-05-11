@@ -90,7 +90,7 @@ public abstract class AbstractUpdateListenerTest {
     @SuppressWarnings("unchecked")
     protected static BaseRequest<?, ?> assertMessageSentToChatId(TelegramBot bot, Long chatId) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
-        verify(bot, atLeast(1)).execute(captor.capture());
+        verify(bot, atLeastOnce()).execute(captor.capture());
         final var actualRequest = captor.getValue();
         final var sendTo = actualRequest.getParameters().get("chat_id").toString();
         assertTrue(sendTo.contains(chatId.toString()));

@@ -12,6 +12,7 @@ import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.ServerProperties;
+import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
@@ -34,13 +35,15 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
     private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
     private final static String BILL_TEMPLATE = "bill.txt";
-    private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
+    private final static String BILL_UPDATE_TEMPLATE = "#amount##currency# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     private final TemplateReader templateReader;
 
     private final ServerProperties serverProperties;
+
+    private final CurrenciesService currenciesService;
 
     public SendMessage renderBill(Long chatId, Bill bill) {
         final var textPart = templateReader.read(BILL_TEMPLATE)
@@ -62,7 +65,8 @@ public class TelegramMessageRenderer {
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_UPDATE_TEMPLATE
-                .replaceAll("#id#", renderId(bill.getId()))
+                .replaceAll("#amount#", bill.getAmount().toString())
+                .replace("#currency#", currenciesService.getCurrencySymbol(bill.getCurrency()))
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("bill", bill.getId()));
         return tryUpdateMessage(chatId, message, textPart);
     }
