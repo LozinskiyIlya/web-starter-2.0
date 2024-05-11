@@ -54,11 +54,17 @@ public class TelegramBillService {
     @EventListener
     public void onBillConfirmed(BillConfirmedEvent event) {
         final var billId = event.getPayload();
-        log.info("Bill {} confirmed, updating status and message...", billId);
         // send to tg
         final var bill = billRepository.findById(billId).orElseThrow();
+        if (bill.getStatus().equals(BillStatus.CONFIRMED)) {
+            // do nothing if bill was priorly confirmed
+            return;
+        }
+
         bill.setStatus(BillStatus.CONFIRMED);
         billRepository.save(bill);
+        log.info("Bill {} confirmed, updating status and message...", bill.getId());
+
         final var group = bill.getGroup();
         final var ownerInfo = group.getOwner().getUserInfo();
         if (bill.getMessageId() != null) {
@@ -70,7 +76,7 @@ public class TelegramBillService {
         }
 
         // send to all members
-        log.info("Status and message updated. Sending bill to all members");
+        log.info("Status and message updated. Sending bill to {} members", group.getMembers().size());
         group.getMembers()
                 .stream()
                 .map(User::getUserInfo)

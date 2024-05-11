@@ -23,7 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.LinkedList;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -112,33 +112,61 @@ public abstract class AbstractTelegramTest {
     }
 
     @SuppressWarnings("unchecked")
+    protected static void assertMessageNotSentToChatId(TelegramBot bot, Long chatId) {
+        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
+        verify(bot, atLeast(0)).execute(captor.capture());
+        final var actualRequests = captor.getAllValues();
+        final var wasNotSend = actualRequests.stream()
+                .map(BaseRequest::getParameters)
+                .map(params -> params.get("chat_id"))
+                .noneMatch(chatId::equals);
+        assertTrue(wasNotSend, "Unexpected message to " + chatId + " was found");
+    }
+
+    @SuppressWarnings("unchecked")
     protected static void assertMessageSentToChatId(TelegramBot bot, Long chatId) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
         verify(bot, atLeastOnce()).execute(captor.capture());
-        final var foundIds = new LinkedList<String>();
+        final var foundIds = new LinkedList<>();
         final var actualRequests = captor.getAllValues();
-        final var wasSent = actualRequests.stream()
+        final var wasSentTimes = actualRequests.stream()
                 .map(BaseRequest::getParameters)
                 .map(params -> params.get("chat_id"))
-                .map(Object::toString)
                 .peek(foundIds::add)
-                .anyMatch(chatId.toString()::equals);
-        assertTrue(wasSent, "Message to " + chatId + " was not found. Present ids: " + foundIds);
+                .filter(chatId::equals)
+                .count();
+        assertEquals(1, wasSentTimes, "Message to " + chatId + " was not found. Present ids: " + foundIds);
     }
 
     @SuppressWarnings("unchecked")
     protected static void assertSentMessageContainsText(TelegramBot bot, String shouldContain) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
         Mockito.verify(bot, atLeastOnce()).execute(captor.capture());
-        final var foundTexts = new LinkedList<String>();
+        final var foundTexts = new LinkedList<>();
         final var actualRequests = captor.getAllValues();
-        final var contains = actualRequests.stream()
+        final var containsTimes = actualRequests.stream()
                 .map(BaseRequest::getParameters)
                 .map(params -> params.get("text"))
-                .map(Object::toString)
                 .peek(foundTexts::add)
-                .anyMatch(text -> text.contains(shouldContain));
-        assertTrue(contains, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
+                .filter(text -> ((String) text).contains(shouldContain))
+                .count();
+        assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
+        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
+        Mockito.verify(bot, atLeastOnce()).execute(captor.capture());
+        final var foundTexts = new LinkedList<>();
+        final var actualRequests = captor.getAllValues();
+        final var containsTimes = actualRequests.stream()
+                .map(BaseRequest::getParameters)
+                .filter(params -> params.get("chat_id").equals(chatId))
+                .map(params -> params.get("text"))
+                .peek(foundTexts::add)
+                .filter(text -> ((String) text).contains(shouldContain))
+                .count();
+        assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
     }
 
     @TestConfiguration
