@@ -20,6 +20,7 @@ import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.LinkedList;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,23 +112,33 @@ public abstract class AbstractTelegramTest {
     }
 
     @SuppressWarnings("unchecked")
-    protected static BaseRequest<?, ?> assertMessageSentToChatId(TelegramBot bot, Long chatId) {
+    protected static void assertMessageSentToChatId(TelegramBot bot, Long chatId) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
         verify(bot, atLeastOnce()).execute(captor.capture());
-        final var actualRequest = captor.getValue();
-        final var sendTo = actualRequest.getParameters().get("chat_id").toString();
-        assertTrue(sendTo.contains(chatId.toString()), "Expected to send message to chatId: " + chatId + ", but was: " + sendTo);
-        return actualRequest;
+        final var foundIds = new LinkedList<String>();
+        final var actualRequests = captor.getAllValues();
+        final var wasSent = actualRequests.stream()
+                .map(BaseRequest::getParameters)
+                .map(params -> params.get("chat_id"))
+                .map(Object::toString)
+                .peek(foundIds::add)
+                .anyMatch(chatId.toString()::equals);
+        assertTrue(wasSent, "Message to " + chatId + " was not found. Present ids: " + foundIds);
     }
 
     @SuppressWarnings("unchecked")
-    protected static BaseRequest<?, ?> assertSentMessageContainsText(TelegramBot bot, String shouldContain) {
+    protected static void assertSentMessageContainsText(TelegramBot bot, String shouldContain) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
-        Mockito.verify(bot).execute(captor.capture());
-        final var actualRequest = captor.getValue();
-        final var text = actualRequest.getParameters().get("text").toString();
-        assertTrue(text.contains(shouldContain), "Expected to send message containing: " + shouldContain + ", but was: " + text);
-        return actualRequest;
+        Mockito.verify(bot, atLeastOnce()).execute(captor.capture());
+        final var foundTexts = new LinkedList<String>();
+        final var actualRequests = captor.getAllValues();
+        final var contains = actualRequests.stream()
+                .map(BaseRequest::getParameters)
+                .map(params -> params.get("text"))
+                .map(Object::toString)
+                .peek(foundTexts::add)
+                .anyMatch(text -> text.contains(shouldContain));
+        assertTrue(contains, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
     }
 
     @TestConfiguration
@@ -140,11 +151,10 @@ public abstract class AbstractTelegramTest {
             return bot;
         }
 
-        //todo: probably add sync task executor for tests
         @Bean
         @Primary
         public SyncTaskExecutor taskExecutor() {
-            return new SyncTaskExecutor(); // Executes tasks synchronously
+            return new SyncTaskExecutor();
         }
     }
 }

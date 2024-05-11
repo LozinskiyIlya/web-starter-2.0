@@ -32,14 +32,33 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
         void shouldChangeStatus() {
             // given
             final var bill = billTestDataCreator.givenBillExists(b -> b.setStatus(Bill.BillStatus.SENT));
-            final var event = new BillConfirmedEvent(this, bill.getId());
 
             // when
-            service.onBillConfirmed(event);
+            service.onBillConfirmed(new BillConfirmedEvent(this, bill.getId()));
 
             // then
             final var updatedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertEquals(Bill.BillStatus.CONFIRMED, updatedBill.getStatus());
+        }
+
+        @Test
+        @DisplayName("should update message")
+        void shouldSendMessage() {
+            // given
+            final var ownerInfo = userTestDataCreator.givenUserInfoExists();
+            final var bill = billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(billTestDataCreator.givenGroupExists(g -> g.setOwner(ownerInfo.getUser())));
+                b.setAmount(100d);
+                b.setCurrency("USD");
+                b.setMessageId(random.nextInt());
+            });
+
+            // when
+            service.onBillConfirmed(new BillConfirmedEvent(this, bill.getId()));
+
+            //then
+            assertMessageSentToChatId(bot, ownerInfo.getTelegramChatId());
+            assertSentMessageContainsText(bot, "100.0$ confirmed.");
         }
     }
 }
