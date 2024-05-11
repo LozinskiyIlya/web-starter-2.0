@@ -2,7 +2,7 @@ package com.starter.web.controller;
 
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.Message;
+import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Bill;
@@ -15,10 +15,9 @@ import com.starter.web.mapper.BillMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,18 +25,22 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static com.starter.telegram.service.TelegramBillService.SelfMadeMessage;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/bills")
 @Schema(title = "Bill-related requests")
 public class BillController {
+
     private final CurrentUserService currentUserService;
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
     private final BillMapper billMapper;
     private final TelegramMessageRenderer messageRenderer;
     private final TelegramBot telegramBot;
+    private final ApplicationEventPublisher publisher;
 
     @GetMapping("/{billId}")
     public BillDto getBill(@PathVariable UUID billId) {
@@ -55,17 +58,8 @@ public class BillController {
             throw new Exceptions.WrongUserException("You can't update this bill");
         }
         final var updated = billMapper.updateEntityFromDto(billDto, bill);
-        updated.setStatus(Bill.BillStatus.CONFIRMED);
         billRepository.save(updated);
-        //todo: refactor this
-        if (updated.getMessageId() == null) {
-            return;
-        }
-        final var tgMessage = new SelfMadeMessage();
-        tgMessage.setMessageId(updated.getMessageId());
-        final var message = messageRenderer.renderBillUpdate(currentUser.getUserInfo().getTelegramChatId(), updated, tgMessage);
-        telegramBot.execute(message);
-        //todo: refactor this
+        publisher.publishEvent(new BillConfirmedEvent(this, updated.getId()));
     }
 
     @DeleteMapping("/{billId}")
@@ -99,15 +93,5 @@ public class BillController {
         return Stream.concat(userTags.stream(), defaultTags.stream())
                 .map(billMapper::toTagDto)
                 .toList();
-    }
-
-
-    @Deprecated
-    @Data
-    @EqualsAndHashCode(callSuper = true)
-    public static class SelfMadeMessage extends Message {
-        public void setMessageId(int messageId) {
-            super.message_id = messageId;
-        }
     }
 }

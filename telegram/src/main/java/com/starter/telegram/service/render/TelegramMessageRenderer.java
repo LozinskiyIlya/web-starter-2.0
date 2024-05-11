@@ -33,7 +33,7 @@ import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 @RequiredArgsConstructor
 public class TelegramMessageRenderer {
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
-    private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
+    private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "#amount##currency# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
@@ -46,21 +46,18 @@ public class TelegramMessageRenderer {
     private final CurrenciesService currenciesService;
 
     public SendMessage renderBill(Long chatId, Bill bill) {
-        final var textPart = templateReader.read(BILL_TEMPLATE)
-                .replaceAll("#group_name#", bill.getGroup().getTitle())
-                .replaceAll("#id#", renderId(bill.getId()))
-                .replaceAll("#buyer#", bill.getBuyer())
-                .replaceAll("#seller#", bill.getSeller())
-                .replaceAll("#amount#", bill.getAmount() + " " + bill.getCurrency())
-                .replaceAll("#purpose#", bill.getPurpose())
-                .replaceAll("#date#", renderDate(bill.getMentionedDate()))
-                .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat));
+        final var caption = renderCaption(bill);
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 new InlineKeyboardButton("✏\uFE0F Edit").webApp(renderWebApp("bill", bill.getId().toString())),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
-        return new SendMessage(chatId, textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+        return new SendMessage(chatId, caption).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderBillPreview(Long chatId, Bill bill) {
+        final var caption = renderCaption(bill);
+        return new SendMessage(chatId, caption).parseMode(ParseMode.HTML);
     }
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
@@ -94,7 +91,7 @@ public class TelegramMessageRenderer {
     }
 
     public BaseRequest<?, ?> renderAddMeAcceptedUpdate(Long chatId, MaybeInaccessibleMessage message, UserInfo userInfo, Group group) {
-        final var textPart = ADD_ME_UPDATE_TEMPLATE
+        final var textPart = templateReader.read(ADD_ME_APPROVED_TEMPLATE)
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("group", group.getId()))
                 .replaceAll("#user_name#", renderTelegramUsername(userInfo))
                 .replaceAll("#group_name#", group.getTitle());
@@ -110,6 +107,22 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, "Settings").replyMarkup(new InlineKeyboardMarkup(
                 new InlineKeyboardButton("View and edit").webApp(renderWebApp("settings", ""))
         ));
+    }
+
+    private String renderCaption(Bill bill) {
+        return templateReader.read(BILL_TEMPLATE)
+                .replaceAll("#group_name#", bill.getGroup().getTitle())
+                .replaceAll("#id#", renderId(bill.getId()))
+                .replaceAll("#buyer#", bill.getBuyer())
+                .replaceAll("#seller#", bill.getSeller())
+                .replaceAll("#amount#", bill.getAmount() + " " + bill.getCurrency())
+                .replaceAll("#purpose#", bill.getPurpose())
+                .replaceAll("#date#", renderDate(bill.getMentionedDate()))
+                .replaceAll("#tags#", renderTags(bill));
+    }
+
+    private static String renderTags(Bill bill) {
+        return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
     }
 
     private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
