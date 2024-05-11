@@ -7,21 +7,26 @@ services:
     volumes:
       - test_postgres:/var/lib/postgresql/data/
     ports:
-      - "5432:5432"
+      - "5433:5432"
     env_file:
       - .env
-    container_name: ai_counting_database
+    container_name: db_ai_counting
     restart: always
 
   web:
     image: docker.io/library/web-starter:latest
-    container_name: ai_counting_backend
+    deploy:
+      resources:
+        limits:
+          memory: 800M
+    container_name: back_ai_counting
     volumes:
       - ./:/app
       - ~/.m2:/root/.m2
+      - /host/downloads:/downloads
     ports:
-      - "8002:8888"
-      - "5005:5005"
+      - "8003:8888"
+      - "5006:5005"
     environment:
       #https://merikan.com/2019/04/jvm-in-a-container/
       JAVA_TOOL_OPTIONS: >-

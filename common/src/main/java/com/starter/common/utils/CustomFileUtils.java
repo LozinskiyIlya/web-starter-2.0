@@ -15,9 +15,10 @@ public class CustomFileUtils {
 
     public static String downloadFileFromUrl(String fileUrl, String outputFileName) {
         RestTemplate restTemplate = new RestTemplate();
+        String directoryPath = "/downloads";
+        File output = new File(directoryPath, outputFileName);
         try {
             Resource resource = restTemplate.getForObject(fileUrl, Resource.class);
-            File output = new File(outputFileName);
             try (InputStream inputStream = resource.getInputStream();
                  FileOutputStream outputStream = new FileOutputStream(output)) {
                 FileCopyUtils.copy(inputStream, outputStream);

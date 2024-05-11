@@ -29,7 +29,7 @@ pipelines:
                     SERVER: '35.198.176.46'
                     PORT: 22
                     COMMAND: >-
-                      cd /var/www/ai-counting/back &&
+                      cd /var/www/aicounting/back &&
                       ls -al &&
                       git fetch --all &&
                       git checkout ${BITBUCKET_BRANCH:-'develop'} &&
