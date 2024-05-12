@@ -111,6 +111,10 @@ public class TelegramBotService {
         if (message.text() != null && KEYBOARD_BUTTONS.contains(message.text())) {
             return listeners.get(KeyboardButtonUpdateListener.class);
         }
+//
+//        if(message.text() != null) {
+//            return listeners.get(TextUpdateListener.class);
+//        }
         return listeners.get(NoopUpdateListener.class);
     }
 

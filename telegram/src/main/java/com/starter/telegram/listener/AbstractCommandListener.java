@@ -6,7 +6,6 @@ import com.pengrad.telegrambot.request.SendMessage;
 import org.springframework.data.util.Pair;
 
 public abstract class AbstractCommandListener implements UpdateListener {
-    public abstract void processUpdate(Update update, TelegramBot bot);
 
     protected Pair<String, String> parseCommand(String commandWithParameters) {
         String[] commandParts = commandWithParameters.split(" ");
