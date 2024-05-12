@@ -193,7 +193,6 @@ class GroupUpdateListenerTest extends AbstractTelegramTest {
         }
     }
 
-
     @Nested
     @DisplayName("On text message")
     class OnTextMessage {

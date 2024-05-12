@@ -11,6 +11,7 @@ import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.common.utils.CustomFileUtils;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
+import com.starter.telegram.service.TelegramUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public abstract class AbstractChatUpdateListener implements UpdateListener {
 
+    protected final TelegramUserService telegramUserService;
     protected final GroupRepository groupRepository;
     protected final ApplicationEventPublisher publisher;
 

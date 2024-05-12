@@ -17,12 +17,10 @@ import java.util.List;
 @Component
 public class GroupUpdateListener extends AbstractChatUpdateListener {
 
-    private final TelegramUserService telegramUserService;
     private final TelegramProperties telegramProperties;
 
     public GroupUpdateListener(GroupRepository groupRepository, ApplicationEventPublisher publisher, TelegramUserService telegramUserService, TelegramProperties telegramProperties) {
-        super(groupRepository, publisher);
-        this.telegramUserService = telegramUserService;
+        super(telegramUserService, groupRepository, publisher);
         this.telegramProperties = telegramProperties;
     }
 
