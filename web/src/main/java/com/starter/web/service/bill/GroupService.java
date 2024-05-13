@@ -4,7 +4,6 @@ import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.User;
-import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.GroupDto;
 import com.starter.web.mapper.GroupMapper;
@@ -13,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -22,14 +22,23 @@ public class GroupService {
 
     private final CurrentUserService currentUserService;
     private final GroupRepository groupRepository;
-    private final BillRepository billRepository;
     private final GroupMapper groupMapper;
+
+
+    public List<GroupDto> getGroups() {
+        return currentUserService.getUser()
+                .stream()
+                .map(groupRepository::findAllByOwner)
+                .flatMap(List::stream)
+                .map(groupMapper::toDto)
+                .toList();
+    }
 
     @Transactional
     public GroupDto getGroup(UUID groupId) {
         return groupRepository.findById(groupId)
                 .filter(this::canView)
-                .map(group -> groupMapper.toDto(group, billRepository.findAllByGroupOrderByMentionedDateDesc(group)))
+                .map(groupMapper::toDto)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
     }
 

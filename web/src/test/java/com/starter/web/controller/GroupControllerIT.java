@@ -37,17 +37,33 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         protected Supplier<Group> group;
         protected Supplier<Pair<String, String>> token;
         protected Supplier<ResultMatcher> expectedStatusGet;
+        protected Supplier<ResultMatcher> expectedStatusGetAll;
         protected Supplier<ResultMatcher> expectedStatusPost;
 
 
         @SneakyThrows
         @Test
-        @DisplayName("is expected GET result")
-        void returnsExpectedResult() {
+        @DisplayName("is expected get by id result")
+        void returnsExpectedGetByIdResult() {
             final var auth = token.get();
             mockMvc.perform(getRequest("/" + group.get().getId())
                             .header(auth.getFirst(), auth.getSecond()))
                     .andExpect(expectedStatusGet.get());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("is expected get all groups result")
+        void returnsExpectedGetAllGroupsResult() {
+            final var auth = token.get();
+            final var result = mockMvc.perform(getRequest("")
+                            .header(auth.getFirst(), auth.getSecond()))
+                    .andExpect(expectedStatusGetAll.get());
+            if (expectedStatusGet.get().equals(status().is2xxSuccessful())) {
+                final var response = result.andReturn().getResponse().getContentAsString();
+                final var groups = mapper.readValue(response, GroupDto[].class);
+                assertThat(groups).hasSize(1);
+            }
         }
 
 
@@ -78,7 +94,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             group = () -> notPersisted;
             token = GroupControllerIT.this::testUserAuthHeader;
             expectedStatusGet = status()::isNotFound;
-            expectedStatusPost = status()::isNotFound;
+            expectedStatusPost = expectedStatusGet;
+            expectedStatusGetAll = status()::is2xxSuccessful;
         }
     }
 
@@ -89,7 +106,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             group = billTestDataCreator::givenGroupExists;
             token = GroupControllerIT.this::userAuthHeaderUnchecked;
             expectedStatusGet = status()::isForbidden;
-            expectedStatusPost = status()::isForbidden;
+            expectedStatusPost = expectedStatusGet;
+            expectedStatusGetAll = expectedStatusGet;
         }
     }
 
@@ -100,7 +118,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             group = billTestDataCreator::givenGroupExists;
             token = GroupControllerIT.this::testUserAuthHeader;
             expectedStatusGet = status()::isForbidden;
-            expectedStatusPost = status()::isForbidden;
+            expectedStatusPost = expectedStatusGet;
+            expectedStatusGetAll = status()::is2xxSuccessful;
         }
     }
 
@@ -119,6 +138,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             token = () -> userAuthHeader(member);
             expectedStatusGet = status()::is2xxSuccessful;
             expectedStatusPost = status()::isForbidden;
+            expectedStatusGetAll = expectedStatusGet;
         }
     }
 
@@ -134,7 +154,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             });
             token = () -> userAuthHeader(owner);
             expectedStatusGet = status()::is2xxSuccessful;
-            expectedStatusPost = status()::is2xxSuccessful;
+            expectedStatusPost = expectedStatusGet;
+            expectedStatusGetAll = expectedStatusGet;
         }
 
         @SneakyThrows
