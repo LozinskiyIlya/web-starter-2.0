@@ -3,12 +3,12 @@ package com.starter.web.controller;
 import com.starter.web.dto.GroupDto;
 import com.starter.web.service.bill.GroupService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -24,5 +24,18 @@ public class GroupController {
     @GetMapping("/{groupId}")
     public GroupDto getGroup(@PathVariable UUID groupId) {
         return groupService.getGroup(groupId);
+    }
+
+    @PostMapping("/{groupId}/currency")
+    public void updateDefaultCurrency(@PathVariable UUID groupId, @RequestBody @Valid UpdateDefaultCurrencyRequest request) {
+        groupService.updateDefaultCurrency(groupId, request.getCurrency());
+    }
+
+
+    @Data
+    public static class UpdateDefaultCurrencyRequest {
+        @Schema(description = "New default currency")
+        @NotBlank
+        private String currency;
     }
 }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class GroupControllerIT extends AbstractSpringIntegrationTest {
@@ -34,7 +36,9 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     abstract class GetGroup {
         protected Supplier<Group> group;
         protected Supplier<Pair<String, String>> token;
-        protected Supplier<ResultMatcher> expectedStatus;
+        protected Supplier<ResultMatcher> expectedStatusGet;
+        protected Supplier<ResultMatcher> expectedStatusPost;
+
 
         @SneakyThrows
         @Test
@@ -43,7 +47,25 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             final var auth = token.get();
             mockMvc.perform(getRequest("/" + group.get().getId())
                             .header(auth.getFirst(), auth.getSecond()))
-                    .andExpect(expectedStatus.get());
+                    .andExpect(expectedStatusGet.get());
+        }
+
+
+        @SneakyThrows
+        @Test
+        @DisplayName("is expected change group result")
+        void returnsExpectedChangeGroupResult() {
+            final var auth = token.get();
+            final var currency = "IDR";
+            mockMvc.perform(postRequest("/" + group.get().getId() + "/currency")
+                            .header(auth.getFirst(), auth.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"currency\":\"" + currency + "\"}"))
+                    .andExpect(expectedStatusPost.get());
+            if (expectedStatusPost.get().equals(status().is2xxSuccessful())) {
+                final var changed = billTestDataCreator.groupRepository().findById(group.get().getId()).orElseThrow();
+                assertEquals(currency, changed.getDefaultCurrency());
+            }
         }
     }
 
@@ -55,7 +77,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             notPersisted.setId(UUID.randomUUID());
             group = () -> notPersisted;
             token = GroupControllerIT.this::testUserAuthHeader;
-            expectedStatus = status()::isNotFound;
+            expectedStatusGet = status()::isNotFound;
+            expectedStatusPost = status()::isNotFound;
         }
     }
 
@@ -65,7 +88,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         {
             group = billTestDataCreator::givenGroupExists;
             token = GroupControllerIT.this::userAuthHeaderUnchecked;
-            expectedStatus = status()::isForbidden;
+            expectedStatusGet = status()::isForbidden;
+            expectedStatusPost = status()::isForbidden;
         }
     }
 
@@ -75,7 +99,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         {
             group = billTestDataCreator::givenGroupExists;
             token = GroupControllerIT.this::testUserAuthHeader;
-            expectedStatus = status()::isForbidden;
+            expectedStatusGet = status()::isForbidden;
+            expectedStatusPost = status()::isForbidden;
         }
     }
 
@@ -91,8 +116,9 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
                 g.setOwner(owner);
                 g.setMembers(List.of(owner, member));
             });
-            token = () -> userAuthHeader(owner);
-            expectedStatus = status()::is2xxSuccessful;
+            token = () -> userAuthHeader(member);
+            expectedStatusGet = status()::is2xxSuccessful;
+            expectedStatusPost = status()::isForbidden;
         }
     }
 
@@ -107,7 +133,8 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
                 g.setMembers(List.of(owner));
             });
             token = () -> userAuthHeader(owner);
-            expectedStatus = status()::is2xxSuccessful;
+            expectedStatusGet = status()::is2xxSuccessful;
+            expectedStatusPost = status()::is2xxSuccessful;
         }
 
         @SneakyThrows
@@ -121,7 +148,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             // when
             final var response = mockMvc.perform(getRequest("/" + group.getId())
                             .header(auth.getFirst(), auth.getSecond()))
-                    .andExpect(expectedStatus.get())
+                    .andExpect(expectedStatusGet.get())
                     .andReturn().getResponse().getContentAsString();
             final var dto = mapper.readValue(response, GroupDto.class);
             // then
