@@ -59,7 +59,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(response("USD", 100.0))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message));
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
             final var responseMocked = Mockito.mock(SendResponse.class);
             final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
             when(messageMocked.messageId()).thenReturn(tgMessageId);

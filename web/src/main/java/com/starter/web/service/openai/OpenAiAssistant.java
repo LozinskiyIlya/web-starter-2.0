@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,17 +57,19 @@ public class OpenAiAssistant {
         return openAiService.createCompletion(completionRequest).getChoices().get(0).getText();
     }
 
-    public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption) {
+    public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
         final var withedCaption = caption != null ? withMaxTextLength(caption) : "";
+        final var currencyPrompt = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
+        final var filePrompt = String.format(FILE_PROMPT, currencyPrompt, withedCaption);
         final var uploaded = openAiFileManager.uploadFile(filePath);
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
                 .metadata(Map.of("user_id", userId.toString()))
                 .thread(ThreadRequest.builder()
                         .messages(List.of(MessageRequest.builder()
-                                        .role("user")
+                                        .role("system")
                                         .fileIds(List.of(uploaded.getId()))
-                                        .content(withedCaption + "\nAnalyse the file according to your instructions")
+                                        .content(filePrompt)
                                         .build(),
                                 MessageRequest.builder()
                                         .role("user")
@@ -84,18 +87,23 @@ public class OpenAiAssistant {
         return responseParser.parse(response);
     }
 
-    public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage) {
+    public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage, @Nullable String defaultCurrency) {
         final var withed = withMaxTextLength(forwardedMessage);
+        final var listOfMessages = new LinkedList<MessageRequest>();
+        if (defaultCurrency != null) {
+            listOfMessages.add(MessageRequest.builder()
+                    .role("assistant")
+                    .content(String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency))
+                    .build());
+        }
+        listOfMessages.add(MessageRequest.builder()
+                .role("user")
+                .content(withed)
+                .build());
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
                 .metadata(Map.of("user_id", userId.toString()))
-                .thread(ThreadRequest.builder()
-                        .messages(List.of(MessageRequest.builder()
-                                        .role("user")
-                                        .content(withed)
-                                        .build()
-                        ))
-                        .build())
+                .thread(ThreadRequest.builder().messages(listOfMessages).build())
                 .build()
         );
         final var response = waitForPipelineCompletion(threadRun);
@@ -146,4 +154,8 @@ public class OpenAiAssistant {
                 "payment_related": true | false
             }
             """;
+
+    private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
+
+    private static final String FILE_PROMPT = "%s\n%s\nAnalyse the file according to your instructions";
 }

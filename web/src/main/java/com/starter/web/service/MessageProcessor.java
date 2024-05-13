@@ -40,7 +40,7 @@ public class MessageProcessor {
         final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();
         if (isPayment) {
             final var group = groupRepository.findById(groupId).orElseThrow();
-            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message);
+            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
             if (shouldSave(response)) {
                 final var bill = billService.addBill(group, response);
                 log.info("Bill created: {}", bill);
@@ -58,7 +58,7 @@ public class MessageProcessor {
         final var caption = payload.caption();
         final var fileUrl = payload.fileUrl();
         final var group = groupRepository.findById(groupId).orElseThrow();
-        final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption);
+        final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
         if (shouldSave(response)) {
             final var bill = billService.addBill(group, response);
             log.info("Bill created: {}", bill);

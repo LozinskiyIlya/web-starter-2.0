@@ -54,7 +54,27 @@ public class OpenAiAssistantIT {
                 Плюс эти банк комиссии сколько обычно? вроде 30 EUR ?\s
 
                 Тогда отправим 2026.5 EUR""";
-        final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message);
+        final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, null);
+        System.out.println(response);
+    }
+
+    @Test
+    @Disabled
+    @DisplayName("Runs text pipeline with default currency")
+    void runsTextPipeWithDefaultCurrency() {
+        final var message = "Байк 700К";
+        final var defaultCurrency = "IDR";
+        final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, defaultCurrency);
+        System.out.println(response);
+    }
+
+    @Test
+    @Disabled
+    @DisplayName("Default currency override")
+    void defaultCurrencyOverride() {
+        final var message = "Байк 700К RUB";
+        final var defaultCurrency = "IDR";
+        final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, defaultCurrency);
         System.out.println(response);
     }
 
@@ -71,7 +91,7 @@ public class OpenAiAssistantIT {
             final var path = String.format("files/%s/Invoice2.%s", getExtension(), getExtension());
             var resource = resourceLoader.getResource("classpath:" + path);
             final var fileExternalUrl = "https://api.telegram.org/file/bot6668502294:AAF76wN9Z8f5LRZ6YBNC5aIaY1pRLn7GPjE/documents/file_1.pdf";
-            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileExternalUrl, additionalMessage);
+            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileExternalUrl, additionalMessage, null);
             System.out.println(response);
         }
     }

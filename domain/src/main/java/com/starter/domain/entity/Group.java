@@ -38,6 +38,9 @@ public class Group extends AbstractEntity {
     @NotNull
     private String title;
 
+    @Column(name = "default_currency")
+    private String defaultCurrency;
+
     @ManyToMany
     @JoinTable(name = "group_members",
             joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),

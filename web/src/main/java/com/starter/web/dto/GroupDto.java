@@ -11,6 +11,7 @@ public class GroupDto {
     private UUID id;
     private String title;
     private String owner;
+    private String defaultCurrency;
     private List<String> members;
     private List<BillDto> bills;
 

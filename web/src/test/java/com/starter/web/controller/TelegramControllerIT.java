@@ -83,8 +83,7 @@ class TelegramControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("returns 2xx if signed with our telegram token and chat id is correct")
         void successfulLogin() {
             // given
-            final var validInitData = "user=%7B%22id%22%3A424808989%2C%22first_name%22%3A%22Ilya%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22ilialoz%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%7D&chat_instance=8865578296467838294&chat_type=sender&auth_date=1714134067&hash=f82a194643761180598c1d80512d07458114240983e0e3e7e2112cda86e7bc41";
-
+            final var validInitData = "query_id=AAEdElIZAAAAAB0SUhk_2cR7&user=%7B%22id%22%3A424808989%2C%22first_name%22%3A%22Ilya%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22ilialoz%22%2C%22language_code%22%3A%22en%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%7D&auth_date=1715572997&hash=478c281bbcfff86c871b7603e6d78170dbdf02f7ba61eba7718d696d5a833949";
             final var userInfo = ((UserInfoRepository) userCreator.userInfoRepository()).findByTelegramChatId(424808989L)
                     .orElse(userCreator.givenUserInfoExists(ui -> ui.setTelegramChatId(424808989L)));
             final var authRequest = authRequest(validInitData, userInfo.getTelegramChatId());
