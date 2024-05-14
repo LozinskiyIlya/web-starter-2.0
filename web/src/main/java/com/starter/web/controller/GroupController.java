@@ -1,5 +1,6 @@
 package com.starter.web.controller;
 
+import com.starter.web.dto.BillDto;
 import com.starter.web.dto.GroupDto;
 import com.starter.web.service.bill.GroupService;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,6 +31,16 @@ public class GroupController {
     @GetMapping("/{groupId}")
     public GroupDto getGroup(@PathVariable UUID groupId) {
         return groupService.getGroup(groupId);
+    }
+
+    @GetMapping("/{groupId}/members")
+    public List<String> getGroupMembers(@PathVariable UUID groupId) {
+        return groupService.getGroupMembers(groupId);
+    }
+
+    @GetMapping("/{groupId}/bills")
+    public List<BillDto> getGroupBills(@PathVariable UUID groupId) {
+        return groupService.getGroupBills(groupId);
     }
 
     @PostMapping("/{groupId}/currency")

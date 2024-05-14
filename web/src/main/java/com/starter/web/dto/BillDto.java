@@ -20,7 +20,7 @@ public class BillDto {
     private String createdAt;
     private Bill.BillStatus status;
     private Set<BillTagDto> tags;
-    private GroupDto.GroupLightDto group;
+    private GroupDto group;
 
     @Data
     public static class BillTagDto {

@@ -11,13 +11,15 @@ import org.mapstruct.MappingTarget;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {GroupMapper.class})
 public interface BillMapper {
 
     @Mapping(target = "date", source = "mentionedDate")
     BillDto toDto(Bill bill);
 
     BillTagDto toTagDto(BillTag tag);
+
+    BillTag toTagEntity(BillTagDto dto);
 
     @Mapping(target = "mentionedDate", source = "date")
     @Mapping(target = "tags", expression = "java(toTagEntities(billDto.getTags()))")
@@ -28,6 +30,4 @@ public interface BillMapper {
     default Set<BillTag> toTagEntities(Set<BillTagDto> tags) {
         return new LinkedHashSet<>(tags.stream().map(this::toTagEntity).toList());
     }
-
-    BillTag toTagEntity(BillTagDto dto);
 }

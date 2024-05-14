@@ -15,4 +15,5 @@ public interface BillRepository extends Repository<Bill> {
 
     List<Bill> findAllByGroup(Group group);
     List<Bill> findAllByGroupOrderByMentionedDateDesc(Group group);
+    Long countByGroup(Group group);
 }
