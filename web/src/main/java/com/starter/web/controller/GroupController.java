@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import static com.starter.web.dto.GroupDto.*;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -34,7 +36,7 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/members")
-    public List<String> getGroupMembers(@PathVariable UUID groupId) {
+    public List<GroupMemberDto> getGroupMembers(@PathVariable UUID groupId) {
         return groupService.getGroupMembers(groupId);
     }
 

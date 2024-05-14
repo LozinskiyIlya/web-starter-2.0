@@ -13,4 +13,11 @@ public class GroupDto {
     private UUID ownerId;
     private long membersCount;
     private long billsCount;
+
+
+    @Data
+    public static class GroupMemberDto{
+        private UUID id;
+        private String name;
+    }
 }

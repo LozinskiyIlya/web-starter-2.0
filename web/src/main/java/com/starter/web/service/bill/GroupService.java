@@ -8,6 +8,7 @@ import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.BillDto;
 import com.starter.web.dto.GroupDto;
+import com.starter.web.dto.GroupDto.GroupMemberDto;
 import com.starter.web.mapper.BillMapper;
 import com.starter.web.mapper.GroupMapper;
 import jakarta.transaction.Transactional;
@@ -40,13 +41,14 @@ public class GroupService {
     }
 
     @Transactional
-    public List<String> getGroupMembers(UUID groupId) {
+    public List<GroupMemberDto> getGroupMembers(UUID groupId) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
                 .stream()
                 .map(Group::getMembers)
                 .flatMap(List::stream)
-                .map(User::getLogin)
+                .map(User::getUserInfo)
+                .map(groupMapper::toGroupMemberDto)
                 .toList();
     }
 

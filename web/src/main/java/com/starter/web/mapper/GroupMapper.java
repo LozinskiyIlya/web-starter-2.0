@@ -1,9 +1,11 @@
 package com.starter.web.mapper;
 
 import com.starter.domain.entity.Group;
+import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.GroupDto;
+import com.starter.web.dto.GroupDto.GroupMemberDto;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -26,11 +28,19 @@ public class GroupMapper {
         );
     }
 
+    public GroupMemberDto toGroupMemberDto(UserInfo userInfo) {
+        return staticMapper.toGroupMemberDto(userInfo);
+    }
+
     @Mapper(componentModel = "spring")
     interface StaticGroupMapper {
 
         @Mapping(target = "ownerId", source = "group.owner.id")
         GroupDto toDto(Group group, long billsCount, long membersCount);
+
+        @Mapping(target = "name", expression = "java(userInfo.getFullName())")
+        @Mapping(target = "id", source = "userInfo.user.id")
+        GroupMemberDto toGroupMemberDto(UserInfo userInfo);
     }
 }
 
