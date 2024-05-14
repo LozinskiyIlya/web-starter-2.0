@@ -38,13 +38,13 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/members")
-    public List<GroupMemberDto> getGroupMembers(@PathVariable UUID groupId) {
-        return groupService.getGroupMembers(groupId);
+    public List<GroupMemberDto> getGroupMembers(@PathVariable UUID groupId, @PageableDefault Pageable pageable) {
+        return groupService.getGroupMembers(groupId, pageable);
     }
 
     @GetMapping("/{groupId}/bills")
-    public List<BillDto> getGroupBills(@PathVariable UUID groupId) {
-        return groupService.getGroupBills(groupId);
+    public List<BillDto> getGroupBills(@PathVariable UUID groupId, @PageableDefault Pageable pageable) {
+        return groupService.getGroupBills(groupId, pageable);
     }
 
     @PostMapping("/{groupId}/currency")

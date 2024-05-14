@@ -43,7 +43,7 @@ public class GroupService {
     }
 
     @Transactional
-    public List<GroupMemberDto> getGroupMembers(UUID groupId) {
+    public List<GroupMemberDto> getGroupMembers(UUID groupId, Pageable pageable) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
                 .stream()
@@ -55,12 +55,12 @@ public class GroupService {
     }
 
     @Transactional
-    public List<BillDto> getGroupBills(UUID groupId) {
+    public List<BillDto> getGroupBills(UUID groupId, Pageable pageable) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
                 .stream()
-                .map(billRepository::findAllByGroupOrderByMentionedDateDesc)
-                .flatMap(List::stream)
+                .map(group -> billRepository.findAllByGroup(group, pageable))
+                .flatMap(Page::stream)
                 .map(billMapper::toDto)
                 .toList();
     }
