@@ -4,23 +4,28 @@ package com.starter.domain.repository;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.User;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author ilya
  * @date 08.11.2021
  */
 
-public interface GroupRepository extends Repository<Group> {
-
-    List<Group> findAllByOwner(User owner);
+public interface GroupRepository extends Repository<Group>, PagingAndSortingRepository<Group, UUID> {
+    Page<Group> findAllByOwner(User owner, Pageable pageable);
 
     Optional<Group> findByChatId(Long chatId);
+
+    List<Group> findAllByOwner(User owner);
 
     @Modifying
     @Transactional

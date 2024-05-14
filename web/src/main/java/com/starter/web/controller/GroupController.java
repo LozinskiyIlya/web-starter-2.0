@@ -9,12 +9,14 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
-import static com.starter.web.dto.GroupDto.*;
+import static com.starter.web.dto.GroupDto.GroupMemberDto;
 
 @Slf4j
 @RestController
@@ -26,8 +28,8 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping
-    public List<GroupDto> getGroups(){
-        return groupService.getGroups();
+    public List<GroupDto> getGroups(@PageableDefault Pageable pageable) {
+        return groupService.getGroups(pageable);
     }
 
     @GetMapping("/{groupId}")

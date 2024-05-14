@@ -14,6 +14,8 @@ import com.starter.web.mapper.GroupMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,11 +33,11 @@ public class GroupService {
     private final BillMapper billMapper;
 
 
-    public List<GroupDto> getGroups() {
+    public List<GroupDto> getGroups(Pageable pageable) {
         return currentUserService.getUser()
                 .stream()
-                .map(groupRepository::findAllByOwner)
-                .flatMap(List::stream)
+                .map(u -> groupRepository.findAllByOwner(u, pageable))
+                .flatMap(Page::stream)
                 .map(groupMapper::toDto)
                 .toList();
     }
