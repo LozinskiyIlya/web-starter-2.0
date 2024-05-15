@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping
-    public List<GroupDto> getGroups(@PageableDefault Pageable pageable) {
+    public Page<GroupDto> getGroups(@PageableDefault Pageable pageable) {
         return groupService.getGroups(pageable);
     }
 
@@ -38,12 +39,12 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/members")
-    public List<GroupMemberDto> getGroupMembers(@PathVariable UUID groupId, @PageableDefault Pageable pageable) {
-        return groupService.getGroupMembers(groupId, pageable);
+    public List<GroupMemberDto> getGroupMembers(@PathVariable UUID groupId) {
+        return groupService.getGroupMembers(groupId);
     }
 
     @GetMapping("/{groupId}/bills")
-    public List<BillDto> getGroupBills(@PathVariable UUID groupId, @PageableDefault Pageable pageable) {
+    public Page<BillDto> getGroupBills(@PathVariable UUID groupId, @PageableDefault Pageable pageable) {
         return groupService.getGroupBills(groupId, pageable);
     }
 

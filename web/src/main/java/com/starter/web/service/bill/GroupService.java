@@ -33,17 +33,16 @@ public class GroupService {
     private final BillMapper billMapper;
 
 
-    public List<GroupDto> getGroups(Pageable pageable) {
+    public Page<GroupDto> getGroups(Pageable pageable) {
         return currentUserService.getUser()
-                .stream()
                 .map(u -> groupRepository.findAllByOwner(u, pageable))
-                .flatMap(Page::stream)
-                .map(groupMapper::toDto)
-                .toList();
+                .map(page -> page.map(groupMapper::toDto))
+                .orElseThrow();
+
     }
 
     @Transactional
-    public List<GroupMemberDto> getGroupMembers(UUID groupId, Pageable pageable) {
+    public List<GroupMemberDto> getGroupMembers(UUID groupId) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
                 .stream()
@@ -55,14 +54,13 @@ public class GroupService {
     }
 
     @Transactional
-    public List<BillDto> getGroupBills(UUID groupId, Pageable pageable) {
+    public Page<BillDto> getGroupBills(UUID groupId, Pageable pageable) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
-                .stream()
                 .map(group -> billRepository.findAllByGroup(group, pageable))
-                .flatMap(Page::stream)
-                .map(billMapper::toDto)
-                .toList();
+                .map(page -> page.map(billMapper::toDto))
+                .orElseThrow(Exceptions.ResourceNotFoundException::new);
+
     }
 
     @Transactional
