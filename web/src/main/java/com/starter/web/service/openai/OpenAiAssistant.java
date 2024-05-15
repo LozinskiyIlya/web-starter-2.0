@@ -32,9 +32,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class OpenAiAssistant {
-
     private static final String ASSISTANT_MODEL = "gpt-4-1106-preview";
-    private static final String MESSAGE_CLASSIFIER_MODEL = "gpt-4-1106-preview";
+    private static final String MESSAGE_CLASSIFIER_MODEL = "gpt-4o";
     private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
