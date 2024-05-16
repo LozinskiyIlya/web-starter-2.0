@@ -61,29 +61,32 @@ public class OpenAiAssistant {
         final var currencyPrompt = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
         final var filePrompt = String.format(FILE_PROMPT, currencyPrompt, withedCaption);
         final var uploaded = openAiFileManager.uploadFile(filePath);
-        final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
-                .assistantId(ASSISTANT_ID)
-                .metadata(Map.of("user_id", userId.toString()))
-                .thread(ThreadRequest.builder()
-                        .messages(List.of(MessageRequest.builder()
-                                        .role("assistant")
-                                        .fileIds(List.of(uploaded.getId()))
-                                        .content(filePrompt)
-                                        .build(),
-                                MessageRequest.builder()
-                                        .role("user")
-                                        .content("Respond with nothing more than a valid JSON")
-                                        .build(),
-                                MessageRequest.builder()
-                                        .role("user")
-                                        .content("Yes, you DO have the file. Try again")
-                                        .build()))
-                        .build())
-                .build()
-        );
-        final var response = waitForPipelineCompletion(threadRun);
-        openAiFileManager.deleteFile(uploaded.getId());
-        return responseParser.parse(response);
+        try {
+            final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
+                    .assistantId(ASSISTANT_ID)
+                    .metadata(Map.of("user_id", userId.toString()))
+                    .thread(ThreadRequest.builder()
+                            .messages(List.of(MessageRequest.builder()
+                                            .role("assistant")
+                                            .fileIds(List.of(uploaded.getId()))
+                                            .content(filePrompt)
+                                            .build(),
+                                    MessageRequest.builder()
+                                            .role("user")
+                                            .content("Respond with nothing more than a valid JSON")
+                                            .build(),
+                                    MessageRequest.builder()
+                                            .role("user")
+                                            .content("Yes, you DO have the file. Try again")
+                                            .build()))
+                            .build())
+                    .build()
+            );
+            final var response = waitForPipelineCompletion(threadRun);
+            return responseParser.parse(response);
+        } finally {
+            openAiFileManager.deleteFile(uploaded.getId());
+        }
     }
 
     public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage, @Nullable String defaultCurrency) {
