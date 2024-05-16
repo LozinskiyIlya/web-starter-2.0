@@ -91,7 +91,7 @@ public class OpenAiAssistantIT {
             final var path = String.format("files/%s/Invoice2.%s", getExtension(), getExtension());
             var resource = resourceLoader.getResource("classpath:" + path);
             final var fileExternalUrl = "https://api.telegram.org/file/bot6668502294:AAF76wN9Z8f5LRZ6YBNC5aIaY1pRLn7GPjE/documents/file_1.pdf";
-            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileExternalUrl, additionalMessage, null);
+            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), resource.getURL().getPath(), additionalMessage, null);
             System.out.println(response);
         }
     }

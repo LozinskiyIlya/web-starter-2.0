@@ -66,7 +66,7 @@ public class OpenAiAssistant {
                 .metadata(Map.of("user_id", userId.toString()))
                 .thread(ThreadRequest.builder()
                         .messages(List.of(MessageRequest.builder()
-                                        .role("system")
+                                        .role("assistant")
                                         .fileIds(List.of(uploaded.getId()))
                                         .content(filePrompt)
                                         .build(),
