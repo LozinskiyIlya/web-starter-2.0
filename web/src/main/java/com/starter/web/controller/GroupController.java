@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.starter.web.dto.GroupDto.GroupMemberDto;
+import static com.starter.web.service.bill.GroupService.DEFAULT_GROUP_SORT;
 
 @Slf4j
 @RestController
@@ -29,7 +30,7 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping
-    public Page<GroupDto> getGroups(@PageableDefault Pageable pageable) {
+    public Page<GroupDto> getGroups(@PageableDefault(sort = DEFAULT_GROUP_SORT) Pageable pageable) {
         return groupService.getGroups(pageable);
     }
 
@@ -48,16 +49,26 @@ public class GroupController {
         return groupService.getGroupBills(groupId, pageable);
     }
 
+    @GetMapping("/{groupId}/totals")
+    public List<Total> getTotals(@PathVariable UUID groupId) {
+        return groupService.getTotals(groupId);
+    }
+
     @PostMapping("/{groupId}/currency")
     public void updateDefaultCurrency(@PathVariable UUID groupId, @RequestBody @Valid UpdateDefaultCurrencyRequest request) {
         groupService.updateDefaultCurrency(groupId, request.getCurrency());
     }
 
-
     @Data
     public static class UpdateDefaultCurrencyRequest {
         @Schema(description = "New default currency")
         @NotBlank
+        private String currency;
+    }
+
+    @Data
+    public static class Total {
+        private double total;
         private String currency;
     }
 }
