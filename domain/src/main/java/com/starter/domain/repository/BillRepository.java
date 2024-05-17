@@ -21,5 +21,7 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
 
     Page<Bill> findAllByGroup(Group group, Pageable pageable);
 
+    Bill findFirstByGroupOrderByMentionedDateDesc(Group group);
+
     Long countByGroup(Group group);
 }

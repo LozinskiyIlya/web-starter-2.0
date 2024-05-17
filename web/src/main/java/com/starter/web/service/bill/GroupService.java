@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GroupService {
-    public final static String DEFAULT_GROUP_SORT = "last bill";
     private final CurrentUserService currentUserService;
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
@@ -38,10 +37,9 @@ public class GroupService {
 
     public Page<GroupDto> getGroups(Pageable pageable) {
         return currentUserService.getUser()
-                .map(u -> groupRepository.findAllByOwner(u, pageable))
+                .map(u -> groupRepository.findGroupsByOwnerOrderByLatestBill(u, pageable))
                 .map(page -> page.map(groupMapper::toDto))
                 .orElseThrow();
-
     }
 
     @Transactional

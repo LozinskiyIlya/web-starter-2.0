@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.starter.web.dto.GroupDto.GroupMemberDto;
-import static com.starter.web.service.bill.GroupService.DEFAULT_GROUP_SORT;
 
 @Slf4j
 @RestController
@@ -30,7 +29,7 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping
-    public Page<GroupDto> getGroups(@PageableDefault(sort = DEFAULT_GROUP_SORT) Pageable pageable) {
+    public Page<GroupDto> getGroups(@PageableDefault Pageable pageable) {
         return groupService.getGroups(pageable);
     }
 

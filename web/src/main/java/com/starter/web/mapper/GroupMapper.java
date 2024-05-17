@@ -1,10 +1,12 @@
 package com.starter.web.mapper;
 
+import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.GroupDto;
+import com.starter.web.dto.GroupDto.GroupLastBillDto;
 import com.starter.web.dto.GroupDto.GroupMemberDto;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Mapper;
@@ -23,6 +25,7 @@ public class GroupMapper {
     public GroupDto toDto(Group group) {
         return staticMapper.toDto(
                 group,
+                billRepository.findFirstByGroupOrderByMentionedDateDesc(group),
                 billRepository.countByGroup(group),
                 groupRepository.countMembers(group)
         );
@@ -36,11 +39,15 @@ public class GroupMapper {
     interface StaticGroupMapper {
 
         @Mapping(target = "ownerId", source = "group.owner.id")
-        GroupDto toDto(Group group, long billsCount, long membersCount);
+        @Mapping(target = "id", source = "group.id")
+        GroupDto toDto(Group group, Bill lastBill, long billsCount, long membersCount);
 
         @Mapping(target = "name", expression = "java(userInfo.getFullName())")
         @Mapping(target = "id", source = "userInfo.user.id")
         GroupMemberDto toGroupMemberDto(UserInfo userInfo);
+
+        @Mapping(target = "date", source = "mentionedDate")
+        GroupLastBillDto toLastBillDto(Bill lastBill);
     }
 }
 

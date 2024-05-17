@@ -27,6 +27,16 @@ public interface GroupRepository extends Repository<Group>, PagingAndSortingRepo
 
     List<Group> findAllByOwner(User owner);
 
+    @Query("""
+            select g from Group g
+            join Bill b
+            on g = b.group
+            where g.owner = :owner
+            group by g
+            order by max(b.mentionedDate) desc
+            """)
+    Page<Group> findGroupsByOwnerOrderByLatestBill(@Param("owner") User owner, Pageable pageable);
+
     @Modifying
     @Transactional
     @Query("update Group g set g.chatId = ?2 where g.chatId = ?1")
