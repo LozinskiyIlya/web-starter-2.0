@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 public class DirectoryConfig {
 
     @Bean(name = "downloadDirectory")
-    @Profile({"local", "unknown", "test"})
+    @Profile({"local", "unknown", "test", "default"})
     public String downloadDirectoryLocal() {
         return System.getProperty("java.io.tmpdir");
     }

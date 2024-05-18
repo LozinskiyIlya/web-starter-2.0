@@ -316,6 +316,12 @@
 
     <profiles>
         <profile>
+            <id>test</id>
+            <properties>
+                <activatedProperties>test</activatedProperties>
+            </properties>
+        </profile>
+        <profile>
             <id>local</id>
             <properties>
                 <activatedProperties>local</activatedProperties>
