@@ -43,7 +43,7 @@ public class CustomFileUtils {
         if (file.delete()) {
             log.info("File deleted successfully: " + filePath);
         } else {
-            log.info("Failed to delete the file: " + filePath);
+            log.error("Failed to delete the file: " + filePath);
         }
     }
 }

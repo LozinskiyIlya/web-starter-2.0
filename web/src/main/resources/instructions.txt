@@ -20,3 +20,8 @@ Respond with nothing more than valid JSON of the format:
 "mentionedDate": ""
 "tags": []
 }
+
+If you're sure that file is NOT payment-related return
+{
+                "payment_related": false
+}
