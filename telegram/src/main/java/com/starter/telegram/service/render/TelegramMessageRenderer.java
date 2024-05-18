@@ -34,6 +34,7 @@ import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 public class TelegramMessageRenderer {
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
     private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
+    private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_UPDATE_TEMPLATE = "#amount##currency# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
@@ -107,6 +108,15 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, "Settings").replyMarkup(new InlineKeyboardMarkup(
                 new InlineKeyboardButton("View and edit").webApp(renderWebApp("settings", ""))
         ));
+    }
+
+    public SendMessage renderNewBill(Long chatId) {
+        final var textPart = templateReader.read(NEW_BILL_TEMPLATE);
+        return new SendMessage(chatId, textPart)
+                .replyMarkup(new InlineKeyboardMarkup(
+                        new InlineKeyboardButton("Add bill")
+                                .webApp(renderWebApp("bill", "new"))))
+                .parseMode(ParseMode.HTML);
     }
 
     private String renderCaption(Bill bill) {

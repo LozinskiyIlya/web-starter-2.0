@@ -1,0 +1,3 @@
+<b>NEW BILL</b>
+
+Feel free to provide bill information directly to the bot in this chat in any format — mentioning the amount and purpose is recommended. Alternatively, you can manually enter the details using the form accessible through the button below.
