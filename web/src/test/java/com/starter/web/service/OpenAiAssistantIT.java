@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ResourceLoader;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @SpringBootTest
 @Disabled
@@ -80,7 +83,7 @@ public class OpenAiAssistantIT {
 
     abstract class RunFilePipeline {
 
-        protected abstract String getExtension();
+        protected Supplier<String> fileUrl;
 
         @SneakyThrows
         @Disabled
@@ -88,9 +91,7 @@ public class OpenAiAssistantIT {
         @DisplayName("For some file extension")
         void forSomeFileExtension() {
             final var additionalMessage = "Sending you an invoice for the last tasks";
-            final var path = String.format("files/%s/Invoice2.%s", getExtension(), getExtension());
-            var resource = resourceLoader.getResource("classpath:" + path);
-            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), resource.getURL().getPath(), additionalMessage, null);
+            final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileUrl.get(), additionalMessage, null);
             System.out.println(response);
         }
     }
@@ -98,20 +99,24 @@ public class OpenAiAssistantIT {
     @Nested
     @DisplayName("For PDF files")
     class RunPDFFilePipeline extends RunFilePipeline {
-
-        @Override
-        protected String getExtension() {
-            return "pdf";
+        {
+            final var path = "files/pdf/Invoice2.pdf";
+            final var resource = resourceLoader.getResource("classpath:" + path);
+            final URL url;
+            try {
+                url = resource.getURL();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            fileUrl = url::getPath;
         }
     }
 
     @Nested
     @DisplayName("For PNG files")
     class RunPNGFilePipeline extends RunFilePipeline {
-
-        @Override
-        protected String getExtension() {
-            return "png";
+        {
+            fileUrl = () -> "https://api.telegram.org/file/bot7126952763:AAH5WcT1TPGBS53WIGYNASsgao8D2UnhRR8/photos/file_0.jpg";
         }
     }
 }
