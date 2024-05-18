@@ -2,10 +2,7 @@ package com.starter.common.service;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,8 +16,8 @@ public class HttpService {
     public void init() {
         rest = new RestTemplate();
         headers = new HttpHeaders();
-        headers.add("Content-Type", "application/json");
-        headers.add("Accept", "*/*");
+        headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+        headers.add("Accept", MediaType.ALL_VALUE);
     }
 
     public String get(String uri) {

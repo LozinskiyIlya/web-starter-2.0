@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -113,8 +114,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             final var token = testUserAuthHeader(); // not bill owner
             mockMvc.perform(postRequest("/" + bill.getId())
                             .header(token.getFirst(), token.getSecond())
-                            .contentType("application/json")
-                            .content("{}"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(MIN_FIELDS_DTO.formatted(bill.getGroup().getId())))
                     .andExpect(status().isForbidden());
         }
 
@@ -125,8 +126,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             final var token = testUserAuthHeader();
             mockMvc.perform(postRequest("/" + UUID.randomUUID())
                             .header(token.getFirst(), token.getSecond())
-                            .contentType("application/json")
-                            .content("{}"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(MIN_FIELDS_DTO.formatted(UUID.randomUUID())))
                     .andExpect(status().isNotFound());
         }
 
@@ -152,7 +153,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             final var token = userAuthHeader(bill.getGroup().getOwner());
             mockMvc.perform(postRequest("/" + bill.getId())
                             .header(token.getFirst(), token.getSecond())
-                            .contentType("application/json")
+                            .contentType(MediaType.APPLICATION_JSON)
                             .content(postContent))
                     .andExpect(status().isOk());
             // then
@@ -162,6 +163,78 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(updatedBill.getPurpose()).isEqualTo(newPurpose);
             assertThat(updatedBill.getBuyer()).isEqualTo(bill.getBuyer());
             assertThat(updatedBill.getGroup().getId()).isEqualTo(bill.getGroup().getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Add Bill")
+    class AddBill {
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 without token")
+        void returns403() {
+            mockMvc.perform(postRequest(""))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 if not group owner")
+        void returns403IfNotOwner() {
+            final var group = billTestDataCreator.givenGroupExists(b -> {
+            });
+            final var token = testUserAuthHeader(); // not group owner
+            mockMvc.perform(postRequest("")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(MIN_FIELDS_DTO.formatted(group.getId())))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 404 if group not found")
+        void returns404() {
+            final var token = testUserAuthHeader();
+            mockMvc.perform(postRequest("/" + UUID.randomUUID())
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(MIN_FIELDS_DTO.formatted(UUID.randomUUID())))
+                    .andExpect(status().isNotFound());
+        }
+
+        @SneakyThrows
+        @Transactional
+        @Test
+        @DisplayName("bill added properly")
+        void billAddedProperly() {
+            // given
+            final var group = billTestDataCreator.givenGroupExists(b -> {
+            });
+            final var workTag = ((BillTagRepository) billTestDataCreator.billTagRepository())
+                    .findByNameAndTagType("Work", BillTag.TagType.DEFAULT)
+                    .orElseThrow();
+            final var newPurpose = "New purpose" + UUID.randomUUID();
+            final var postContent = readResource("requests/bill/bill_new.json")
+                    .replaceAll("#PURPOSE#", newPurpose)
+                    .replaceAll("#GROUP_ID#", group.getId().toString())
+                    .replaceAll("#TAG_ID#", workTag.getId().toString());
+            // when
+            final var token = userAuthHeader(group.getOwner());
+            final var response = mockMvc.perform(postRequest("")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(postContent))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final var createdBillId = mapper.readValue(response, BillController.BillCreationResponse.class).getId();
+            // then
+            final var createdBill = billTestDataCreator.billRepository().findById(createdBillId).orElseThrow();
+            assertThat(createdBill.getTags()).hasSize(1);
+            assertThat(createdBill.getTags()).contains(workTag);
+            assertThat(createdBill.getPurpose()).isEqualTo(newPurpose);
+            assertThat(createdBill.getGroup().getId()).isEqualTo(group.getId());
         }
     }
 
@@ -252,6 +325,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             Arrays.stream(assistantProperties.getBillTags()).forEach(tag -> assertThat(dto).anyMatch(t -> t.getName().equals(tag)));
         }
     }
+
+    private static final String MIN_FIELDS_DTO = "{\"group\": {\"id\" : \"%s\"}, \"purpose\": \"Purpose\", \"amount\": 100, \"currency\": \"USD\"}";
 
     @Override
     protected String controllerPath() {

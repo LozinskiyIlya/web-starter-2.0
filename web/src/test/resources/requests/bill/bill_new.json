@@ -1,0 +1,17 @@
+{
+  "id": null,
+  "purpose": "#PURPOSE#",
+  "amount": 2026.5,
+  "currency": "EUR",
+  "tags": [
+    {
+      "id": "#TAG_ID#",
+      "name": "Work",
+      "hexColor": "#27A81E",
+      "tagType": "DEFAULT"
+    }
+  ],
+  "group": {
+    "id": "#GROUP_ID#"
+  }
+}
