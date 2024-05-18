@@ -64,6 +64,7 @@ public class BillController {
         var bill = billMapper.updateEntityFromDto(billDto, new Bill());
         bill.setGroup(group);
         bill.setStatus(Bill.BillStatus.NEW);
+        bill.setMessageId(-1);
         bill = billRepository.saveAndFlush(bill);
         publisher.publishEvent(new BillConfirmedEvent(this, bill.getId()));
         return BillCreationResponse.builder().id(bill.getId()).build();

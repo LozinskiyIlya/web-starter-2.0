@@ -136,16 +136,20 @@ public class TelegramMessageRenderer {
     }
 
     private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
-        if (message instanceof Message) {
-            // if the message is accessible, update it
-            final var editRequest = new EditMessageText(chatId, message.messageId(), text)
-                    .parseMode(ParseMode.HTML)
-                    .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                    .disableWebPagePreview(true);
-            if (buttons != null && buttons.length > 0) {
-                editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
+        // if the message is accessible, update it
+        try {
+            if (message instanceof Message && message.messageId() != -1) {
+                final var editRequest = new EditMessageText(chatId, message.messageId(), text)
+                        .parseMode(ParseMode.HTML)
+                        .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
+                        .disableWebPagePreview(true);
+                if (buttons != null && buttons.length > 0) {
+                    editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
+                }
+                return editRequest;
             }
-            return editRequest;
+        } catch (Exception e) {
+            log.error("Error while updating message", e);
         }
         // if the message is not accessible, send a new message
         return linkPreviewOff(new SendMessage(chatId, text));
