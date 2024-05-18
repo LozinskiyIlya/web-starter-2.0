@@ -27,6 +27,7 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
     protected final TelegramUserService telegramUserService;
     protected final GroupRepository groupRepository;
     protected final ApplicationEventPublisher publisher;
+    protected final String downloadDirectory;
 
     @Override
     @Transactional
@@ -66,7 +67,21 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
                 String downloadUrl = bot.getFullFilePath(file);
                 // Use this URL to download the file
                 log.info("Download URL: {}", downloadUrl);
-                return CustomFileUtils.downloadFileFromUrl(downloadUrl, document.fileName());
+                return CustomFileUtils.downloadFileFromUrl(downloadUrl, document.fileName(), downloadDirectory);
+            }
+        }
+        return extractPhotoFromUpdate(update, bot);
+    }
+
+    private String extractPhotoFromUpdate(Update update, TelegramBot bot) {
+        if (update.message() != null && update.message().photo() != null) {
+            var photo = update.message().photo();
+            var photoSize = photo[photo.length - 1];
+            log.info("Photo received: file_id = {}, file_size = {}", photoSize.fileId(), photoSize.fileSize());
+            GetFile request = new GetFile(photoSize.fileId());
+            File file = bot.execute(request).file();
+            if (file.filePath() != null) {
+                return bot.getFullFilePath(file);
             }
         }
         return null;

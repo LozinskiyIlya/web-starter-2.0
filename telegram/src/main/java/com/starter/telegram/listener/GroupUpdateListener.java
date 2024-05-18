@@ -7,6 +7,7 @@ import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.configuration.TelegramProperties;
 import com.starter.telegram.service.TelegramUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +20,13 @@ public class GroupUpdateListener extends AbstractChatUpdateListener {
 
     private final TelegramProperties telegramProperties;
 
-    public GroupUpdateListener(GroupRepository groupRepository, ApplicationEventPublisher publisher, TelegramUserService telegramUserService, TelegramProperties telegramProperties) {
-        super(telegramUserService, groupRepository, publisher);
+    public GroupUpdateListener(
+            GroupRepository groupRepository,
+            ApplicationEventPublisher publisher,
+            TelegramUserService telegramUserService,
+            TelegramProperties telegramProperties,
+            @Qualifier("downloadDirectory") String downloadDirectory) {
+        super(telegramUserService, groupRepository, publisher, downloadDirectory);
         this.telegramProperties = telegramProperties;
     }
 

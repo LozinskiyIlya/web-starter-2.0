@@ -73,11 +73,7 @@ public class OpenAiAssistant {
                                             .build(),
                                     MessageRequest.builder()
                                             .role("user")
-                                            .content("Respond with nothing more than a valid JSON")
-                                            .build(),
-                                    MessageRequest.builder()
-                                            .role("user")
-                                            .content("Yes, you DO have the file. Try again")
+                                            .content(FILE_ADDITIONAL_PROMPT)
                                             .build()))
                             .build())
                     .build()
@@ -137,6 +133,7 @@ public class OpenAiAssistant {
         return openAiService.listMessages(run.getThreadId())
                 .getData()
                 .stream()
+                .peek(m -> log.info("Message: {}", m))
                 .findFirst()
                 .map(Message::getContent)
                 .map(l -> l.get(l.size() - 1))
@@ -156,8 +153,7 @@ public class OpenAiAssistant {
                 "payment_related": true | false
             }
             """;
-
     private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
-
     private static final String FILE_PROMPT = "%s\n%s\nAnalyse the file according to your instructions";
+    private static final String FILE_ADDITIONAL_PROMPT = "Yes, you DO have the file. In case of error try again. DO NOT include any comments, respond only with the resulting JSON filled according to the file's content.";
 }

@@ -6,6 +6,7 @@ import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.service.TelegramUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,12 @@ import java.util.List;
 @Slf4j
 @Component
 public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
-    public PrivateChatTextUpdateListener(TelegramUserService telegramUserService, GroupRepository groupRepository, ApplicationEventPublisher publisher) {
-        super(telegramUserService, groupRepository, publisher);
+    public PrivateChatTextUpdateListener(
+            TelegramUserService telegramUserService,
+            GroupRepository groupRepository,
+            ApplicationEventPublisher publisher,
+            @Qualifier("downloadDirectory") String downloadDirectory) {
+        super(telegramUserService, groupRepository, publisher, downloadDirectory);
     }
 
     @Override

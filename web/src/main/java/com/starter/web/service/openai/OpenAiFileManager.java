@@ -8,10 +8,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 
-import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,32 +45,24 @@ public class OpenAiFileManager {
         final var fileFormat = filePath.substring(filePath.lastIndexOf('.') + 1);
         return switch (fileFormat) {
             case "pdf" -> new Pair<>(filePath, false);
-            case "jpg", "jpeg", "png" -> new Pair<>(imgToText(filePath, fileName), true);
+            case "jpg", "jpeg", "png" -> new Pair<>(imgToText(filePath, fileFormat), true);
             default -> throw new IllegalArgumentException("Unsupported file format: " + fileFormat);
         };
     }
 
     @SneakyThrows(IOException.class)
-    private String imgToText(String filePath, String fileName) {
+    private String imgToText(String filePath, String fileFormat) {
         // Load the image
-        final var file = new File(filePath);
-
-        // Determine the MIME type of the file
-        final var mimeType = Files.probeContentType(file.toPath());
-        if (mimeType == null) {
-            throw new IOException("Unable to determine MIME type for file: " + filePath);
-        }
-
-        // Make a request to OCR.Space
-        final var imageFilePath = file.getAbsolutePath();
-        final var base64Image = encodeFileToBase64Binary(imageFilePath);
-        final var data = "base64Image=" + "data:" + mimeType + ";base64," + base64Image;
         final var headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded");
+        headers.set(HttpHeaders.CONTENT_TYPE, "multipart/form-data");
         headers.set("apikey", OCR_API_KEY);
-        final var extractedText = httpService.postT(OCR_API_URL, data, String.class, headers);
+        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+        builder.part("url", filePath);
+        builder.part("filetype", fileFormat);
+        builder.part("isTable", "true");
+        final var extractedText = httpService.postT(OCR_API_URL, builder.build(), String.class, headers);
         // Save the extracted text to a file
-        final var outputFilePath = fileName + ".txt";
+        final var outputFilePath = System.currentTimeMillis() + ".txt";
         Files.write(Paths.get(outputFilePath), extractedText.getBytes());
 
         // Return the path to the created file
