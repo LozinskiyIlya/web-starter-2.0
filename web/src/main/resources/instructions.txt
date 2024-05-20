@@ -12,16 +12,16 @@ Tags:  From the list: ["Food", "Transport", "Entertainment", "Health", "Educatio
 
 Respond with nothing more than valid JSON of the format:
 {
-"buyer": "",
-"seller": "",
-"purpose" : "",
-"currency": "",
-"amount": "",
-"mentionedDate": ""
-"tags": []
+    "buyer": "",
+    "seller": "",
+    "purpose" : "",
+    "currency": "",
+    "amount": "",
+    "mentionedDate": ""
+    "tags": []
 }
 
-If you're sure that file is NOT payment-related return
+Only if you're absolutely sure that the file is NOT payment-related return
 {
-                "payment_related": false
+    "payment_related": false
 }
