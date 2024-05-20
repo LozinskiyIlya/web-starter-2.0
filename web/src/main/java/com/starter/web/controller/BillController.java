@@ -7,6 +7,7 @@ import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
+import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.GroupRepository;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Stream;
 
 import static com.starter.telegram.service.TelegramBillService.SelfMadeMessage;
@@ -93,17 +95,43 @@ public class BillController {
         if (!bill.getGroup().getOwner().getId().equals(currentUser.getId())) {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
+        skipBill(bill, currentUser.getUserInfo());
+    }
+
+    @DeleteMapping("")
+    @Operation(summary = "Skip bills in batch", description = "Mark bills as skipped, NOT deleting them entirely")
+    public void skipAll(@RequestBody List<UUID> ids) {
+        // on empty list do nothing
+        if (ids.isEmpty()) {
+            return;
+        }
+
+        // check rights to skip
+        final var bills = billRepository.findAllById(ids);
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        if (!bills.get(0).getGroup().getOwner().getId().equals(currentUser.getId())) {
+            throw new Exceptions.WrongUserException("You can't skip this bill");
+        }
+        // skip all bills
+        bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
+    }
+
+    private void skipBill(Bill bill, UserInfo currentUserInfo) {
         bill.setStatus(Bill.BillStatus.SKIPPED);
         billRepository.save(bill);
-        //todo: refactor this
         if (bill.getMessageId() == null) {
             return;
         }
-        final var tgMessage = new SelfMadeMessage();
-        tgMessage.setMessageId(bill.getMessageId());
-        final var message = messageRenderer.renderBillSkipped(currentUser.getUserInfo().getTelegramChatId(), bill, tgMessage);
-        telegramBot.execute(message);
-        //todo: refactor this
+
+        // todo: refactor this
+        new FutureTask<Void>(() -> {
+            final var tgMessage = new SelfMadeMessage();
+            tgMessage.setMessageId(bill.getMessageId());
+            final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
+            telegramBot.execute(message);
+            return null;
+        }).run();
+        // todo: refactor this
     }
 
     @GetMapping("/tags")

@@ -41,9 +41,9 @@ public class CustomFileUtils {
     public static void deleteLocalFile(String filePath) {
         File file = new File(filePath);
         if (file.delete()) {
-            log.info("File deleted successfully: " + filePath);
+            log.info("File deleted successfully from local: " + filePath);
         } else {
-            log.error("Failed to delete the file: " + filePath);
+            log.error("Failed to delete local the file: " + filePath);
         }
     }
 }

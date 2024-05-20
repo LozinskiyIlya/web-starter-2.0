@@ -37,6 +37,7 @@ public class ImgToTextTransformer {
         builder.part("filetype", fileFormat);
         builder.part("isTable", "true");
         final var ocrResponse = httpService.postT(OCR_API_URL, builder.build(), OcrResponse.class, headers);
+        log.info("OCR response: {}", ocrResponse);
         final var extractedText = ocrResponse.getParsedResults()
                 .stream()
                 .map(OcrResponse.ParsedResult::getParsedText)
