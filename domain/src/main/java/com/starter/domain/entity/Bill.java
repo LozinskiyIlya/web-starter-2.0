@@ -54,6 +54,7 @@ public class Bill extends AbstractEntity {
     private Double amount;
     private Instant mentionedDate;
     private Integer messageId;
+    private String modelResponse;
     public enum BillStatus {
         NEW, SENT, CONFIRMED, SKIPPED
     }
