@@ -4,6 +4,7 @@ package com.starter.domain.repository;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -21,11 +22,17 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
     @Query("select b from Bill b where b.group = :group and b.status <> 'SKIPPED'")
     Page<Bill> findAllNotSkippedByGroup(Group group, Pageable pageable);
 
-    @Query("select b from Bill b where b.group = :group and b.status <> 'SKIPPED' order by b.mentionedDate desc")
-    Bill findFirstNotSkippedByGroupOrderByMentionedDateDesc(Group group);
-
     @Query("select count(b) from Bill b where b.group = :group and b.status <> 'SKIPPED'")
     Long countNotSkippedByGroup(Group group);
+
+    @Query("select b from Bill b where b.group = :group and b.status <> 'SKIPPED' order by b.mentionedDate desc")
+    List<Bill> findFirstNotSkippedByGroupOrderByMentionedDateDesc(Group group, Pageable pageable);
+
+    default Bill findFirstNotSkippedByGroupOrderByMentionedDateDesc(Group group) {
+        Pageable pageable = PageRequest.of(0, 1);
+        List<Bill> bills = findFirstNotSkippedByGroupOrderByMentionedDateDesc(group, pageable);
+        return bills.isEmpty() ? null : bills.get(0);
+    }
 
     List<Bill> findAllByGroup(Group group);
 }
