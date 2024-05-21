@@ -25,8 +25,8 @@ public class GroupMapper {
     public GroupDto toDto(Group group) {
         return staticMapper.toDto(
                 group,
-                billRepository.findFirstByGroupOrderByMentionedDateDesc(group),
-                billRepository.countByGroup(group),
+                billRepository.findFirstNotSkippedByGroupOrderByMentionedDateDesc(group),
+                billRepository.countNotSkippedByGroup(group),
                 groupRepository.countMembers(group)
         );
     }

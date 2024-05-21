@@ -21,7 +21,6 @@ import java.util.UUID;
  */
 
 public interface GroupRepository extends Repository<Group>, PagingAndSortingRepository<Group, UUID> {
-    Page<Group> findAllByOwner(User owner, Pageable pageable);
 
     Optional<Group> findByChatId(Long chatId);
 
@@ -32,6 +31,7 @@ public interface GroupRepository extends Repository<Group>, PagingAndSortingRepo
             join Bill b
             on g = b.group
             where g.owner = :owner
+            and b.status <> 'SKIPPED'
             group by g
             order by max(b.mentionedDate) desc
             """)

@@ -1,11 +1,9 @@
 package com.starter.web;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteSource;
 import com.starter.common.service.JwtProvider;
@@ -13,8 +11,6 @@ import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
-import com.starter.web.dto.GroupDto;
-import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,17 +19,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.util.Pair;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -204,45 +201,31 @@ public abstract class AbstractSpringIntegrationTest {
 
     @TestConfiguration
     static class AbstractSpringIntegrationTestConfig {
-
-        @Autowired
-        private ObjectMapper mapper;
-
-        @PostConstruct
-        void configure() {
-            SimpleModule module = new SimpleModule();
-            module.addDeserializer(Page.class, new PageDeserializer<>(GroupDto.class));
-            mapper.registerModule(module);
-        }
     }
 
+    protected static class RestResponsePage<T> extends PageImpl<T> {
 
-    static class PageDeserializer<T> extends JsonDeserializer<Page<T>> {
+        @Serial
+        private static final long serialVersionUID = 3248189030448292002L;
 
-        private final Class<T> clazz;
-
-        public PageDeserializer(Class<T> clazz) {
-            this.clazz = clazz;
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+        public RestResponsePage(@JsonProperty("content") List<T> content, @JsonProperty("number") int number, @JsonProperty("size") int size,
+                                @JsonProperty("totalElements") Long totalElements, @JsonProperty("pageable") JsonNode pageable, @JsonProperty("last") boolean last,
+                                @JsonProperty("totalPages") int totalPages, @JsonProperty("sort") JsonNode sort, @JsonProperty("first") boolean first,
+                                @JsonProperty("numberOfElements") int numberOfElements) {
+            super(content, PageRequest.of(number, size), totalElements);
         }
 
-        @Override
-        public Page<T> deserialize(JsonParser p, DeserializationContext ctxt)
-                throws IOException {
-            ObjectMapper mapper = (ObjectMapper) p.getCodec();
-            JsonNode node = mapper.readTree(p);
+        public RestResponsePage(List<T> content, Pageable pageable, long total) {
+            super(content, pageable, total);
+        }
 
-            JsonNode contentNode = node.get("content");
-            JsonNode totalElementsNode = node.get("totalElements");
-            JsonNode numberNode = node.get("number");
-            JsonNode sizeNode = node.get("size");
+        public RestResponsePage(List<T> content) {
+            super(content);
+        }
 
-            List<T> content = mapper.readValue(contentNode.traverse(mapper),
-                    mapper.getTypeFactory().constructCollectionType(List.class, clazz));
-            long totalElements = totalElementsNode.asLong();
-            int number = numberNode.asInt();
-            int size = sizeNode.asInt();
-
-            return new PageImpl<>(content, PageRequest.of(number, size), totalElements);
+        public RestResponsePage() {
+            super(new ArrayList<T>());
         }
     }
 }

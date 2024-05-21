@@ -46,9 +46,9 @@ public class GroupService {
     public List<GroupMemberDto> getGroupMembers(UUID groupId) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
-                .stream()
                 .map(Group::getMembers)
-                .flatMap(List::stream)
+                .orElseThrow(Exceptions.ResourceNotFoundException::new)
+                .stream()
                 .map(User::getUserInfo)
                 .map(groupMapper::toGroupMemberDto)
                 .toList();
@@ -58,7 +58,7 @@ public class GroupService {
     public Page<BillDto> getGroupBills(UUID groupId, Pageable pageable) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
-                .map(group -> billRepository.findAllByGroup(group, pageable))
+                .map(group -> billRepository.findAllNotSkippedByGroup(group, pageable))
                 .map(page -> page.map(billMapper::toDto))
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
 
@@ -95,7 +95,7 @@ public class GroupService {
 
     public List<GroupController.Total> getTotals(UUID groupId) {
         final var group = groupRepository.findById(groupId).orElseThrow(Exceptions.ResourceNotFoundException::new);
-        return billRepository.findAllByGroup(group)
+        return billRepository.findAllNotSkippedByGroup(group, Pageable.unpaged())
                 .stream()
                 .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)))
                 .entrySet()
