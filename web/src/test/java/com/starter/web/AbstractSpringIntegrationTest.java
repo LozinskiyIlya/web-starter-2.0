@@ -1,13 +1,20 @@
 package com.starter.web;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteSource;
+import com.starter.common.service.JwtProvider;
 import com.starter.domain.entity.Role;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
-import com.starter.common.service.JwtProvider;
+import com.starter.web.dto.GroupDto;
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +23,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.util.Pair;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
@@ -193,5 +204,45 @@ public abstract class AbstractSpringIntegrationTest {
 
     @TestConfiguration
     static class AbstractSpringIntegrationTestConfig {
+
+        @Autowired
+        private ObjectMapper mapper;
+
+        @PostConstruct
+        void configure() {
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(Page.class, new PageDeserializer<>(GroupDto.class));
+            mapper.registerModule(module);
+        }
+    }
+
+
+    static class PageDeserializer<T> extends JsonDeserializer<Page<T>> {
+
+        private final Class<T> clazz;
+
+        public PageDeserializer(Class<T> clazz) {
+            this.clazz = clazz;
+        }
+
+        @Override
+        public Page<T> deserialize(JsonParser p, DeserializationContext ctxt)
+                throws IOException {
+            ObjectMapper mapper = (ObjectMapper) p.getCodec();
+            JsonNode node = mapper.readTree(p);
+
+            JsonNode contentNode = node.get("content");
+            JsonNode totalElementsNode = node.get("totalElements");
+            JsonNode numberNode = node.get("number");
+            JsonNode sizeNode = node.get("size");
+
+            List<T> content = mapper.readValue(contentNode.traverse(mapper),
+                    mapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            long totalElements = totalElementsNode.asLong();
+            int number = numberNode.asInt();
+            int size = sizeNode.asInt();
+
+            return new PageImpl<>(content, PageRequest.of(number, size), totalElements);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.starter.web.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
@@ -11,14 +12,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import static com.starter.domain.repository.testdata.TimeTestData.TODAY_INSTANT;
+import static com.starter.domain.repository.testdata.TimeTestData.YESTERDAY_INSTANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -56,14 +61,9 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("is expected get all groups result")
         void returnsExpectedGetAllGroupsResult() {
             final var auth = token.get();
-            final var result = mockMvc.perform(getRequest("")
+            mockMvc.perform(getRequest("")
                             .header(auth.getFirst(), auth.getSecond()))
                     .andExpect(expectedStatusGetAll.get());
-            if (expectedStatusGet.get().equals(status().is2xxSuccessful())) {
-                final var response = result.andReturn().getResponse().getContentAsString();
-                final var groups = mapper.readValue(response, GroupDto[].class);
-                assertThat(groups).hasSize(1);
-            }
         }
 
 
@@ -73,13 +73,14 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         void returnsExpectedChangeGroupResult() {
             final var auth = token.get();
             final var currency = "IDR";
-            mockMvc.perform(postRequest("/" + group.get().getId() + "/currency")
+            final var id = group.get().getId();
+            final var status = mockMvc.perform(postRequest("/" + id + "/currency")
                             .header(auth.getFirst(), auth.getSecond())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"currency\":\"" + currency + "\"}"))
-                    .andExpect(expectedStatusPost.get());
-            if (expectedStatusPost.get().equals(status().is2xxSuccessful())) {
-                final var changed = billTestDataCreator.groupRepository().findById(group.get().getId()).orElseThrow();
+                    .andExpect(expectedStatusPost.get()).andReturn().getResponse().getStatus();
+            if (status == 200) {
+                final var changed = billTestDataCreator.groupRepository().findById(id).orElseThrow();
                 assertEquals(currency, changed.getDefaultCurrency());
             }
         }
@@ -164,9 +165,9 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         void groupMappedProperly() {
             // given
             final var group = this.group.get();
-            final var auth = token.get();
             final var bill = billTestDataCreator.givenBillExists(b -> b.setGroup(group));
             // when
+            final var auth = token.get();
             final var response = mockMvc.perform(getRequest("/" + group.getId())
                             .header(auth.getFirst(), auth.getSecond()))
                     .andExpect(expectedStatusGet.get())
@@ -183,6 +184,40 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             assertThat(lastBill.getAmount()).isEqualTo(bill.getAmount());
             assertThat(lastBill.getCurrency()).isEqualTo(bill.getCurrency());
             assertThat(lastBill.getPurpose()).isEqualTo(bill.getPurpose());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and groups sorted by last bill")
+        void groupsSortedByLastBill() {
+            // given
+            final var group = this.group.get();
+            final var anotherGroup = billTestDataCreator.givenGroupExists(g -> g.setOwner(group.getOwner()));
+            billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(anotherGroup);
+                b.setMentionedDate(TODAY_INSTANT);
+            });
+            billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(group);
+                b.setMentionedDate(YESTERDAY_INSTANT);
+            });
+            // when
+            final var auth = token.get();
+            final var response = mockMvc.perform(getRequest("")
+                            .header(auth.getFirst(), auth.getSecond()))
+                    .andExpect(expectedStatusGet.get())
+                    .andReturn().getResponse().getContentAsString();
+            // then
+            final var groups = mapper.readValue(response, new TypeReference<Page<GroupDto>>() {
+            });
+            assertEquals(2, groups.getContent().size());
+            final var dates = groups.getContent()
+                    .stream()
+                    .map(GroupDto::getLastBill)
+                    .map(GroupDto.GroupLastBillDto::getDate)
+                    .map(Instant::parse)
+                    .map(Instant::toEpochMilli).toList();
+            isSortedDescending(dates);
         }
     }
 
