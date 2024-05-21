@@ -165,7 +165,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             // given
             final var group = this.group.get();
             final var auth = token.get();
-            billTestDataCreator.givenBillExists(b -> b.setGroup(group));
+            final var bill = billTestDataCreator.givenBillExists(b -> b.setGroup(group));
             // when
             final var response = mockMvc.perform(getRequest("/" + group.getId())
                             .header(auth.getFirst(), auth.getSecond()))
@@ -177,6 +177,12 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             assertThat(dto.getTitle()).isEqualTo(group.getTitle());
             assertThat(dto.getBillsCount()).isEqualTo(1);
             assertThat(dto.getMembersCount()).isEqualTo(1);
+            final var lastBill = dto.getLastBill();
+            assertThat(lastBill).isNotNull();
+            assertThat(lastBill.getId()).isEqualTo(bill.getId());
+            assertThat(lastBill.getAmount()).isEqualTo(bill.getAmount());
+            assertThat(lastBill.getCurrency()).isEqualTo(bill.getCurrency());
+            assertThat(lastBill.getPurpose()).isEqualTo(bill.getPurpose());
         }
     }
 

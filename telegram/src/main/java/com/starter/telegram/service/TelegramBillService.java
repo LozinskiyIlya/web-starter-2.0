@@ -69,7 +69,7 @@ public class TelegramBillService {
         final var ownerInfo = group.getOwner().getUserInfo();
         if (bill.getMessageId() != null) {
             // update message in owner chat
-            final var tgMessage = new SelfMadeMessage();
+            final var tgMessage = new SelfMadeTelegramMessage();
             tgMessage.setMessageId(bill.getMessageId());
             final var message = renderer.renderBillUpdate(ownerInfo.getTelegramChatId(), bill, tgMessage);
             bot.execute(message);
@@ -91,7 +91,7 @@ public class TelegramBillService {
     @Deprecated
     @Data
     @EqualsAndHashCode(callSuper = true)
-    public static class SelfMadeMessage extends Message {
+    public static class SelfMadeTelegramMessage extends Message {
         public void setMessageId(int messageId) {
             super.message_id = messageId;
         }

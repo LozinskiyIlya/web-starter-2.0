@@ -28,7 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.FutureTask;
 import java.util.stream.Stream;
 
-import static com.starter.telegram.service.TelegramBillService.SelfMadeMessage;
+import static com.starter.telegram.service.TelegramBillService.SelfMadeTelegramMessage;
 
 @Slf4j
 @RestController
@@ -125,7 +125,7 @@ public class BillController {
 
         // todo: refactor this
         new FutureTask<Void>(() -> {
-            final var tgMessage = new SelfMadeMessage();
+            final var tgMessage = new SelfMadeTelegramMessage();
             tgMessage.setMessageId(bill.getMessageId());
             final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
             telegramBot.execute(message);
