@@ -152,7 +152,7 @@ public class OpenAiAssistant {
             {
                 "payment_related": true | false
             }
-            Return false only if you're absolutely sure that the message is not related to payments.
+            It is most likely true if there is an amount and the purpose mentioned in the message.
             """;
     private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
     private static final String FILE_PROMPT = "%s\n%s\nAnalyse the file according to your instructions";

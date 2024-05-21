@@ -250,6 +250,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             });
             mockMvc.perform(deleteRequest("/" + bill.getId()))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(deleteRequest(""))
+                    .andExpect(status().isForbidden());
         }
 
         @SneakyThrows
@@ -289,6 +291,28 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             // then
             final var skippedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertThat(skippedBill.getStatus()).isEqualTo(Bill.BillStatus.SKIPPED);
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("all bills skipped")
+        void allBillSkipped() {
+            // given
+            final var bill = billTestDataCreator.givenBillExists(b -> {
+            });
+            final var anotherBill = billTestDataCreator.givenBillExists(b -> {
+            });
+            final var ids = List.of(bill.getId(), anotherBill.getId());
+            // when
+            final var token = userAuthHeader(bill.getGroup().getOwner());
+            mockMvc.perform(deleteRequest("")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(ids)))
+                    .andExpect(status().isOk());
+            // then
+            billTestDataCreator.billRepository().findAllById(ids)
+                    .forEach(b -> assertThat(b.getStatus()).isEqualTo(Bill.BillStatus.SKIPPED));
         }
     }
 
