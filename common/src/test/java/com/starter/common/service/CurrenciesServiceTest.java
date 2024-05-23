@@ -17,13 +17,13 @@ class CurrenciesServiceTest {
     @Test
     @DisplayName("returns currency symbol by currency code")
     void getCurrencySymbol() {
-        assertEquals("€", currenciesService.getCurrencySymbol("EUR"));
-        assertEquals("$", currenciesService.getCurrencySymbol("USD"));
+        assertEquals("€", currenciesService.getSymbol("EUR"));
+        assertEquals("$", currenciesService.getSymbol("USD"));
     }
 
     @Test
     @DisplayName("returns currency code if currency code is not found")
     void getCurrencySymbolNotFound() {
-        assertEquals("INVALID_CODE", currenciesService.getCurrencySymbol("INVALID_CODE"));
+        assertEquals("INVALID_CODE", currenciesService.getSymbol("INVALID_CODE"));
     }
 }

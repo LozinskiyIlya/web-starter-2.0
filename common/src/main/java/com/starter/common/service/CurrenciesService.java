@@ -28,7 +28,7 @@ public class CurrenciesService {
         currencies.putAll(tempMap);
     }
 
-    public String getCurrencySymbol(String code) {
+    public String getSymbol(String code) {
         if (currencies.containsKey(code)) {
             return currencies.get(code).getSymbol();
         }

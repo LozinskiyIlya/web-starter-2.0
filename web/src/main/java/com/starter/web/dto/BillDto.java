@@ -3,8 +3,8 @@ package com.starter.web.dto;
 
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
+import com.starter.web.dto.GroupDto.GroupLightDto;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -27,7 +27,7 @@ public class BillDto {
     private String createdAt;
     private Bill.BillStatus status;
     private Set<BillTagDto> tags;
-    private GroupDto group;
+    private GroupLightDto group;
 
     @Data
     public static class BillTagDto {

@@ -64,7 +64,7 @@ public class TelegramMessageRenderer {
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_UPDATE_TEMPLATE
                 .replaceAll("#amount#", bill.getAmount().toString())
-                .replace("#currency#", currenciesService.getCurrencySymbol(bill.getCurrency()))
+                .replace("#currency#", currenciesService.getSymbol(bill.getCurrency()))
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("bill", bill.getId()));
         return tryUpdateMessage(chatId, message, textPart);
     }

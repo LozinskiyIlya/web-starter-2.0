@@ -1,5 +1,6 @@
 package com.starter.web.mapper;
 
+import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
@@ -8,10 +9,16 @@ import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.GroupDto;
 import com.starter.web.dto.GroupDto.GroupLastBillDto;
 import com.starter.web.dto.GroupDto.GroupMemberDto;
+import com.starter.web.dto.GroupDto.TotalDto;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -21,18 +28,70 @@ public class GroupMapper {
     private final StaticGroupMapper staticMapper;
     private final BillRepository billRepository;
     private final GroupRepository groupRepository;
+    private final CurrenciesService currenciesService;
 
     public GroupDto toDto(Group group) {
-        return staticMapper.toDto(
+        final var dto = staticMapper.toDto(
                 group,
                 billRepository.findFirstNotSkippedByGroupOrderByMentionedDateDesc(group),
-                billRepository.countNotSkippedByGroup(group),
-                groupRepository.countMembers(group)
+                groupRepository.countMembers(group),
+                billRepository.countNotSkippedByGroup(group)
         );
+        enrichWithChartData(group, dto);
+        return dto;
     }
 
     public GroupMemberDto toGroupMemberDto(UserInfo userInfo) {
         return staticMapper.toGroupMemberDto(userInfo);
+    }
+
+    private void enrichWithChartData(Group source, GroupDto target) {
+        final var chartData = new GroupDto.ChartDataDto();
+        // Set total amount for each currency
+        chartData.setTotals(getTotals(source));
+        // In group view we show chart only for the default or the most used currency
+        final var currency = selectCurrency(source, chartData.getTotals());
+        chartData.setCurrency(currency);
+        chartData.setCurrencySymbol(currenciesService.getSymbol(currency));
+        // Now for that currency select amount per tag
+        final var data = billRepository.findTagAmountsByGroupAndCurrency(source, currency);
+        chartData.setData(data);
+        target.setChartData(chartData);
+    }
+
+    private String selectCurrency(Group group, List<TotalDto> totals) {
+        // Check for the default currency in the group, or find the most used currency if not present
+        String currency = Optional.ofNullable(group.getDefaultCurrency())
+                .orElseGet(() -> billRepository.findMostUsedCurrencyByGroup(group));
+
+        // Check if the selected currency is present in the totals list
+        boolean currencyExistsInTotals = totals.stream()
+                .map(TotalDto::getCurrency)
+                .anyMatch(currency::equals);
+
+        // If the currency is not found in the totals list, use the currency from the first total
+        if (!currencyExistsInTotals) {
+            currency = totals.stream()
+                    .findFirst()
+                    .map(TotalDto::getCurrency)
+                    .orElse("");
+        }
+
+        return currency;
+    }
+
+    private List<TotalDto> getTotals(Group group) {
+        return billRepository.findAllNotSkippedByGroup(group, Pageable.unpaged()).stream()
+                .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)))
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    final var total = new TotalDto();
+                    total.setCurrency(entry.getKey());
+                    total.setTotal(entry.getValue());
+                    return total;
+                })
+                .toList();
     }
 
     @Mapper(componentModel = "spring")
@@ -40,7 +99,7 @@ public class GroupMapper {
 
         @Mapping(target = "ownerId", source = "group.owner.id")
         @Mapping(target = "id", source = "group.id")
-        GroupDto toDto(Group group, Bill lastBill, long billsCount, long membersCount);
+        GroupDto toDto(Group group, Bill lastBill, long membersCount, long billsCount);
 
         @Mapping(target = "name", expression = "java(userInfo.getFullName())")
         @Mapping(target = "id", source = "userInfo.user.id")

@@ -2,12 +2,10 @@ package com.starter.web.service.bill;
 
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
-import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
-import com.starter.web.controller.GroupController;
 import com.starter.web.dto.BillDto;
 import com.starter.web.dto.GroupDto;
 import com.starter.web.dto.GroupDto.GroupMemberDto;
@@ -22,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -91,21 +88,5 @@ public class GroupService {
                 .filter(group::contains)
                 .map(user -> true)
                 .orElseThrow(Exceptions.WrongUserException::new);
-    }
-
-    public List<GroupController.Total> getTotals(UUID groupId) {
-        final var group = groupRepository.findById(groupId).orElseThrow(Exceptions.ResourceNotFoundException::new);
-        return billRepository.findAllNotSkippedByGroup(group, Pageable.unpaged())
-                .stream()
-                .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)))
-                .entrySet()
-                .stream()
-                .map(entry -> {
-                    final var total = new GroupController.Total();
-                    total.setCurrency(entry.getKey());
-                    total.setTotal(entry.getValue());
-                    return total;
-                })
-                .toList();
     }
 }
