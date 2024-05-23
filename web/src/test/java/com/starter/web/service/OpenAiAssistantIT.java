@@ -26,16 +26,16 @@ public class OpenAiAssistantIT {
 
     @Test
     @Disabled
-    @DisplayName("Calls completions api")
-    void callsCompletionsApi() {
-        String response = openAiAssistant.completion("Hello, my name is John and I am a");
+    @DisplayName("Calls chat completions api")
+    void callsChatCompletionsApi() {
+        String response = openAiAssistant.chatCompletion("Some system message, ignore it", "Hello, my name is John and I am a");
         System.out.println(response);
     }
 
     @Test
     @Disabled
-    @DisplayName("Calls chat completions api")
-    void callsChatCompletionsApi() {
+    @DisplayName("Classifies message")
+    void classifiesMessage() {
         MessageClassificationResponse response = openAiAssistant.classifyMessage("Я расплатился с Username по всем платежам включая последний за Project");
         Assertions.assertTrue(response.isPaymentRelated());
 

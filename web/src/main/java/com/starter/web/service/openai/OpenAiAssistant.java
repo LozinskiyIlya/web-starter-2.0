@@ -2,7 +2,6 @@ package com.starter.web.service.openai;
 
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.fragments.MessageClassificationResponse;
-import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.messages.Message;
@@ -32,28 +31,31 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class OpenAiAssistant {
-    private static final String ASSISTANT_MODEL = "gpt-4-1106-preview";
-    private static final String MESSAGE_CLASSIFIER_MODEL = "gpt-4o";
+    private static final String ASSISTANT_MODEL = "gpt-4o";
     private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
     private static final int CHOICES = 1;
-    private static final int MAX_TOKENS = 512;
+    private static final int MAX_TOKENS = 1024;
     private static final int MAX_TEXT_LENGTH = 1024;
 
     private final OpenAiService openAiService;
     private final OpenAiFileManager openAiFileManager;
     private final AssistantResponseParser responseParser;
 
-    public String completion(String prompt) {
-        CompletionRequest completionRequest = CompletionRequest.builder()
+    public String chatCompletion(String system, String prompt) {
+        ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
                 .model(ASSISTANT_MODEL)
                 .n(CHOICES)
                 .stop(STOP)
+                .maxTokens(MAX_TOKENS)
                 .temperature(TEMPERATURE)
-                .prompt(prompt)
+                .messages(List.of(
+                        new ChatMessage("system", system),
+                        new ChatMessage("user", prompt)
+                ))
                 .build();
-        return openAiService.createCompletion(completionRequest).getChoices().get(0).getText();
+        return openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
     }
 
     public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
@@ -110,20 +112,15 @@ public class OpenAiAssistant {
     }
 
     public MessageClassificationResponse classifyMessage(String prompt) {
-        ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
-                .model(MESSAGE_CLASSIFIER_MODEL)
-                .n(CHOICES)
-                .maxTokens(MAX_TOKENS)
-                .stop(STOP)
-                .temperature(TEMPERATURE)
-                .messages(List.of(
-                        new ChatMessage("system", PRE_PROCESS_PROMPT),
-                        new ChatMessage("user", prompt)
-                ))
-                .build();
-        final var response = openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
+        final var response = chatCompletion(PRE_PROCESS_PROMPT, prompt);
         log.info("Text classification response: {}", response);
         return responseParser.parseClassification(response);
+    }
+
+    public String getInsights(String prompt) {
+        final var response = chatCompletion(INSIGHTS_INSTRUCTIONS, prompt);
+        log.info("Insights response: {}", response);
+        return response;
     }
 
     private String waitForPipelineCompletion(Run run) {
@@ -145,6 +142,13 @@ public class OpenAiAssistant {
         final var withed = text != null && text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) + "..." : text;
         return withed.trim();
     }
+
+    private static final String INSIGHTS_INSTRUCTIONS = """
+            Analyse the following bills and give short 2 sentences suggestions 'insights'.
+            Analyse trends over time, categories, amounts, and other patterns.
+            Do not go into great details by mentioning exact bill entry anywhere, keep it simple and clear.
+            Do not include markup, your response should look like a short paragraph. The shorter the better.
+            """;
 
     private static final String PRE_PROCESS_PROMPT = """
             Is this a payment related message?

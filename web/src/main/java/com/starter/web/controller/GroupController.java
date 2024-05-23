@@ -38,6 +38,11 @@ public class GroupController {
         return groupService.getGroup(groupId);
     }
 
+    @GetMapping("/{groupId}/insights")
+    public String getInsights(@PathVariable UUID groupId) {
+        return groupService.getInsights(groupId);
+    }
+
     @GetMapping("/{groupId}/members")
     public List<GroupMemberDto> getGroupMembers(@PathVariable UUID groupId) {
         return groupService.getGroupMembers(groupId);

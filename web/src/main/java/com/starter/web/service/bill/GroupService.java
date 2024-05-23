@@ -1,5 +1,6 @@
 package com.starter.web.service.bill;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Group;
@@ -11,8 +12,10 @@ import com.starter.web.dto.GroupDto;
 import com.starter.web.dto.GroupDto.GroupMemberDto;
 import com.starter.web.mapper.BillMapper;
 import com.starter.web.mapper.GroupMapper;
+import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,11 +28,14 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class GroupService {
+
     private final CurrentUserService currentUserService;
     private final GroupRepository groupRepository;
     private final GroupMapper groupMapper;
     private final BillRepository billRepository;
     private final BillMapper billMapper;
+    private final OpenAiAssistant assistant;
+    private final ObjectMapper objectMapper;
 
 
     public Page<GroupDto> getGroups(Pageable pageable) {
@@ -83,10 +89,28 @@ public class GroupService {
                 });
     }
 
+
+    public String getInsights(UUID groupId) {
+        return groupRepository.findById(groupId)
+                .filter(this::hasAccessToViewGroup)
+                .map(this::requestInsights)
+                .orElseThrow(Exceptions.ResourceNotFoundException::new);
+    }
+
     private boolean hasAccessToViewGroup(Group group) {
         return currentUserService.getUser()
                 .filter(group::contains)
                 .map(user -> true)
                 .orElseThrow(Exceptions.WrongUserException::new);
+    }
+
+    @SneakyThrows(Exception.class)
+    private String requestInsights(Group group) {
+        final var bills = billRepository.findAllNotSkippedByGroup(group, Pageable.unpaged())
+                .stream()
+                .map(billMapper::toDto)
+                .toList();
+        final var json = objectMapper.writeValueAsString(bills);
+        return assistant.getInsights(json);
     }
 }
