@@ -12,11 +12,13 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.starter.domain.entity.Bill.DEFAULT_CURRENCY;
@@ -38,22 +40,26 @@ public class ChartsController {
     @GetMapping({"/{groupId}", ""})
     public ChartData getChartsData(
             @PathVariable(value = "groupId", required = false) UUID groupId,
-            @RequestParam(value = "currency", required = false) String currency) {
+            @RequestParam(value = "currency", required = false) String currency,
+            @RequestParam(value = "from", required = false) Instant from,
+            @RequestParam(value = "to", required = false) Instant to) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var groups = groupId == null ?
                 groupRepository.findAllByOwner(currentUser) :
                 List.of(groupRepository.findById(groupId).orElseThrow());
+        final var fromDefault = from == null ? LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant() : from;
+        final var toDefault = to == null ? Instant.now() : to;
         final var bills = billRepository.findAllNotSkippedByGroupIn(groups, Pageable.unpaged()).toList();
         final var chartData = new ChartData();
         chartData.setTotals(chartsService.getTotals(bills));
         chartData.setCurrencies(chartsService.getCurrencies(groups));
-        chartData.setCurrencyByWeek(chartsService.getCurrencyByWeek(bills));
-        final var selectedCurrency = currency == null ?
+        final var selectedCurrency = StringUtils.hasText(currency) ?
+                currency :
                 groups.stream().findFirst().map(Group::getDefaultCurrency)
                         .orElse(chartData.getCurrencies().stream().findFirst()
-                                .orElse(DEFAULT_CURRENCY)) :
-                currency;
+                                .orElse(DEFAULT_CURRENCY));
         chartData.setSelectedCurrency(selectedCurrency);
+        chartData.setTimeline(chartsService.getTimeline(bills, fromDefault, toDefault, selectedCurrency));
         chartData.setCurrencySymbol(currenciesService.getSymbol(selectedCurrency));
         chartData.setAmountByTag(chartsService.getAmountPerTag(groups, selectedCurrency));
         return chartData;
@@ -65,14 +71,14 @@ public class ChartsController {
         String selectedCurrency;
         String currencySymbol;
         List<String> currencies;
-        List<CurrencyByWeek> currencyByWeek;
+        List<Timeline> timeline;
         List<TagAmount> amountByTag;
         List<TotalDto> totals;
     }
 
     @Data
-    public static class CurrencyByWeek {
-        private String currency;
-        private Map<Instant, Integer> byWeek;
+    public static class Timeline {
+        private Instant date;
+        private Double amount;
     }
 }

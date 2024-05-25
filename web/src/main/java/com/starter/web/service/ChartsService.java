@@ -4,7 +4,7 @@ import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillRepository.TagAmount;
-import com.starter.web.controller.ChartsController.CurrencyByWeek;
+import com.starter.web.controller.ChartsController.Timeline;
 import com.starter.web.dto.GroupDto.TotalDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -53,27 +50,22 @@ public class ChartsService {
         return billRepository.findMostUsedCurrenciesByGroupIn(groups, Pageable.unpaged());
     }
 
-    public List<CurrencyByWeek> getCurrencyByWeek(List<Bill> bills) {
+    public List<Timeline> getTimeline(List<Bill> bills, Instant from, Instant to, String selectedCurrency) {
         return bills.stream()
-                .collect(Collectors.groupingBy(Bill::getCurrency, // Group by currency
-                        Collectors.groupingBy(bill -> getStartOfWeek(bill.getMentionedDate())))) // Group by the start of the week
-                .entrySet().stream()
-                .map(currencyEntry -> {
-                    CurrencyByWeek currencyByWeek = new CurrencyByWeek();
-                    currencyByWeek.setCurrency(currencyEntry.getKey());
-                    currencyByWeek.setByWeek(currencyEntry.getValue().entrySet().stream()
-                            .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    entry -> entry.getValue().size()))); // Count the bills in each week
-                    return currencyByWeek;
+                .filter(bill -> bill.getMentionedDate().isAfter(from) && bill.getMentionedDate().isBefore(to))
+                .filter(bill -> selectedCurrency.equals(bill.getCurrency()))
+                .collect(Collectors.groupingBy(bill ->
+                                bill.getMentionedDate().atZone(ZoneId.systemDefault()).toLocalDate(),
+                        Collectors.summingDouble(Bill::getAmount)))
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    final var timeline = new Timeline();
+                    timeline.setDate(entry.getKey().atStartOfDay(ZoneId.systemDefault()).toInstant());
+                    timeline.setAmount(entry.getValue());
+                    return timeline;
                 })
-                .collect(Collectors.toList());
-    }
-
-    private static Instant getStartOfWeek(Instant date) {
-        ZonedDateTime zonedDateTime = date.atZone(ZoneId.systemDefault());
-        ZonedDateTime startOfWeek = zonedDateTime.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
-                .truncatedTo(ChronoUnit.DAYS);
-        return startOfWeek.toInstant();
+                .sorted(Comparator.comparing(Timeline::getDate))
+                .toList();
     }
 }
