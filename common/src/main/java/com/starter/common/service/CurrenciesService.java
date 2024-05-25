@@ -1,5 +1,6 @@
 package com.starter.common.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -30,7 +31,7 @@ public class CurrenciesService {
 
     public String getSymbol(String code) {
         if (currencies.containsKey(code)) {
-            return currencies.get(code).getSymbol();
+            return currencies.get(code).getSymbolNative();
         }
         return code;
     }
@@ -39,10 +40,13 @@ public class CurrenciesService {
     private static class Currency {
         private String symbol;
         private String name;
+        @JsonProperty("symbol_native")
         private String symbolNative;
+        @JsonProperty("decimal_digits")
         private int decimalDigits;
         private int rounding;
         private String code;
+        @JsonProperty("name_plural")
         private String namePlural;
     }
 }

@@ -58,4 +58,6 @@ public class Bill extends AbstractEntity {
     public enum BillStatus {
         NEW, SENT, CONFIRMED, SKIPPED
     }
+
+    public static final String DEFAULT_CURRENCY = "USD";
 }

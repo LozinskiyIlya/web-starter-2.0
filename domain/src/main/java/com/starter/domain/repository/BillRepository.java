@@ -20,8 +20,8 @@ import java.util.UUID;
 
 public interface BillRepository extends Repository<Bill>, PagingAndSortingRepository<Bill, UUID> {
 
-    @Query("select b from Bill b where b.group = :group and b.status <> 'SKIPPED'")
-    Page<Bill> findAllNotSkippedByGroup(@Param("group") Group group, Pageable pageable);
+    @Query("select b from Bill b where b.group in (:groups) and b.status <> 'SKIPPED'")
+    Page<Bill> findAllNotSkippedByGroupIn(@Param("groups") List<Group> groups, Pageable pageable);
 
     @Query("select count(b) from Bill b where b.group = :group and b.status <> 'SKIPPED'")
     Long countNotSkippedByGroup(@Param("group") Group group);
@@ -33,16 +33,17 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
             "FROM Bill b " +
             "JOIN b.tags t " +
             "WHERE b.status <> 'SKIPPED' " +
-            "AND b.group = :group " +
+            "AND b.group in (:groups) " +
             "AND b.currency = :currency " +
             "GROUP BY t")
-    List<TagAmount> findTagAmountsByGroupAndCurrency(@Param("group") Group group, @Param("currency") String currency);
+    List<TagAmount> findTagAmountsByGroupInAndCurrency(@Param("groups") List<Group> groups, @Param("currency") String currency);
 
     @Query("SELECT b.currency FROM Bill b " +
-            "WHERE b.group = :group " +
+            "WHERE b.group in (:groups) " +
+            "AND b.status <> 'SKIPPED' " +
             "GROUP BY b.currency " +
             "ORDER BY COUNT(b.currency) DESC")
-    List<String> findMostUsedCurrencyByGroup(@Param("group") Group group, Pageable pageable);
+    List<String> findMostUsedCurrenciesByGroupIn(@Param("groups") List<Group> groups, Pageable pageable);
 
     default Bill findFirstNotSkippedByGroupOrderByMentionedDateDesc(Group group) {
         Pageable pageable = PageRequest.of(0, 1);
@@ -52,11 +53,17 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
 
     default String findMostUsedCurrencyByGroup(Group group) {
         Pageable pageable = PageRequest.of(0, 1);
-        List<String> currencies = findMostUsedCurrencyByGroup(group, pageable);
+        List<String> currencies = findMostUsedCurrenciesByGroupIn(List.of(group), pageable);
         return currencies.isEmpty() ? "" : currencies.get(0);
     }
 
+    default Page<Bill> findAllNotSkippedByGroup(Group group, Pageable pageable) {
+        return findAllNotSkippedByGroupIn(List.of(group), pageable);
+    }
+
     List<Bill> findAllByGroup(Group group);
+
+    List<Bill> findAllByGroupIn(List<Group> groups);
 
     interface TagAmount {
         String getName();
