@@ -1,15 +1,12 @@
 package com.starter.telegram.service.render;
 
 
-import com.pengrad.telegrambot.model.LinkPreviewOptions;
-import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.WebAppInfo;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
-import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.ServerProperties;
 import com.starter.common.service.CurrenciesService;
@@ -20,13 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
 
 @Slf4j
 @Service
@@ -36,9 +28,8 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
     private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
     private final static String BILL_TEMPLATE = "bill.txt";
-    private final static String BILL_UPDATE_TEMPLATE = "#amount##currency# confirmed. <a href='#edit_url#'>Edit</a>";
+    private final static String BILL_UPDATE_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
-    private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     private final TemplateReader templateReader;
 
@@ -63,8 +54,7 @@ public class TelegramMessageRenderer {
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_UPDATE_TEMPLATE
-                .replaceAll("#amount#", bill.getAmount().toString())
-                .replace("#currency#", currenciesService.getSymbol(bill.getCurrency()))
+                .replaceAll("#amount#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency())))
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("bill", bill.getId()));
         return tryUpdateMessage(chatId, message, textPart);
     }
@@ -119,68 +109,19 @@ public class TelegramMessageRenderer {
                 .parseMode(ParseMode.HTML);
     }
 
+    private WebAppInfo renderWebApp(String path, String pathVariable) {
+        return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
+    }
+
     private String renderCaption(Bill bill) {
         return templateReader.read(BILL_TEMPLATE)
                 .replaceAll("#group_name#", bill.getGroup().getTitle())
                 .replaceAll("#id#", renderId(bill.getId()))
                 .replaceAll("#buyer#", bill.getBuyer())
                 .replaceAll("#seller#", bill.getSeller())
-                .replaceAll("#amount#", bill.getAmount() + " " + bill.getCurrency())
+                .replaceAll("#amount#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency())))
                 .replaceAll("#purpose#", bill.getPurpose())
                 .replaceAll("#date#", renderDate(bill.getMentionedDate()))
                 .replaceAll("#tags#", renderTags(bill));
-    }
-
-    private static String renderTags(Bill bill) {
-        return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
-    }
-
-    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
-        // if the message is accessible, update it
-        try {
-            if (message instanceof Message && message.messageId() != -1) {
-                final var editRequest = new EditMessageText(chatId, message.messageId(), text)
-                        .parseMode(ParseMode.HTML)
-                        .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                        .disableWebPagePreview(true);
-                if (buttons != null && buttons.length > 0) {
-                    editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
-                }
-                return editRequest;
-            }
-        } catch (Exception e) {
-            log.error("Error while updating message", e);
-        }
-        // if the message is not accessible, send a new message
-        return linkPreviewOff(new SendMessage(chatId, text));
-    }
-
-    private static SendMessage linkPreviewOff(SendMessage request) {
-        return request.parseMode(ParseMode.HTML)
-                .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                .disableWebPagePreview(true);
-    }
-
-    private static String renderDate(Instant date) {
-        final var zoneId = ZoneId.systemDefault();
-        final var zonedDateTime = date.atZone(zoneId);
-        final var formatter = DateTimeFormatter.ofPattern("HH:mm dd.MM.yyyy");
-        return zonedDateTime.format(formatter);
-    }
-
-    private String renderId(UUID id) {
-        return String.format("<code>#%s</code>", id.toString().substring(0, 8));
-    }
-
-    private String renderTelegramUsername(UserInfo userInfo) {
-        return userInfo.getTelegramUsername() != null ? userInfo.getTelegramUsername() : userInfo.getTelegramChatId().toString();
-    }
-
-    private String renderWebAppDirectUrl(String paramName, UUID id) {
-        return WEB_APP_DIRECT_URL + "?startapp=" + paramName + "_" + id;
-    }
-
-    private WebAppInfo renderWebApp(String path, String pathVariable) {
-        return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
     }
 }

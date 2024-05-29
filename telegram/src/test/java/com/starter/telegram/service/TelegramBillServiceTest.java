@@ -52,7 +52,7 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
             final var ownerInfo = userTestDataCreator.givenUserInfoExists();
             final var bill = billTestDataCreator.givenBillExists(b -> {
                 b.setGroup(billTestDataCreator.givenGroupExists(g -> g.setOwner(ownerInfo.getUser())));
-                b.setAmount(100d);
+                b.setAmount(100.0);
                 b.setCurrency("USD");
                 b.setMessageId(random.nextInt());
             });
@@ -61,7 +61,7 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
             //then
             verify(bot).execute(Mockito.any(EditMessageText.class));
             assertMessageSentToChatId(bot, ownerInfo.getTelegramChatId());
-            assertSentMessageContainsText(bot, "100.0$ confirmed.");
+            assertSentMessageContainsText(bot, "100$ confirmed.");
         }
 
         @Test

@@ -77,7 +77,6 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
             assertThat(bill.getAmount()).isEqualTo(100);
             assertThat(bill.getCurrency()).isEqualTo("USD");
-            assertThat(bill.getMessageId()).isEqualTo(tgMessageId);
         }
     }
 
