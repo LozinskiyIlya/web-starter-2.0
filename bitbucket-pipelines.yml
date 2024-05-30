@@ -30,7 +30,6 @@ pipelines:
                     PORT: 19777
                     COMMAND: >-
                       cd /var/www/aicounting/back &&
-                      ls -al &&
                       git fetch --all &&
                       git checkout ${BITBUCKET_BRANCH:-'develop'} &&
                       git pull &&
