@@ -119,4 +119,12 @@ public class OpenAiAssistantIT {
             fileUrl = () -> "https://api.telegram.org/file/bot7126952763:AAH5WcT1TPGBS53WIGYNASsgao8D2UnhRR8/photos/file_0.jpg";
         }
     }
+
+    @Nested
+    @DisplayName("For JPG files")
+    class RunJPGFilePipeline extends RunFilePipeline {
+        {
+            fileUrl = () -> "https://i.ibb.co.com/23Jhfqm/Invoice1.jpg";
+        }
+    }
 }

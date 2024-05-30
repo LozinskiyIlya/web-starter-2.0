@@ -24,6 +24,7 @@ public class ImgToTextTransformer {
     private String OCR_API_KEY;
     private static final String OCR_API_URL = "https://api.ocr.space/parse/image";
     private final HttpService httpService;
+    private final String downloadDirectory;
 
 
     @SneakyThrows(IOException.class)
@@ -43,11 +44,11 @@ public class ImgToTextTransformer {
                 .map(OcrResponse.ParsedResult::getParsedText)
                 .reduce("", String::concat);
         // Save the extracted text to a file
-        final var outputFilePath = System.currentTimeMillis() + ".txt";
-        Files.write(Paths.get(outputFilePath), extractedText.getBytes());
+        final var outputFilePath = Paths.get(downloadDirectory, System.currentTimeMillis() + ".txt");
+        Files.write(outputFilePath, extractedText.getBytes());
 
         // Return the path to the created file
-        return outputFilePath;
+        return outputFilePath.toString();
     }
 
 }
