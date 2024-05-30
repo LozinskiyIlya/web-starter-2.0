@@ -25,9 +25,9 @@ pipelines:
               script:
                 - pipe: atlassian/ssh-run:0.4.1
                   variables:
-                    SSH_USER: 'inbtrhope'
-                    SERVER: '35.198.176.46'
-                    PORT: 22
+                    SSH_USER: 'devlabs'
+                    SERVER: 'devadmin.joinee.io'
+                    PORT: 19777
                     COMMAND: >-
                       cd /var/www/aicounting/back &&
                       ls -al &&
