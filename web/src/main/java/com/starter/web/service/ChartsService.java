@@ -24,8 +24,8 @@ public class ChartsService {
 
     private final BillRepository billRepository;
 
-    public List<TagAmount> getAmountPerTag(List<Group> groups, String currency) {
-        return billRepository.findTagAmountsByGroupInAndCurrency(groups, currency);
+    public List<TagAmount> getAmountPerTag(List<Group> groups, Instant from, Instant to, String currency) {
+        return billRepository.findTagAmountsByGroupInAndCurrency(groups, currency, from, to);
     }
 
     public List<TotalDto> getTotalsByGroups(List<Group> groups) {
@@ -50,9 +50,8 @@ public class ChartsService {
         return billRepository.findMostUsedCurrenciesByGroupIn(groups, Pageable.unpaged());
     }
 
-    public List<Timeline> getTimeline(List<Bill> bills, Instant from, Instant to, String selectedCurrency) {
+    public List<Timeline> getTimeline(List<Bill> bills, String selectedCurrency) {
         return bills.stream()
-                .filter(bill -> bill.getMentionedDate().isAfter(from) && bill.getMentionedDate().isBefore(to))
                 .filter(bill -> selectedCurrency.equals(bill.getCurrency()))
                 .collect(Collectors.groupingBy(bill ->
                                 bill.getMentionedDate().atZone(ZoneId.systemDefault()).toLocalDate(),

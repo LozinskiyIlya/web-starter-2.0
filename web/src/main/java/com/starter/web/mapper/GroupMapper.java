@@ -15,6 +15,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +53,9 @@ public class GroupMapper {
         chartData.setCurrency(currency);
         chartData.setCurrencySymbol(currenciesService.getSymbol(currency));
         // Now for that currency select amount per tag
-        final var data = chartsService.getAmountPerTag(list, currency);
+        final var minDate = Instant.EPOCH;
+        final var maxDate = Instant.now();
+        final var data = chartsService.getAmountPerTag(list, minDate, maxDate, currency);
         chartData.setData(data);
         dto.setChartData(chartData);
     }

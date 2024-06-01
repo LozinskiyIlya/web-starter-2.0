@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +24,9 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
     @Query("select b from Bill b where b.group in (:groups) and b.status <> 'SKIPPED'")
     Page<Bill> findAllNotSkippedByGroupIn(@Param("groups") List<Group> groups, Pageable pageable);
 
+    @Query("select b from Bill b where b.group in (:groups) and b.status <> 'SKIPPED' and b.mentionedDate >= :from and b.mentionedDate <= :to")
+    Page<Bill> findAllNotSkippedByGroupInAndMentionedDateBetween(@Param("groups") List<Group> groups, @Param("from") Instant from, @Param("to") Instant to, Pageable pageable);
+
     @Query("select count(b) from Bill b where b.group = :group and b.status <> 'SKIPPED'")
     Long countNotSkippedByGroup(@Param("group") Group group);
 
@@ -35,8 +39,13 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
             "WHERE b.status <> 'SKIPPED' " +
             "AND b.group in (:groups) " +
             "AND b.currency = :currency " +
+            "AND b.mentionedDate >= :from AND b.mentionedDate <= :to " +
             "GROUP BY t")
-    List<TagAmount> findTagAmountsByGroupInAndCurrency(@Param("groups") List<Group> groups, @Param("currency") String currency);
+    List<TagAmount> findTagAmountsByGroupInAndCurrency(
+            @Param("groups") List<Group> groups,
+            @Param("currency") String currency,
+            @Param("from") Instant from,
+            @Param("to") Instant to);
 
     @Query("SELECT b.currency FROM Bill b " +
             "WHERE b.group in (:groups) " +

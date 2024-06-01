@@ -49,7 +49,7 @@ public class ChartsController {
                 List.of(groupRepository.findById(groupId).orElseThrow());
         final var fromDefault = from == null ? LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant() : from;
         final var toDefault = to == null ? Instant.now() : to;
-        final var bills = billRepository.findAllNotSkippedByGroupIn(groups, Pageable.unpaged()).toList();
+        final var bills = billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(groups, fromDefault, toDefault, Pageable.unpaged()).toList();
         final var chartData = new ChartData();
         chartData.setTotals(chartsService.getTotals(bills));
         chartData.setCurrencies(chartsService.getCurrencies(groups));
@@ -59,9 +59,9 @@ public class ChartsController {
                         .orElse(chartData.getCurrencies().stream().findFirst()
                                 .orElse(DEFAULT_CURRENCY));
         chartData.setSelectedCurrency(selectedCurrency);
-        chartData.setTimeline(chartsService.getTimeline(bills, fromDefault, toDefault, selectedCurrency));
+        chartData.setTimeline(chartsService.getTimeline(bills, selectedCurrency));
         chartData.setCurrencySymbol(currenciesService.getSymbol(selectedCurrency));
-        chartData.setAmountByTag(chartsService.getAmountPerTag(groups, selectedCurrency));
+        chartData.setAmountByTag(chartsService.getAmountPerTag(groups, fromDefault, toDefault, selectedCurrency));
         return chartData;
     }
 
