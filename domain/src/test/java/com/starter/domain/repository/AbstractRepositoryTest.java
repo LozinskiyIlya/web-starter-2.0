@@ -80,7 +80,11 @@ abstract class AbstractRepositoryTest<E extends AbstractEntity> {
         } else if (Instant.class.isAssignableFrom(getter.getReturnType())) {
             var p = (Instant) persistedResult;
             var r = (Instant) requestedResult;
-            assertTrue(p.toEpochMilli() - r.toEpochMilli() <= 1, String.format("%s instants: [%s], [%s] should be equal", getter.getName(), p, r));
+            if (p == null) {
+                assertNull(r);
+            } else {
+                assertTrue(p.toEpochMilli() - r.toEpochMilli() <= 1, String.format("%s instants: [%s], [%s] should be equal", getter.getName(), p, r));
+            }
         } else if (getter.getReturnType().isArray()) {
             if (persistedResult instanceof float[] && requestedResult instanceof float[]) {
                 var p = (float[]) persistedResult;

@@ -47,14 +47,19 @@ public class Bill extends AbstractEntity {
     @Enumerated(EnumType.STRING)
     private BillStatus status = BillStatus.NEW;
 
-    private String buyer;
-    private String seller;
+    @Column(name = "purpose", columnDefinition = "TEXT")
     private String purpose;
+
+    @Column(name = "model_response", columnDefinition = "TEXT")
+    private String modelResponse;
+
     private String currency;
     private Double amount;
     private Instant mentionedDate;
     private Integer messageId;
-    private String modelResponse;
+    private String buyer;
+    private String seller;
+
     public enum BillStatus {
         NEW, SENT, CONFIRMED, SKIPPED
     }

@@ -3,6 +3,7 @@ package com.starter.web.controller;
 import com.starter.web.dto.BillDto;
 import com.starter.web.dto.GroupDto;
 import com.starter.web.service.bill.GroupService;
+import com.starter.web.service.bill.GroupService.InsightsDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -39,8 +40,8 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/insights")
-    public String getInsights(@PathVariable UUID groupId) {
-        return groupService.getInsights(groupId);
+    public InsightsDto getInsights(@PathVariable UUID groupId, @RequestParam(required = false) boolean forceUpdate) {
+        return groupService.getInsights(groupId, forceUpdate);
     }
 
     @GetMapping("/{groupId}/members")

@@ -14,13 +14,16 @@ import com.starter.web.mapper.BillMapper;
 import com.starter.web.mapper.GroupMapper;
 import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,11 +93,19 @@ public class GroupService {
     }
 
 
-    public String getInsights(UUID groupId) {
-        return groupRepository.findById(groupId)
+    @Transactional
+    public InsightsDto getInsights(UUID groupId, boolean forceUpdate) {
+        final var group = groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
-                .map(this::requestInsights)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
+        if (StringUtils.hasText(group.getInsights()) && !forceUpdate) {
+            return new InsightsDto(group.getInsights(), group.getInsightsUpdatedAt().toString());
+        }
+        final var insights = requestInsights(group);
+        group.setInsights(insights);
+        group.setInsightsUpdatedAt(Instant.now());
+        groupRepository.save(group);
+        return new InsightsDto(insights, group.getInsightsUpdatedAt().toString());
     }
 
     private boolean hasAccessToViewGroup(Group group) {
@@ -112,5 +123,9 @@ public class GroupService {
                 .toList();
         final var json = objectMapper.writeValueAsString(bills);
         return assistant.getInsights(json);
+    }
+
+    public record InsightsDto(String text, String updatedAt) {
+
     }
 }
