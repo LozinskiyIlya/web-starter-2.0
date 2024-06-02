@@ -6,6 +6,7 @@ import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
 import com.starter.web.dto.UserSettingsDto;
+import com.starter.web.mapper.UserSettingsMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.util.UUID;
@@ -33,11 +35,15 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
     @Autowired
     private UserSettingsRepository userSettingsRepository;
 
+    @Autowired
+    private UserSettingsMapper userSettingsMapper;
+
     @RequiredArgsConstructor
     abstract class ControllerCalled {
         protected Supplier<UserSettings> settings;
         protected Supplier<Pair<String, String>> token;
-        protected Supplier<ResultMatcher> expectedStatus;
+        protected Supplier<ResultMatcher> expectedGetStatus;
+        protected Supplier<ResultMatcher> expectedPostStatus;
 
         @SneakyThrows
         @Test
@@ -46,7 +52,20 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             final var auth = token.get();
             mockMvc.perform(getRequest("")
                             .header(auth.getFirst(), auth.getSecond()))
-                    .andExpect(expectedStatus.get());
+                    .andExpect(expectedGetStatus.get());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("is expected POST result")
+        void returnsExpectedPostResult() {
+            final var auth = token.get();
+            final var dto = userSettingsMapper.toDto(settings.get());
+            mockMvc.perform(postRequest("")
+                            .header(auth.getFirst(), auth.getSecond())
+                            .content(mapper.writeValueAsString(dto))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(expectedPostStatus.get());
         }
     }
 
@@ -58,7 +77,8 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             notPersisted.setId(UUID.randomUUID());
             settings = () -> notPersisted;
             token = UserSettingsControllerIT.this::testUserAuthHeader;
-            expectedStatus = status()::isOk;
+            expectedGetStatus = status()::isOk;
+            expectedPostStatus = status()::isOk;
         }
 
         @SneakyThrows
@@ -80,7 +100,8 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
         {
             settings = userCreator::givenUserSettingsExists;
             token = UserSettingsControllerIT.this::userAuthHeaderUnchecked;
-            expectedStatus = status()::isForbidden;
+            expectedGetStatus = status()::isForbidden;
+            expectedPostStatus = status()::isForbidden;
         }
     }
 
@@ -96,7 +117,8 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
                 s.setAutoConfirmBills(true);
             });
             token = () -> userAuthHeader(user);
-            expectedStatus = status()::is2xxSuccessful;
+            expectedGetStatus = status()::is2xxSuccessful;
+            expectedPostStatus = status()::is2xxSuccessful;
         }
 
         @Test
