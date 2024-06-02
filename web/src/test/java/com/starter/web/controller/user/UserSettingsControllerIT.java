@@ -108,14 +108,23 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
     @Nested
     @DisplayName("As settings owner 200")
     public class AsSettingsOwner extends ControllerCalled {
+
+        private UserSettings cachedSettings = null;
+
         {
             final var user = userCreator.givenUserExists();
-            settings = () -> userCreator.givenUserSettingsExists(s -> {
-                s.setUser(user);
-                s.setPinCode("123456");
-                s.setSpoilerBills(true);
-                s.setAutoConfirmBills(true);
-            });
+            settings = () -> {
+                if (cachedSettings == null) {
+                    cachedSettings = userSettingsRepository.findOneByUser(user)
+                            .orElse(userCreator.givenUserSettingsExists(s -> {
+                                s.setUser(user);
+                                s.setPinCode("123456");
+                                s.setSpoilerBills(true);
+                                s.setAutoConfirmBills(true);
+                            }));
+                }
+                return cachedSettings;
+            };
             token = () -> userAuthHeader(user);
             expectedGetStatus = status()::is2xxSuccessful;
             expectedPostStatus = status()::is2xxSuccessful;
@@ -134,6 +143,46 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             assertEquals(persisted.getPinCode(), returned.getPinCode());
             assertEquals(persisted.getSpoilerBills(), returned.getSpoilerBills());
             assertEquals(persisted.getAutoConfirmBills(), returned.getAutoConfirmBills());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and settings updated")
+        void settingsUpdated() {
+            final var header = token.get();
+            final var persisted = this.settings.get();
+            final var dto = userSettingsMapper.toDto(persisted);
+            dto.setPinCode("654321");
+            dto.setSpoilerBills(false);
+            dto.setAutoConfirmBills(false);
+            mockMvc.perform(postRequest("")
+                            .header(header.getFirst(), header.getSecond())
+                            .content(mapper.writeValueAsString(dto))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk());
+            final var updated = userSettingsRepository.findOneByUser(settings.get().getUser()).orElseThrow();
+            assertEquals(dto.getPinCode(), updated.getPinCode());
+            assertEquals(dto.getSpoilerBills(), updated.getSpoilerBills());
+            assertEquals(dto.getAutoConfirmBills(), updated.getAutoConfirmBills());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and settings validated")
+        void settingsValidated() {
+            final var header = token.get();
+            final var persisted = this.settings.get();
+            final var dto = userSettingsMapper.toDto(persisted);
+            dto.setPinCode(null);
+            dto.setPinCodeEnabled(true);
+            mockMvc.perform(postRequest("")
+                            .header(header.getFirst(), header.getSecond())
+                            .content(mapper.writeValueAsString(dto))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
+            final var notUpdated = userSettingsRepository.findOneByUser(settings.get().getUser()).orElseThrow();
+            assertEquals(persisted.getPinCode(), notUpdated.getPinCode());
+            assertEquals(persisted.getPinCodeEnabled(), notUpdated.getPinCodeEnabled());
         }
     }
 

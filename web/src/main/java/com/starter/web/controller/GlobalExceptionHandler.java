@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
         return Collections.singletonMap("error", e.getMessage());
     }
 
-    @ExceptionHandler({MissingPasswordException.class})
+    @ExceptionHandler({MissingPasswordException.class, ValidationException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public Map<String, String> handleBadRequestException(Exception e) {

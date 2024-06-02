@@ -57,4 +57,10 @@ public class Exceptions {
             return "Invalid or expired code";
         }
     }
+
+    public static class ValidationException extends RuntimeException {
+        public ValidationException(String message) {
+            super(message);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.starter.web.controller.user;
 
+import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserSettingsRepository;
@@ -48,8 +49,15 @@ public class UserSettingsController {
                     newSettings.setUser(current);
                     return userSettingsRepository.save(newSettings);
                 });
+        validate(dto);
         var updated = userSettingsMapper.updateEntityFromDto(dto, settings);
         updated = userSettingsRepository.save(settings);
         return updated.getLastUpdatedAt();
+    }
+
+    private void validate(UserSettingsDto dto) {
+        if (dto.getPinCodeEnabled() && (dto.getPinCode() == null || !dto.getPinCode().matches("^\\d{6}$"))) {
+            throw new Exceptions.ValidationException("Pin code must be exactly 6 digits");
+        }
     }
 }
