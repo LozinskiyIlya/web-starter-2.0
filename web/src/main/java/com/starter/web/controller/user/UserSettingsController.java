@@ -41,7 +41,7 @@ public class UserSettingsController {
 
     @PostMapping("")
     @Operation(summary = "Изменить настройки пользователя")
-    public Instant updateUserSettings(@RequestBody @Valid UserSettingsDto dto) {
+    public String updateUserSettings(@RequestBody @Valid UserSettingsDto dto) {
         final var current = currentUserService.getUser().orElseThrow();
         var settings = userSettingsRepository.findOneByUser(current)
                 .orElseGet(() -> {
@@ -52,7 +52,7 @@ public class UserSettingsController {
         validate(dto);
         var updated = userSettingsMapper.updateEntityFromDto(dto, settings);
         updated = userSettingsRepository.save(settings);
-        return updated.getLastUpdatedAt();
+        return updated.getLastUpdatedAt().toString();
     }
 
     private void validate(UserSettingsDto dto) {

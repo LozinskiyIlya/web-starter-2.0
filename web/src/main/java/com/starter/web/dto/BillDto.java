@@ -14,7 +14,6 @@ import java.util.UUID;
 @Data
 public class BillDto {
     private UUID id;
-
     @NotBlank(message = "Purpose is required")
     private String purpose;
     @NotNull(message = "Amount is required")

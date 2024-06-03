@@ -17,11 +17,11 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
@@ -155,15 +155,16 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             dto.setPinCode("654321");
             dto.setSpoilerBills(false);
             dto.setAutoConfirmBills(false);
-            mockMvc.perform(postRequest("")
+            final var updatedAt = mockMvc.perform(postRequest("")
                             .header(header.getFirst(), header.getSecond())
                             .content(mapper.writeValueAsString(dto))
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
             final var updated = userSettingsRepository.findOneByUser(settings.get().getUser()).orElseThrow();
             assertEquals(dto.getPinCode(), updated.getPinCode());
             assertEquals(dto.getSpoilerBills(), updated.getSpoilerBills());
             assertEquals(dto.getAutoConfirmBills(), updated.getAutoConfirmBills());
+            assertTrue(updated.getLastUpdatedAt().toEpochMilli() - Instant.parse(updatedAt).toEpochMilli() <= 1);
         }
 
         @SneakyThrows
