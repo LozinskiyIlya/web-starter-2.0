@@ -8,6 +8,7 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import java.time.Instant;
 import java.util.List;
 
 
@@ -37,6 +38,14 @@ public class Group extends AbstractEntity {
 
     @NotNull
     private String title;
+
+    @Column(name = "default_currency")
+    private String defaultCurrency;
+
+    @Column(name = "insights", columnDefinition = "TEXT")
+    private String insights;
+
+    private Instant insightsUpdatedAt;
 
     @ManyToMany
     @JoinTable(name = "group_members",

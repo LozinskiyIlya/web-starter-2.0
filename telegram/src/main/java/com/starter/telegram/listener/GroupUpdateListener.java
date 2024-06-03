@@ -1,23 +1,14 @@
 package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.Document;
-import com.pengrad.telegrambot.model.File;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.GetFile;
-import com.starter.common.events.TelegramFileMessageEvent;
-import com.starter.common.events.TelegramFileMessageEvent.TelegramFileMessagePayload;
-import com.starter.common.events.TelegramTextMessageEvent;
-import com.starter.common.utils.CustomFileUtils;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.configuration.TelegramProperties;
 import com.starter.telegram.service.TelegramUserService;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -25,25 +16,22 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class GroupUpdateListener implements UpdateListener {
+public class GroupUpdateListener extends AbstractChatUpdateListener {
 
-    private final GroupRepository groupRepository;
-    private final ApplicationEventPublisher publisher;
-    private final TelegramUserService telegramUserService;
     private final TelegramProperties telegramProperties;
 
-    @Override
-    @Transactional
-    public void processUpdate(Update update, TelegramBot bot) {
-        log.info("Processing group update: {}", update);
-        checkIdMigration(update);
-        final var group = createOrFindGroup(update, bot);
-        final var text = update.message().text();
-        doBillWork(bot, update, group, text);
+    public GroupUpdateListener(
+            GroupRepository groupRepository,
+            ApplicationEventPublisher publisher,
+            TelegramUserService telegramUserService,
+            TelegramProperties telegramProperties,
+            @Qualifier("downloadDirectory") String downloadDirectory) {
+        super(telegramUserService, groupRepository, publisher, downloadDirectory);
+        this.telegramProperties = telegramProperties;
     }
 
-    private void checkIdMigration(Update update) {
+    @Override
+    public void checkIdMigration(Update update) {
         final var currentChatId = update.message().chat().id();
         final var oldChatId = update.message().migrateFromChatId();
         if (oldChatId != null) {
@@ -51,7 +39,8 @@ public class GroupUpdateListener implements UpdateListener {
         }
     }
 
-    private Group createOrFindGroup(Update update, TelegramBot bot) {
+    @Override
+    public Group getGroup(Update update, TelegramBot bot) {
         final var groupId = update.message().chat().id();
         final var hasNewChatMembers = update.message().newChatMembers() != null;
         final var weAreTheNewMember = hasNewChatMembers && Arrays.stream(update.message().newChatMembers())
@@ -71,36 +60,5 @@ public class GroupUpdateListener implements UpdateListener {
             }
         }
         return group.orElseThrow();
-    }
-
-
-    private void doBillWork(TelegramBot bot, Update update, Group group, String text) {
-        final var fileUrl = extractFileFromUpdate(update, bot);
-        if (fileUrl != null) {
-            publisher.publishEvent(new TelegramFileMessageEvent(this, new TelegramFileMessagePayload(group.getId(), fileUrl, text)));
-            return;
-        }
-        if (text != null) {
-            publisher.publishEvent(new TelegramTextMessageEvent(this, Pair.of(group.getId(), text)));
-            return;
-        }
-        log.info("No text or file found in the update: {}", update);
-    }
-
-    private String extractFileFromUpdate(Update update, TelegramBot bot) {
-        if (update.message() != null && update.message().document() != null) {
-            Document document = update.message().document();
-            log.info("File received: file_id = {}, file_name = {}, file_size = {}", document.fileId(), document.fileName(), document.fileSize());
-            GetFile request = new GetFile(document.fileId());
-            File file = bot.execute(request).file(); // Assuming 'bot' is an instance of TelegramBot
-
-            if (file.filePath() != null) {
-                String downloadUrl = bot.getFullFilePath(file);
-                // Use this URL to download the file
-                log.info("Download URL: {}", downloadUrl);
-                return CustomFileUtils.downloadFileFromUrl(downloadUrl, document.fileName());
-            }
-        }
-        return null;
     }
 }

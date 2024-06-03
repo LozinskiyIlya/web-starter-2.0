@@ -3,6 +3,7 @@ package com.starter.common.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -13,10 +14,14 @@ import java.io.InputStream;
 @Slf4j
 public class CustomFileUtils {
 
-    public static String downloadFileFromUrl(String fileUrl, String outputFileName) {
+    public static String downloadFileFromUrl(String fileUrl, String outputFileName, String outputDirectory) {
         RestTemplate restTemplate = new RestTemplate();
-        String directoryPath = "/downloads";
-        File output = new File(directoryPath, outputFileName);
+        File output;
+        if (StringUtils.hasText(outputDirectory)) {
+            output = new File(outputDirectory, outputFileName);
+        } else {
+            output = new File(outputFileName);
+        }
         try {
             Resource resource = restTemplate.getForObject(fileUrl, Resource.class);
             try (InputStream inputStream = resource.getInputStream();
@@ -36,10 +41,9 @@ public class CustomFileUtils {
     public static void deleteLocalFile(String filePath) {
         File file = new File(filePath);
         if (file.delete()) {
-            log.info("File deleted successfully: " + filePath);
+            log.info("File deleted successfully from local: " + filePath);
         } else {
-            log.info("Failed to delete the file: " + filePath);
+            log.error("Failed to delete local the file: " + filePath);
         }
     }
-
 }

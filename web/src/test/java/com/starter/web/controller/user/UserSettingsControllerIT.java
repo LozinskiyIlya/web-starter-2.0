@@ -6,6 +6,7 @@ import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
 import com.starter.web.dto.UserSettingsDto;
+import com.starter.web.mapper.UserSettingsMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
@@ -13,13 +14,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
@@ -33,11 +35,15 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
     @Autowired
     private UserSettingsRepository userSettingsRepository;
 
+    @Autowired
+    private UserSettingsMapper userSettingsMapper;
+
     @RequiredArgsConstructor
     abstract class ControllerCalled {
         protected Supplier<UserSettings> settings;
         protected Supplier<Pair<String, String>> token;
-        protected Supplier<ResultMatcher> expectedStatus;
+        protected Supplier<ResultMatcher> expectedGetStatus;
+        protected Supplier<ResultMatcher> expectedPostStatus;
 
         @SneakyThrows
         @Test
@@ -46,7 +52,20 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             final var auth = token.get();
             mockMvc.perform(getRequest("")
                             .header(auth.getFirst(), auth.getSecond()))
-                    .andExpect(expectedStatus.get());
+                    .andExpect(expectedGetStatus.get());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("is expected POST result")
+        void returnsExpectedPostResult() {
+            final var auth = token.get();
+            final var dto = userSettingsMapper.toDto(settings.get());
+            mockMvc.perform(postRequest("")
+                            .header(auth.getFirst(), auth.getSecond())
+                            .content(mapper.writeValueAsString(dto))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(expectedPostStatus.get());
         }
     }
 
@@ -58,7 +77,8 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             notPersisted.setId(UUID.randomUUID());
             settings = () -> notPersisted;
             token = UserSettingsControllerIT.this::testUserAuthHeader;
-            expectedStatus = status()::isOk;
+            expectedGetStatus = status()::isOk;
+            expectedPostStatus = status()::isOk;
         }
 
         @SneakyThrows
@@ -80,23 +100,34 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
         {
             settings = userCreator::givenUserSettingsExists;
             token = UserSettingsControllerIT.this::userAuthHeaderUnchecked;
-            expectedStatus = status()::isForbidden;
+            expectedGetStatus = status()::isForbidden;
+            expectedPostStatus = status()::isForbidden;
         }
     }
 
     @Nested
     @DisplayName("As settings owner 200")
     public class AsSettingsOwner extends ControllerCalled {
+
+        private UserSettings cachedSettings = null;
+
         {
             final var user = userCreator.givenUserExists();
-            settings = () -> userCreator.givenUserSettingsExists(s -> {
-                s.setUser(user);
-                s.setPinCode("123456");
-                s.setSpoilerBills(true);
-                s.setAutoConfirmBills(true);
-            });
+            settings = () -> {
+                if (cachedSettings == null) {
+                    cachedSettings = userSettingsRepository.findOneByUser(user)
+                            .orElse(userCreator.givenUserSettingsExists(s -> {
+                                s.setUser(user);
+                                s.setPinCode("123456");
+                                s.setSpoilerBills(true);
+                                s.setAutoConfirmBills(true);
+                            }));
+                }
+                return cachedSettings;
+            };
             token = () -> userAuthHeader(user);
-            expectedStatus = status()::is2xxSuccessful;
+            expectedGetStatus = status()::is2xxSuccessful;
+            expectedPostStatus = status()::is2xxSuccessful;
         }
 
         @Test
@@ -112,6 +143,47 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             assertEquals(persisted.getPinCode(), returned.getPinCode());
             assertEquals(persisted.getSpoilerBills(), returned.getSpoilerBills());
             assertEquals(persisted.getAutoConfirmBills(), returned.getAutoConfirmBills());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and settings updated")
+        void settingsUpdated() {
+            final var header = token.get();
+            final var persisted = this.settings.get();
+            final var dto = userSettingsMapper.toDto(persisted);
+            dto.setPinCode("654321");
+            dto.setSpoilerBills(false);
+            dto.setAutoConfirmBills(false);
+            final var updatedAt = mockMvc.perform(postRequest("")
+                            .header(header.getFirst(), header.getSecond())
+                            .content(mapper.writeValueAsString(dto))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            final var updated = userSettingsRepository.findOneByUser(settings.get().getUser()).orElseThrow();
+            assertEquals(dto.getPinCode(), updated.getPinCode());
+            assertEquals(dto.getSpoilerBills(), updated.getSpoilerBills());
+            assertEquals(dto.getAutoConfirmBills(), updated.getAutoConfirmBills());
+            assertTrue(updated.getLastUpdatedAt().toEpochMilli() - Instant.parse(updatedAt).toEpochMilli() <= 1);
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and settings validated")
+        void settingsValidated() {
+            final var header = token.get();
+            final var persisted = this.settings.get();
+            final var dto = userSettingsMapper.toDto(persisted);
+            dto.setPinCode(null);
+            dto.setPinCodeEnabled(true);
+            mockMvc.perform(postRequest("")
+                            .header(header.getFirst(), header.getSecond())
+                            .content(mapper.writeValueAsString(dto))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
+            final var notUpdated = userSettingsRepository.findOneByUser(settings.get().getUser()).orElseThrow();
+            assertEquals(persisted.getPinCode(), notUpdated.getPinCode());
+            assertEquals(persisted.getPinCodeEnabled(), notUpdated.getPinCodeEnabled());
         }
     }
 

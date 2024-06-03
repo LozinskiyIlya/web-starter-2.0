@@ -27,12 +27,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class TelegramBotService {
-    public static final Set<String> KEYBOARD_BUTTONS = Set.of();
+    public static final String NEW_BILL_BUTTON = "\uD83E\uDDFE NEW BILL";
+    public static final Set<String> KEYBOARD_BUTTONS = Set.of(NEW_BILL_BUTTON);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);
 
     private final TelegramBot bot;
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @PreDestroy
     void stop() {
         final var shutdownBotExecutor = Executors.newSingleThreadExecutor();
@@ -52,6 +54,7 @@ public class TelegramBotService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Autowired
     private void setListenersMap(Collection<UpdateListener> listeners) {
         for (UpdateListener listener : listeners) {
@@ -109,14 +112,17 @@ public class TelegramBotService {
         if (message.text() != null && KEYBOARD_BUTTONS.contains(message.text())) {
             return listeners.get(KeyboardButtonUpdateListener.class);
         }
+        if (message.text() != null || message.photo().length > 0 || message.document() != null) {
+            return listeners.get(PrivateChatTextUpdateListener.class);
+        }
         return listeners.get(NoopUpdateListener.class);
     }
 
     public static Keyboard latestKeyboard() {
-        return new ReplyKeyboardMarkup(
-                new KeyboardButton("Button 1").requestLocation(true))
-                .addRow(new KeyboardButton("Button 2"))
-                .addRow(new KeyboardButton("Button 3"))
+        return new ReplyKeyboardMarkup(KEYBOARD_BUTTONS
+                .stream()
+                .map(KeyboardButton::new)
+                .toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false);
     }

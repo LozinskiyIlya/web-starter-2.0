@@ -5,8 +5,9 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import org.springframework.data.util.Pair;
 
+import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+
 public abstract class AbstractCommandListener implements UpdateListener {
-    public abstract void processUpdate(Update update, TelegramBot bot);
 
     protected Pair<String, String> parseCommand(String commandWithParameters) {
         String[] commandParts = commandWithParameters.split(" ");
@@ -17,6 +18,6 @@ public abstract class AbstractCommandListener implements UpdateListener {
     }
 
     protected void onUnknownCommand(Update update, TelegramBot bot, String command) {
-        bot.execute(new SendMessage(update.message().chat().id(), "Unknown command: " + command));
+        bot.execute(new SendMessage(update.message().chat().id(), "Unknown command: " + command).replyMarkup(latestKeyboard()));
     }
 }

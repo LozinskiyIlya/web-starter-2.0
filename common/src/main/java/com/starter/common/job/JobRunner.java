@@ -12,12 +12,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 
 
 @Service
@@ -26,6 +26,8 @@ public class JobRunner {
 
     @Value("${spring.profiles.active:Unknown}")
     private String activeProfile;
+
+    private final static Set<String> LOCAL_PROFILES = Set.of("local", "Unknown");
 
     private final Collection<JobExecutor> jobs;
     private final JobInvocationDetailsRepository repo;
@@ -37,7 +39,7 @@ public class JobRunner {
 
     @Scheduled(fixedRate = 300_000)//once per 5 minutes
     public void runJobsIfNecessary() {
-        if (jobs == null || jobs.isEmpty() || activeProfile.equals("local") || activeProfile.equals("Unknown")) {
+        if (jobs == null || jobs.isEmpty() || LOCAL_PROFILES.contains(activeProfile)) {
             return;
         }
         jobs.forEach(this::runIfNecessary);
@@ -102,7 +104,7 @@ public class JobRunner {
         private final Job job;
 
         Future<?> run() {
-           return executor.submit(job::run);
+            return executor.submit(job::run);
         }
 
         private String name() {

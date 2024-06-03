@@ -6,8 +6,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
-import com.starter.domain.repository.testdata.BillTestDataCreator;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.AbstractTelegramTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -23,16 +22,10 @@ import java.util.NoSuchElementException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
+class GroupUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private GroupUpdateListener listener;
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
-
-    @Autowired
-    private BillTestDataCreator billTestDataCreator;
 
     @SpyBean
     private GroupRepository groupRepository;
@@ -54,7 +47,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             final var mockedNewUsers = new User[]{mockBotUser()};
             when(message.newChatMembers()).thenReturn(mockedNewUsers);
             // when
-            listener.processUpdate(update, mockBot());
+            listener.processUpdate(update, bot);
             // then
             final var group = groupRepository.findByChatId(update.message().chat().id()).orElseThrow();
             assertTrue(group.contains(user));
@@ -81,7 +74,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(message.newChatMembers()).thenReturn(null); // No new members
 
             // when
-            listener.processUpdate(update, mockBot());
+            listener.processUpdate(update, bot);
 
             // then
             final var group = groupRepository.findByChatId(existingChatId);
@@ -100,7 +93,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(message.chat().id()).thenReturn(nonExistingChatId);
             when(message.newChatMembers()).thenReturn(new User[]{});  // Bot is not included
             // when
-            Executable action = () -> listener.processUpdate(update, mockBot());
+            Executable action = () -> listener.processUpdate(update, bot);
             // then
             assertThrows(NoSuchElementException.class, action); // Expecting to throw, as no group should be created/found
             assertFalse(groupRepository.findByChatId(nonExistingChatId).isPresent());
@@ -122,7 +115,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(mockedUser.username()).thenReturn(null);
             when(message.newChatMembers()).thenReturn(new User[]{mockedUser});
             // when
-            listener.processUpdate(update, mockBot());
+            listener.processUpdate(update, bot);
             // then
             verify(groupRepository, never()).save(any(Group.class));
         }
@@ -142,7 +135,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(mockedUser.username()).thenReturn(null);
             when(message.newChatMembers()).thenReturn(new User[]{mockedUser});
             // when
-            Executable action = () -> listener.processUpdate(update, mockBot());
+            Executable action = () -> listener.processUpdate(update, bot);
             // then
             assertDoesNotThrow(action);
         }
@@ -156,7 +149,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(update.message()).thenReturn(message);
             when(message.chat()).thenReturn(mock(Chat.class)); // Chat mock without ID
             // when
-            Executable action = () -> listener.processUpdate(update, mockBot());
+            Executable action = () -> listener.processUpdate(update, bot);
             // then
             assertThrows(NoSuchElementException.class, action); // Assuming your method throws when chat ID is missing
         }
@@ -178,7 +171,7 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(message.migrateToChatId()).thenReturn(newChatId);
             when(message.migrateFromChatId()).thenReturn(oldChatId);
             // when
-            listener.processUpdate(update, mockBot());
+            listener.processUpdate(update, bot);
             // then
             assertTrue(groupRepository.findByChatId(newChatId).isPresent());
         }
@@ -194,12 +187,11 @@ class GroupUpdateListenerTest extends AbstractUpdateListenerTest {
             when(message.migrateToChatId()).thenReturn(null);
             when(message.migrateFromChatId()).thenReturn(null);
             // when
-            listener.processUpdate(update, mockBot());
+            listener.processUpdate(update, bot);
             // then
             verify(groupRepository, never()).save(Mockito.any(Group.class));
         }
     }
-
 
     @Nested
     @DisplayName("On text message")

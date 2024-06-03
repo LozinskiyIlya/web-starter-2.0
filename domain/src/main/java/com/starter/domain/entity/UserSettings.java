@@ -30,14 +30,17 @@ public class UserSettings extends AbstractEntity {
     private User user;
 
     @NotNull
+    @Column(name = "last_updated_at", nullable = false)
+    private Instant lastUpdatedAt = Instant.now();
+
+    @NotNull
+    private Boolean spoilerBills = true;
+
+    @NotNull
     private Boolean autoConfirmBills = false;
 
     @NotNull
-    private Boolean spoilerBills = false;
-
-    @NotNull
-    @Column(name = "last_updated_at", nullable = false)
-    private Instant lastUpdatedAt = Instant.now();
+    private Boolean pinCodeEnabled = false;
 
     private String pinCode;
 }

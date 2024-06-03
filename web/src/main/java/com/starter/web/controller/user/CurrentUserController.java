@@ -7,6 +7,8 @@ import com.starter.domain.repository.UserRepository;
 import com.starter.common.aspect.logging.LogApiAction;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.repository.UserSettingsRepository;
+import com.starter.web.dto.UserSettingsDto;
+import com.starter.web.mapper.UserSettingsMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -32,6 +34,7 @@ public class CurrentUserController {
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final UserSettingsMapper userSettingsMapper;
 
     @GetMapping("")
     @Operation(summary = "Отобразить данные пользователя")
@@ -49,9 +52,8 @@ public class CurrentUserController {
                     dto.setTelegramUser(telegramUser);
                 });
         userSettingsRepository.findOneByUser(current)
-                .map(UserSettings::getPinCode)
-                .map(StringUtils::hasText)
-                .ifPresent(dto::setPinCodeSet);
+                .map(userSettingsMapper::toDto)
+                .ifPresent(dto::setSettings);
         dto.setAccountNonExpired(userDetails.isAccountNonExpired());
         dto.setAccountNonLocked(userDetails.isAccountNonLocked());
         dto.setCredentialsNonExpired(userDetails.isCredentialsNonExpired());
@@ -75,8 +77,8 @@ public class CurrentUserController {
         private boolean isAccountNonLocked;
         private boolean isCredentialsNonExpired;
         private boolean isEnabled;
-        private boolean isPinCodeSet;
         private TelegramUserDto telegramUser;
+        private UserSettingsDto settings;
     }
 
     @Data

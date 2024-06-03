@@ -1,7 +1,7 @@
 package com.starter.telegram.listener;
 
-import com.starter.domain.repository.testdata.BillTestDataCreator;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.domain.entity.Bill;
+import com.starter.telegram.AbstractTelegramTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,20 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
-class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
+class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private CallbackQueryUpdateListener listener;
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
-
-    @Autowired
-    private BillTestDataCreator billTestDataCreator;
 
 
     @Nested
@@ -43,7 +36,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             });
             final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
@@ -69,7 +61,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             });
             final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
@@ -91,7 +82,6 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             final var newMember = userTestDataCreator.givenUserInfoExists(ui -> {
             }).getUser();
             final var update = mockCallbackQueryUpdate(ADDME_REJECT_PREFIX, owner.getTelegramChatId());
-            final var bot = mockBot();
 
             // when
             listener.processUpdate(update, bot);
@@ -100,6 +90,28 @@ class CallbackQueryUpdateListenerTest extends AbstractUpdateListenerTest {
             final var groupWithUser = billTestDataCreator.groupRepository().findById(group.getId()).orElseThrow();
             assertFalse(groupWithUser.contains(newMember));
             assertMessageSentToChatId(bot, owner.getTelegramChatId());
+        }
+    }
+
+    @Nested
+    @DisplayName("on confirm bill callback")
+    class OnConfirmBillCallback {
+
+        @Test
+        @DisplayName("should confirm bill")
+        void shouldConfirmBill() {
+            // given
+            final var chatId = random.nextLong();
+            final var bill = billTestDataCreator.givenBillExists();
+            final var query = CONFIRM_BILL_PREFIX + bill.getId();
+            final var update = mockCallbackQueryUpdate(query, chatId);
+
+            // when
+            listener.processUpdate(update, bot);
+
+            // then
+            final var confirmedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            assertEquals(Bill.BillStatus.CONFIRMED, confirmedBill.getStatus());
         }
     }
 }

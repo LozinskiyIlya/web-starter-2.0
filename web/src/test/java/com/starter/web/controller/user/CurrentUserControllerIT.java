@@ -14,6 +14,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.params.shadow.com.univocity.parsers.conversions.Conversions.replace;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,13 +42,15 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
             ui.setTelegramUsername("current user telegram username");
             ui.setTelegramChatId(chatId);
         }).getUser();
-        userCreator.givenUserSettingsExists(us -> {
+        final var settings = userCreator.givenUserSettingsExists(us -> {
             us.setUser(user);
             us.setPinCode("123456");
         });
         var header = userAuthHeader(login);
         var serializedUser = readResource("responses/user/current_user.json")
                 .replace("%USER_ID%", user.getId().toString())
+                .replace("%PIN_CODE%", settings.getPinCode())
+                .replace("%LAST_UPDATED_AT%", settings.getLastUpdatedAt().toString())
                 .replace("\"%TELEGRAM_CHAT_ID%\"", chatId.toString());
         mockMvc.perform(getRequest("")
                         .header(header.getFirst(), header.getSecond()))

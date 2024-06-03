@@ -2,16 +2,24 @@ package com.starter.telegram.service;
 
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.Message;
+import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.domain.entity.Bill.BillStatus;
+import com.starter.domain.entity.User;
+import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import jakarta.transaction.Transactional;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.function.Predicate;
 
 @Slf4j
 @Service
@@ -30,7 +38,8 @@ public class TelegramBillService {
         log.info("Sending bill to confirmation: {}", billId);
         // send to tg
         final var bill = billRepository.findById(billId).orElseThrow();
-        final var ownerInfo = bill.getGroup().getOwner().getUserInfo();
+        final var group = bill.getGroup();
+        final var ownerInfo = group.getOwner().getUserInfo();
         final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill);
         final var message = bot.execute(billMessage);
         // change status, message id and save
@@ -38,5 +47,53 @@ public class TelegramBillService {
         bill.setStatus(BillStatus.SENT);
         billRepository.save(bill);
         log.info("Bill sent, message id: {}", message.message().messageId());
+    }
+
+    @Async
+    @Transactional
+    @EventListener
+    public void onBillConfirmed(BillConfirmedEvent event) {
+        final var billId = event.getPayload();
+        // send to tg
+        final var bill = billRepository.findById(billId).orElseThrow();
+        if (bill.getStatus().equals(BillStatus.CONFIRMED)) {
+            // do nothing if bill was priorly confirmed
+            return;
+        }
+
+        bill.setStatus(BillStatus.CONFIRMED);
+        billRepository.save(bill);
+        log.info("Bill {} confirmed, updating status and message...", bill.getId());
+
+        final var group = bill.getGroup();
+        final var ownerInfo = group.getOwner().getUserInfo();
+        if (bill.getMessageId() != null) {
+            // update message in owner chat
+            final var tgMessage = new SelfMadeTelegramMessage();
+            tgMessage.setMessageId(bill.getMessageId());
+            final var message = renderer.renderBillUpdate(ownerInfo.getTelegramChatId(), bill, tgMessage);
+            bot.execute(message);
+        }
+
+        // send to all members
+        log.info("Status and message updated. Sending bill to {} members", group.getMembers().size());
+        group.getMembers()
+                .stream()
+                .map(User::getUserInfo)
+                .map(UserInfo::getTelegramChatId)
+                .filter(Predicate.not(ownerInfo.getTelegramChatId()::equals))
+                .map(chatId -> renderer.renderBillPreview(chatId, bill))
+                .forEach(bot::execute);
+        log.info("Bill sent to all members");
+    }
+
+
+    @Deprecated
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    public static class SelfMadeTelegramMessage extends Message {
+        public void setMessageId(int messageId) {
+            super.message_id = messageId;
+        }
     }
 }

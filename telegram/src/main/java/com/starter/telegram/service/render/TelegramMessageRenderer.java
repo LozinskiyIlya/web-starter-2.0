@@ -1,17 +1,15 @@
 package com.starter.telegram.service.render;
 
 
-import com.pengrad.telegrambot.model.LinkPreviewOptions;
-import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.WebAppInfo;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
-import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.ServerProperties;
+import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
@@ -19,50 +17,44 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramMessageRenderer {
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
-    private final static String ADD_ME_UPDATE_TEMPLATE = "@#user_name# can now view bills in <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>";
+    private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
+    private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
     private final static String BILL_TEMPLATE = "bill.txt";
-    private final static String BILL_UPDATE_TEMPLATE = "Bill #id# saved. <a href='#edit_url#'>Edit bill</a>";
+    private final static String BILL_UPDATE_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
-    private final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     private final TemplateReader templateReader;
 
     private final ServerProperties serverProperties;
 
+    private final CurrenciesService currenciesService;
+
     public SendMessage renderBill(Long chatId, Bill bill) {
-        final var textPart = templateReader.read(BILL_TEMPLATE)
-                .replaceAll("#group_name#", bill.getGroup().getTitle())
-                .replaceAll("#id#", renderId(bill.getId()))
-                .replaceAll("#buyer#", bill.getBuyer())
-                .replaceAll("#seller#", bill.getSeller())
-                .replaceAll("#amount#", bill.getAmount() + " " + bill.getCurrency())
-                .replaceAll("#purpose#", bill.getPurpose())
-                .replaceAll("#date#", renderDate(bill.getMentionedDate()))
-                .replaceAll("#tags#", bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat));
+        final var caption = renderCaption(bill);
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 new InlineKeyboardButton("✏\uFE0F Edit").webApp(renderWebApp("bill", bill.getId().toString())),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
-        return new SendMessage(chatId, textPart).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+        return new SendMessage(chatId, caption).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderBillPreview(Long chatId, Bill bill) {
+        final var caption = renderCaption(bill);
+        return new SendMessage(chatId, caption).parseMode(ParseMode.HTML);
     }
 
     public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
         final var textPart = BILL_UPDATE_TEMPLATE
-                .replaceAll("#id#", renderId(bill.getId()))
+                .replaceAll("#amount#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency())))
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("bill", bill.getId()));
         return tryUpdateMessage(chatId, message, textPart);
     }
@@ -90,7 +82,7 @@ public class TelegramMessageRenderer {
     }
 
     public BaseRequest<?, ?> renderAddMeAcceptedUpdate(Long chatId, MaybeInaccessibleMessage message, UserInfo userInfo, Group group) {
-        final var textPart = ADD_ME_UPDATE_TEMPLATE
+        final var textPart = templateReader.read(ADD_ME_APPROVED_TEMPLATE)
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("group", group.getId()))
                 .replaceAll("#user_name#", renderTelegramUsername(userInfo))
                 .replaceAll("#group_name#", group.getTitle());
@@ -108,48 +100,28 @@ public class TelegramMessageRenderer {
         ));
     }
 
-    private static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
-        if (message instanceof Message) {
-            // if the message is accessible, update it
-            final var editRequest = new EditMessageText(chatId, message.messageId(), text)
-                    .parseMode(ParseMode.HTML)
-                    .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                    .disableWebPagePreview(true);
-            if (buttons != null && buttons.length > 0) {
-                editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
-            }
-            return editRequest;
-        }
-        // if the message is not accessible, send a new message
-        return linkPreviewOff(new SendMessage(chatId, text));
-    }
-
-    private static SendMessage linkPreviewOff(SendMessage request) {
-        return request.parseMode(ParseMode.HTML)
-                .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
-                .disableWebPagePreview(true);
-    }
-
-    private static String renderDate(Instant date) {
-        final var zoneId = ZoneId.systemDefault();
-        final var zonedDateTime = date.atZone(zoneId);
-        final var formatter = DateTimeFormatter.ofPattern("HH:mm dd.MM.yyyy");
-        return zonedDateTime.format(formatter);
-    }
-
-    private String renderId(UUID id) {
-        return String.format("<code>#%s</code>", id.toString().substring(0, 8));
-    }
-
-    private String renderTelegramUsername(UserInfo userInfo) {
-        return userInfo.getTelegramUsername() != null ? userInfo.getTelegramUsername() : userInfo.getTelegramChatId().toString();
-    }
-
-    private String renderWebAppDirectUrl(String paramName, UUID id) {
-        return WEB_APP_DIRECT_URL + "?startapp=" + paramName + "_" + id;
+    public SendMessage renderNewBill(Long chatId) {
+        final var textPart = templateReader.read(NEW_BILL_TEMPLATE);
+        return new SendMessage(chatId, textPart)
+                .replyMarkup(new InlineKeyboardMarkup(
+                        new InlineKeyboardButton("Add bill")
+                                .webApp(renderWebApp("bill", "new"))))
+                .parseMode(ParseMode.HTML);
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {
         return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
+    }
+
+    private String renderCaption(Bill bill) {
+        return templateReader.read(BILL_TEMPLATE)
+                .replaceAll("#group_name#", bill.getGroup().getTitle())
+                .replaceAll("#id#", renderId(bill.getId()))
+                .replaceAll("#buyer#", bill.getBuyer())
+                .replaceAll("#seller#", bill.getSeller())
+                .replaceAll("#amount#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency())))
+                .replaceAll("#purpose#", bill.getPurpose())
+                .replaceAll("#date#", renderDate(bill.getMentionedDate()))
+                .replaceAll("#tags#", renderTags(bill));
     }
 }

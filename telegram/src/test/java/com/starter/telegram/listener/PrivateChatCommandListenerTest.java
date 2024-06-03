@@ -7,7 +7,7 @@ import com.pengrad.telegrambot.response.GetChatResponse;
 import com.starter.domain.entity.Role;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserSettingsRepository;
-import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.telegram.AbstractTelegramTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,14 +20,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
-
+class PrivateChatCommandListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private UserInfoRepository userInfoRepository;
-
-    @Autowired
-    private UserTestDataCreator userTestDataCreator;
 
     @Autowired
     private PrivateChatCommandListener privateChatCommandListener;
@@ -42,7 +38,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             // given
             final var chatId = random.nextLong();
             final var update = mockCommandUpdate("/start", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -66,7 +61,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var update = mockCommandUpdate("/start", chatId);
             when(update.message().from().firstName()).thenReturn(null);
             when(update.message().from().lastName()).thenReturn(null);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -89,7 +83,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var chatId = random.nextLong();
             final var bio = "bio";
             final var update = mockCommandUpdate("/start", chatId);
-            final var bot = mockBot();
             final var chat = mock(Chat.class);
             final var chatResponse = mock(GetChatResponse.class);
             when(chatResponse.chat()).thenReturn(chat);
@@ -115,7 +108,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
                 it.setTelegramChatId(chatId);
             });
             final var update = mockCommandUpdate("/start", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -129,7 +121,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             // given
             final var chatId = random.nextLong();
             final var update = mockCommandUpdate("/start", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -152,7 +143,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var chatId = random.nextLong();
             userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
             final var update = mockCommandUpdate("/pin", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -166,7 +156,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var chatId = random.nextLong();
             userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
             final var update = mockCommandUpdate("/pin 1234", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -180,7 +169,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var chatId = random.nextLong();
             userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
             final var update = mockCommandUpdate("/pin 1234a6", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -195,7 +183,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var user = userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId)).getUser();
             final var userSettings = userTestDataCreator.givenUserSettingsExists(it -> it.setUser(user));
             final var update = mockCommandUpdate("/pin 123456", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -211,7 +198,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var chatId = random.nextLong();
             final var user = userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId)).getUser();
             final var update = mockCommandUpdate("/pin 123456", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
@@ -232,7 +218,6 @@ class PrivateChatCommandListenerTest extends AbstractUpdateListenerTest {
             final var chatId = random.nextLong();
             userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
             final var update = mockCommandUpdate("/settings", chatId);
-            final var bot = mockBot();
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
