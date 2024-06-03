@@ -9,7 +9,13 @@
   "accountNonExpired": true,
   "accountNonLocked": true,
   "credentialsNonExpired": true,
-  "pinCodeSet": true,
+  "settings": {
+    "autoConfirmBills": false,
+    "spoilerBills": true,
+    "pinCodeEnabled": false,
+    "pinCode": "%PIN_CODE%",
+    "lastUpdatedAt": "%LAST_UPDATED_AT%"
+  },
   "telegramUser": {
     "id": "%TELEGRAM_CHAT_ID%",
     "username": "current user telegram username"
