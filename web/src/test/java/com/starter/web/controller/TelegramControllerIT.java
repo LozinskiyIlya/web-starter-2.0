@@ -182,6 +182,30 @@ class TelegramControllerIT extends AbstractSpringIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("reset pin code")
+    class ResetPin {
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 without token")
+        void returns4xxIfEmpty() {
+            mockMvc.perform(postRequest("/auth/pin/reset"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("works with token")
+        void returnsFalseIfPinIsNotEqual() {
+            final var userInfo = userCreator.givenUserInfoExists();
+            final var token = userAuthHeader(userInfo.getUser());
+            mockMvc.perform(postRequest("/auth/pin/reset")
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isOk());
+        }
+    }
+
     @Override
     protected String controllerPath() {
         return "/api/telegram";

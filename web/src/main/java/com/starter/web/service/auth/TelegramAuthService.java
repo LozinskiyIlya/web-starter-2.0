@@ -54,7 +54,7 @@ public class TelegramAuthService {
 
     public void resetPin() {
         final var user = currentUserService.getUser()
-                .orElseThrow(Exceptions.UserNotFoundException::new);
+                .orElseThrow(Exceptions.WrongUserException::new);
         final var chatId = user.getUserInfo().getTelegramChatId();
         bot.execute(renderer.renderPin(chatId));
     }
