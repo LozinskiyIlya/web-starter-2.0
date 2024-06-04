@@ -46,6 +46,11 @@ public class TelegramController {
         return authService.verifyPin(request.getChatId(), request.getPin());
     }
 
+    @PostMapping("/auth/pin/reset")
+    public void resetPin() {
+        authService.resetPin();
+    }
+
     @PostMapping("/bills/{billId}/send")
     public void confirmBill(@PathVariable UUID billId) {
         billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill.getId())));

@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.BaseResponse;
 import com.starter.common.config.ServerProperties;
 import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
@@ -107,6 +108,15 @@ public class TelegramMessageRenderer {
                         new InlineKeyboardButton("Add bill")
                                 .webApp(renderWebApp("bill", "new"))))
                 .parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderPin(Long chatId) {
+        return new SendMessage(chatId,
+                """
+                        Pin code is used to additionally protect your financial data. Store it in a safe place!
+                        Please send me your new 6-digit pin code like this: /pin 123456
+                        """
+        );
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {

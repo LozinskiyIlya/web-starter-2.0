@@ -1,12 +1,15 @@
 package com.starter.web.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pengrad.telegrambot.TelegramBot;
 import com.starter.common.exception.Exceptions;
+import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.configuration.TelegramProperties;
+import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,8 +28,11 @@ import java.util.stream.Collectors;
 public class TelegramAuthService {
 
     private final TelegramProperties telegramProperties;
+    private final CurrentUserService currentUserService;
     private final UserInfoRepository userInfoRepository;
     private final ObjectMapper objectMapper;
+    private final TelegramBot bot;
+    private final TelegramMessageRenderer renderer;
 
     public User login(Long chatId, String initDataEncoded) {
         final var user = userInfoRepository.findByTelegramChatId(chatId)
@@ -44,6 +50,13 @@ public class TelegramAuthService {
                 .map(UserSettings::getPinCode)
                 .map(pin::equals)
                 .orElseThrow(Exceptions.UserNotFoundException::new);
+    }
+
+    public void resetPin() {
+        final var user = currentUserService.getUser()
+                .orElseThrow(Exceptions.UserNotFoundException::new);
+        final var chatId = user.getUserInfo().getTelegramChatId();
+        bot.execute(renderer.renderPin(chatId));
     }
 
     private boolean initDataIsValid(Long chatId, String initDataEncoded) {
@@ -102,4 +115,5 @@ public class TelegramAuthService {
             return false;
         }
     }
+
 }
