@@ -38,8 +38,8 @@ public class TelegramMessageRenderer {
 
     private final CurrenciesService currenciesService;
 
-    public SendMessage renderBill(Long chatId, Bill bill) {
-        final var caption = renderCaption(bill);
+    public SendMessage renderBill(Long chatId, Bill bill, boolean spoiler) {
+        final var caption = renderCaption(bill, spoiler);
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 new InlineKeyboardButton("✏\uFE0F Edit").webApp(renderWebApp("bill", bill.getId().toString())),
@@ -48,8 +48,8 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, caption).replyMarkup(keyboard).parseMode(ParseMode.HTML);
     }
 
-    public SendMessage renderBillPreview(Long chatId, Bill bill) {
-        final var caption = renderCaption(bill);
+    public SendMessage renderBillPreview(Long chatId, Bill bill, boolean spoiler) {
+        final var caption = renderCaption(bill, spoiler);
         return new SendMessage(chatId, caption).parseMode(ParseMode.HTML);
     }
 
@@ -123,8 +123,8 @@ public class TelegramMessageRenderer {
         return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
     }
 
-    private String renderCaption(Bill bill) {
-        return templateReader.read(BILL_TEMPLATE)
+    private String renderCaption(Bill bill, boolean spoiler) {
+        final var caption = templateReader.read(BILL_TEMPLATE)
                 .replaceAll("#group_name#", bill.getGroup().getTitle())
                 .replaceAll("#id#", renderId(bill.getId()))
                 .replaceAll("#buyer#", bill.getBuyer())
@@ -133,5 +133,11 @@ public class TelegramMessageRenderer {
                 .replaceAll("#purpose#", bill.getPurpose())
                 .replaceAll("#date#", renderDate(bill.getMentionedDate()))
                 .replaceAll("#tags#", renderTags(bill));
+        if (!spoiler) {
+            return caption
+                    .replaceAll("<tg-spoiler>", "")
+                    .replaceAll("</tg-spoiler>", "");
+        }
+        return caption;
     }
 }

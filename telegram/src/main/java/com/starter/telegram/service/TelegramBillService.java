@@ -8,7 +8,9 @@ import com.starter.common.events.BillCreatedEvent;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
+import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
+import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import jakarta.transaction.Transactional;
 import lombok.Data;
@@ -29,6 +31,7 @@ public class TelegramBillService {
     private final TelegramBot bot;
     private final TelegramMessageRenderer renderer;
     private final BillRepository billRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @Async
     @Transactional
@@ -40,7 +43,9 @@ public class TelegramBillService {
         final var bill = billRepository.findById(billId).orElseThrow();
         final var group = bill.getGroup();
         final var ownerInfo = group.getOwner().getUserInfo();
-        final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill);
+        final var spoilerBills = userSettingsRepository.findOneByUser(group.getOwner())
+                .map(UserSettings::getSpoilerBills).orElse(false);
+        final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill, spoilerBills);
         final var message = bot.execute(billMessage);
         // change status, message id and save
         bill.setMessageId(message.message().messageId());
@@ -80,9 +85,14 @@ public class TelegramBillService {
         group.getMembers()
                 .stream()
                 .map(User::getUserInfo)
-                .map(UserInfo::getTelegramChatId)
-                .filter(Predicate.not(ownerInfo.getTelegramChatId()::equals))
-                .map(chatId -> renderer.renderBillPreview(chatId, bill))
+                .filter(userInfo -> userInfo.getId() != ownerInfo.getId())
+                .map(userInfo -> {
+                    final var chatId = userInfo.getTelegramChatId();
+                    final var spoilerBills = userSettingsRepository.findOneByUser(userInfo.getUser())
+                            .map(UserSettings::getSpoilerBills)
+                            .orElse(false);
+                    return renderer.renderBillPreview(chatId, bill, spoilerBills);
+                })
                 .forEach(bot::execute);
         log.info("Bill sent to all members");
     }

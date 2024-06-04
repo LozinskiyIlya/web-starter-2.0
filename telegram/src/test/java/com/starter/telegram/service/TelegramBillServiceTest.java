@@ -1,15 +1,24 @@
 package com.starter.telegram.service;
 
+import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.EditMessageText;
+import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.SendResponse;
 import com.starter.common.events.BillConfirmedEvent;
+import com.starter.common.events.BillCreatedEvent;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.UserInfo;
+import com.starter.domain.entity.UserSettings;
 import com.starter.telegram.AbstractTelegramTest;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 
@@ -25,6 +34,54 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
     @Nested
     @DisplayName("on bill created")
     class OnBillCreated {
+
+        @BeforeEach
+        void setupBotResponse() {
+            final var responseMock = Mockito.mock(SendResponse.class);
+            final var messageMock = Mockito.mock(Message.class);
+            Mockito.when(responseMock.message()).thenReturn(messageMock);
+            Mockito.when(messageMock.messageId()).thenReturn(random.nextInt());
+            Mockito.when(bot.execute(Mockito.any(SendMessage.class)))
+                    .thenReturn(responseMock);
+        }
+
+        @Test
+        @DisplayName("should send bill to confirmation")
+        void shouldSendBillToConfirmation() {
+            // given
+            final var ownerInfo = userTestDataCreator.givenUserInfoExists();
+            final var bill = billTestDataCreator.givenBillExists(b ->
+                    b.setGroup(billTestDataCreator.givenGroupExists(g ->
+                            g.setOwner(ownerInfo.getUser()))));
+            // when
+            service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
+            // then
+            verify(bot).execute(Mockito.any(SendMessage.class));
+            assertSentMessageToChatIdContainsText(bot, "<tg-spoiler>", ownerInfo.getTelegramChatId());
+            // and then bill status changed to SENT
+            final var updatedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            assertEquals(Bill.BillStatus.SENT, updatedBill.getStatus());
+        }
+
+        @Test
+        @DisplayName("should remove <tg-spoiler> according to user settings")
+        void shouldRemoveSpoilerAccordingToUserSettings() {
+            // given
+            final var ownerInfo = userTestDataCreator.givenUserInfoExists();
+            final var bill = billTestDataCreator.givenBillExists(b ->
+                    b.setGroup(billTestDataCreator.givenGroupExists(g ->
+                            g.setOwner(ownerInfo.getUser()))));
+            userTestDataCreator.givenUserSettingsExists(s -> {
+                s.setSpoilerBills(false);
+                s.setUser(ownerInfo.getUser());
+            });
+            // when
+            service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
+            // then
+            verify(bot).execute(Mockito.any(SendMessage.class));
+            assertMessageSentToChatId(bot, ownerInfo.getTelegramChatId());
+            assertSentMessageNotContainsText(bot, "<tg-spoiler>");
+        }
     }
 
     @Nested

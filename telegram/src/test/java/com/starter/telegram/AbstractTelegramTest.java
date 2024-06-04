@@ -148,6 +148,16 @@ public abstract class AbstractTelegramTest {
         assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
     }
 
+    protected static void assertSentMessageNotContainsText(TelegramBot bot, String shouldNotContain) {
+        final var foundTexts = new LinkedList<>();
+        final var containsTimes = getCapturedRequestParams(bot)
+                .map(params -> params.get("text"))
+                .peek(foundTexts::add)
+                .filter(text -> ((String) text).contains(shouldNotContain))
+                .count();
+        assertEquals(0, containsTimes, "Message containing: \"" + shouldNotContain + "\" was found. Present texts: " + foundTexts);
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Stream<Map> getCapturedRequestParams(TelegramBot bot) {
         final var captor = ArgumentCaptor.forClass(BaseRequest.class);
