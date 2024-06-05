@@ -5,9 +5,9 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.events.BillCreatedEvent;
+import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.entity.User;
-import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.UserSettingsRepository;
@@ -20,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.function.Predicate;
 
 @Slf4j
 @Service
@@ -43,8 +41,18 @@ public class TelegramBillService {
         final var bill = billRepository.findById(billId).orElseThrow();
         final var group = bill.getGroup();
         final var ownerInfo = group.getOwner().getUserInfo();
-        final var spoilerBills = userSettingsRepository.findOneByUser(group.getOwner())
-                .map(UserSettings::getSpoilerBills).orElse(false);
+        final var userSettings = userSettingsRepository.findOneByUser(group.getOwner());
+        final var autoConfirm = userSettings.map(UserSettings::getAutoConfirmBills).orElse(false);
+
+        if (autoConfirm) {
+            log.info("Auto-confirm enabled, sending only confirmed message");
+            bill.setMessageId(Bill.DEFAULT_MESSAGE_ID);
+            billRepository.save(bill);
+            onBillConfirmed(new BillConfirmedEvent(this, billId));
+            return;
+        }
+
+        final var spoilerBills = userSettings.map(UserSettings::getSpoilerBills).orElse(true);
         final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill, spoilerBills);
         final var message = bot.execute(billMessage);
         // change status, message id and save
@@ -72,13 +80,11 @@ public class TelegramBillService {
 
         final var group = bill.getGroup();
         final var ownerInfo = group.getOwner().getUserInfo();
-        if (bill.getMessageId() != null) {
-            // update message in owner chat
-            final var tgMessage = new SelfMadeTelegramMessage();
-            tgMessage.setMessageId(bill.getMessageId());
-            final var message = renderer.renderBillUpdate(ownerInfo.getTelegramChatId(), bill, tgMessage);
-            bot.execute(message);
-        }
+        // update message in owner chat
+        final var tgMessage = new SelfMadeTelegramMessage();
+        tgMessage.setMessageId(bill.getMessageId());
+        final var message = renderer.renderBillConfirmation(ownerInfo.getTelegramChatId(), bill, tgMessage);
+        bot.execute(message);
 
         // send to all members
         log.info("Status and message updated. Sending bill to {} members", group.getMembers().size());
@@ -90,7 +96,7 @@ public class TelegramBillService {
                     final var chatId = userInfo.getTelegramChatId();
                     final var spoilerBills = userSettingsRepository.findOneByUser(userInfo.getUser())
                             .map(UserSettings::getSpoilerBills)
-                            .orElse(false);
+                            .orElse(true);
                     return renderer.renderBillPreview(chatId, bill, spoilerBills);
                 })
                 .forEach(bot::execute);

@@ -8,7 +8,6 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.response.BaseResponse;
 import com.starter.common.config.ServerProperties;
 import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
@@ -29,7 +28,7 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
     private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
     private final static String BILL_TEMPLATE = "bill.txt";
-    private final static String BILL_UPDATE_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
+    private final static String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
 
     private final TemplateReader templateReader;
@@ -53,8 +52,8 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, caption).parseMode(ParseMode.HTML);
     }
 
-    public BaseRequest<?, ?> renderBillUpdate(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
-        final var textPart = BILL_UPDATE_TEMPLATE
+    public BaseRequest<?, ?> renderBillConfirmation(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
+        final var textPart = BILL_CONFIRMED_TEMPLATE
                 .replaceAll("#amount#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency())))
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("bill", bill.getId()));
         return tryUpdateMessage(chatId, message, textPart);
@@ -108,15 +107,6 @@ public class TelegramMessageRenderer {
                         new InlineKeyboardButton("Add bill")
                                 .webApp(renderWebApp("bill", "new"))))
                 .parseMode(ParseMode.HTML);
-    }
-
-    public SendMessage renderPin(Long chatId) {
-        return new SendMessage(chatId,
-                """
-                        Pin code is used to additionally protect your financial data. Store it in a safe place!
-                        Please send me your new 6-digit pin code like this: /pin 123456
-                        """
-        );
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {

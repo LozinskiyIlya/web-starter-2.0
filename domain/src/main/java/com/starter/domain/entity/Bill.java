@@ -43,6 +43,9 @@ public class Bill extends AbstractEntity {
     private Set<BillTag> tags = new HashSet<>();
 
     @NotNull
+    private Integer messageId;
+
+    @NotNull
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private BillStatus status = BillStatus.NEW;
@@ -56,7 +59,6 @@ public class Bill extends AbstractEntity {
     private String currency;
     private Double amount;
     private Instant mentionedDate;
-    private Integer messageId;
     private String buyer;
     private String seller;
 
@@ -65,4 +67,5 @@ public class Bill extends AbstractEntity {
     }
 
     public static final String DEFAULT_CURRENCY = "USD";
+    public static final int DEFAULT_MESSAGE_ID = -1;
 }

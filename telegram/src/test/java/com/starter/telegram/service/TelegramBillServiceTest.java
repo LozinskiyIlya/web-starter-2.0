@@ -8,17 +8,13 @@ import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.UserInfo;
-import com.starter.domain.entity.UserSettings;
 import com.starter.telegram.AbstractTelegramTest;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 
@@ -136,9 +132,11 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
                     })));
             // when
             service.onBillConfirmed(new BillConfirmedEvent(this, bill.getId()));
-            //then
-            verify(bot, never()).execute(Mockito.any(EditMessageText.class));
-            assertMessageNotSentToChatId(bot, ownerInfo.getTelegramChatId());
+
+            //then bot sends a confirmation to owner
+            assertSentMessageToChatIdContainsText(bot, "confirmed. <a href='", ownerInfo.getTelegramChatId());
+
+            //and then bot sends preview to other group members
             assertSentMessageToChatIdContainsText(bot, bill.getPurpose(), memberInfo.getTelegramChatId());
             assertSentMessageToChatIdContainsText(bot, bill.getPurpose(), otherMemberInfo.getTelegramChatId());
         }

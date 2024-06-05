@@ -35,7 +35,7 @@ public class TelegramStaticRenderer {
     public static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
         // if the message is accessible, update it
         try {
-            if (message instanceof Message && message.messageId() != -1) {
+            if (message instanceof Message && message.messageId() != Bill.DEFAULT_MESSAGE_ID) {
                 final var editRequest = new EditMessageText(chatId, message.messageId(), text)
                         .parseMode(ParseMode.HTML)
                         .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
@@ -92,5 +92,14 @@ public class TelegramStaticRenderer {
             formattedAmount = formattedAmount.substring(0, formattedAmount.length() - 2);
         }
         return Matcher.quoteReplacement(formattedAmount + currencySymbol);
+    }
+
+    public static SendMessage renderPin(Long chatId) {
+        return new SendMessage(chatId,
+                """
+                        Pin code is used to additionally protect your financial data. Store it in a safe place!
+                        Please send me your new 6-digit pin code like this: /pin 123456
+                        """
+        );
     }
 }

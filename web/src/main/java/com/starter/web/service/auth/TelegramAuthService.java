@@ -9,7 +9,6 @@ import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.configuration.TelegramProperties;
-import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +21,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderPin;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,6 @@ public class TelegramAuthService {
     private final UserInfoRepository userInfoRepository;
     private final ObjectMapper objectMapper;
     private final TelegramBot bot;
-    private final TelegramMessageRenderer renderer;
 
     public User login(Long chatId, String initDataEncoded) {
         final var user = userInfoRepository.findByTelegramChatId(chatId)
@@ -56,7 +56,7 @@ public class TelegramAuthService {
         final var user = currentUserService.getUser()
                 .orElseThrow(Exceptions.WrongUserException::new);
         final var chatId = user.getUserInfo().getTelegramChatId();
-        bot.execute(renderer.renderPin(chatId));
+        bot.execute(renderPin(chatId));
     }
 
     private boolean initDataIsValid(Long chatId, String initDataEncoded) {

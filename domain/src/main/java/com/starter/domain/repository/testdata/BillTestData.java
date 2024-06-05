@@ -18,6 +18,7 @@ public interface BillTestData {
         bill.setBuyer("buyer");
         bill.setSeller("seller");
         bill.setPurpose("purpose");
+        bill.setMessageId(Bill.DEFAULT_MESSAGE_ID);
         bill.setMentionedDate(Instant.ofEpochMilli(TimeTestData.TODAY_MS));
         configure.accept(bill);
         return billRepository().saveAndFlush(bill);

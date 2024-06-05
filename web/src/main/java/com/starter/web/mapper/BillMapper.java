@@ -33,6 +33,7 @@ public interface BillMapper {
     @Mapping(target = "tags", source = "tags")
     @Mapping(target = "group", source = "group")
     @Mapping(target = "status", expression = "java(BillStatus.NEW)")
+    @Mapping(target ="messageId", expression = "java(Bill.DEFAULT_MESSAGE_ID)")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "state", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

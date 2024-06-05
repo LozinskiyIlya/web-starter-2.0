@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import java.util.Set;
 
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderPin;
 
 
 @Slf4j
@@ -45,7 +46,7 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     private void onPinCommand(Update update, TelegramBot bot, String pinParameter) {
         final var chatId = update.message().chat().id();
         if (!StringUtils.hasText(pinParameter)) {
-            bot.execute(messageRenderer.renderPin(chatId));
+            bot.execute(renderPin(chatId));
         } else {
             if (pinParameter.length() != 6) {
                 bot.execute(new SendMessage(chatId, "Pin code must be 6 characters long"));
