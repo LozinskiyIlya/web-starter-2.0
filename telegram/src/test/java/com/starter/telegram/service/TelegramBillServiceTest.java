@@ -60,6 +60,30 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
         }
 
         @Test
+        @DisplayName("should not send bill to confirmation if auto-confirm enabled")
+        void shouldNotSendBillToConfirmationIfAutoConfirm() {
+            // given
+            final var ownerInfo = userTestDataCreator.givenUserInfoExists();
+            final var bill = billTestDataCreator.givenBillExists(b ->
+                    b.setGroup(billTestDataCreator.givenGroupExists(g -> {
+                        g.setOwner(ownerInfo.getUser());
+                        g.setMembers(List.of(ownerInfo.getUser()));
+                    })));
+            userTestDataCreator.givenUserSettingsExists(s -> {
+                s.setAutoConfirmBills(true);
+                s.setUser(ownerInfo.getUser());
+            });
+            // when
+            service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
+            // then does not send new bill message, but sends only confirmation
+            assertSentMessageNotContainsText(bot, "New bill");
+            assertSentMessageContainsText(bot, "confirmed.");
+            // and then bill status changed to CONFIRMED
+            final var updatedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            assertEquals(Bill.BillStatus.CONFIRMED, updatedBill.getStatus());
+        }
+
+        @Test
         @DisplayName("should remove <tg-spoiler> according to user settings")
         void shouldRemoveSpoilerAccordingToUserSettings() {
             // given
