@@ -60,7 +60,7 @@ public class BillController {
         final var group = groupRepository.findById(billDto.getGroup().getId())
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
         if (!group.getOwner().getId().equals(currentUser.getId())) {
-            throw new Exceptions.WrongUserException("You can't bills to this group");
+            throw new Exceptions.WrongUserException("You can't add bills to this group");
         }
 
         var bill = billMapper.updateEntityFromDto(billDto, new Bill());
@@ -123,7 +123,7 @@ public class BillController {
             return;
         }
 
-        // todo: refactor this
+        // todo: refactor this so that all bills processing is async
         new FutureTask<Void>(() -> {
             final var tgMessage = new SelfMadeTelegramMessage();
             tgMessage.setMessageId(bill.getMessageId());
@@ -131,7 +131,7 @@ public class BillController {
             telegramBot.execute(message);
             return null;
         }).run();
-        // todo: refactor this
+        // todo: refactor this so that all bills processing is async
     }
 
     @GetMapping("/tags")
