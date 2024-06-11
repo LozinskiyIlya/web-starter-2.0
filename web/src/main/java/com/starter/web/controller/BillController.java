@@ -16,6 +16,7 @@ import com.starter.web.dto.BillDto;
 import com.starter.web.mapper.BillMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static com.starter.telegram.service.TelegramBillService.SelfMadeTelegramMessage;
@@ -45,6 +48,18 @@ public class BillController {
     private final TelegramMessageRenderer messageRenderer;
     private final TelegramBot telegramBot;
     private final ApplicationEventPublisher publisher;
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+
+    @PreDestroy
+    public void destroy() {
+        executor.shutdown();
+        try {
+            executor.awaitTermination(15, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            log.error("Failed to stop executor", ex);
+            Thread.currentThread().interrupt();
+        }
+    }
 
     @GetMapping("/{billId}")
     public BillDto getBill(@PathVariable UUID billId) {
@@ -105,33 +120,25 @@ public class BillController {
         if (ids.isEmpty()) {
             return;
         }
-
         // check rights to skip
         final var bills = billRepository.findAllById(ids);
         final var currentUser = currentUserService.getUser().orElseThrow();
         if (!bills.get(0).getGroup().getOwner().getId().equals(currentUser.getId())) {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
-        // skip all bills
-        bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
+        executor.submit(() -> {
+            // skip all bills
+            bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
+        });
     }
 
     private void skipBill(Bill bill, UserInfo currentUserInfo) {
         bill.setStatus(Bill.BillStatus.SKIPPED);
         billRepository.save(bill);
-        if (bill.getMessageId() == null) {
-            return;
-        }
-
-        // todo: refactor this so that all bills processing is async
-        new FutureTask<Void>(() -> {
-            final var tgMessage = new SelfMadeTelegramMessage();
-            tgMessage.setMessageId(bill.getMessageId());
-            final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
-            telegramBot.execute(message);
-            return null;
-        }).run();
-        // todo: refactor this so that all bills processing is async
+        final var tgMessage = new SelfMadeTelegramMessage();
+        tgMessage.setMessageId(bill.getMessageId());
+        final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
+        telegramBot.execute(message);
     }
 
     @GetMapping("/tags")

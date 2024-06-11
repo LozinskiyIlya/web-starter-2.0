@@ -48,7 +48,7 @@ public class ArchiveService {
             throw new Exceptions.WrongUserException("You can't restore this bill");
         }
         bill.setStatus(Bill.BillStatus.CONFIRMED);
-        billRepository.save(bill);
+        billRepository.saveAndFlush(bill);
     }
 
     @Transactional
@@ -60,5 +60,6 @@ public class ArchiveService {
             throw new Exceptions.WrongUserException("You can't delete bills in this group");
         }
         billRepository.deleteAllByGroupAndStatus(group, Bill.BillStatus.SKIPPED);
+        billRepository.flush();
     }
 }
