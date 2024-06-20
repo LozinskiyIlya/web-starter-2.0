@@ -48,13 +48,13 @@ public class BillController {
     private final TelegramMessageRenderer messageRenderer;
     private final TelegramBot telegramBot;
     private final ApplicationEventPublisher publisher;
-    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final ExecutorService billMessageExecutor = Executors.newFixedThreadPool(4);
 
     @PreDestroy
     public void destroy() {
-        executor.shutdown();
+        billMessageExecutor.shutdown();
         try {
-            executor.awaitTermination(15, TimeUnit.SECONDS);
+            billMessageExecutor.awaitTermination(15, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
             log.error("Failed to stop executor", ex);
             Thread.currentThread().interrupt();
@@ -126,19 +126,19 @@ public class BillController {
         if (!bills.get(0).getGroup().getOwner().getId().equals(currentUser.getId())) {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
-        executor.submit(() -> {
-            // skip all bills
-            bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
-        });
+        // skip all bills
+        bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
     }
 
     private void skipBill(Bill bill, UserInfo currentUserInfo) {
         bill.setStatus(Bill.BillStatus.SKIPPED);
         billRepository.save(bill);
-        final var tgMessage = new SelfMadeTelegramMessage();
-        tgMessage.setMessageId(bill.getMessageId());
-        final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
-        telegramBot.execute(message);
+        billMessageExecutor.submit(() -> {
+            final var tgMessage = new SelfMadeTelegramMessage();
+            tgMessage.setMessageId(bill.getMessageId());
+            final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
+            telegramBot.execute(message);
+        });
     }
 
     @GetMapping("/tags")

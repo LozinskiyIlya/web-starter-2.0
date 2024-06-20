@@ -3,8 +3,10 @@ package com.starter.telegram.service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.events.BillCreatedEvent;
+import com.starter.common.events.NotPaymentRelatedEvent;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.entity.User;
@@ -101,6 +103,14 @@ public class TelegramBillService {
                 })
                 .forEach(bot::execute);
         log.info("Bill sent to all members");
+    }
+
+    @Async
+    @EventListener
+    public void onNotRecognizedBill(NotPaymentRelatedEvent event) {
+        final var chatId = event.getPayload();
+        final var message = new SendMessage(chatId,"The message is not recognized as payment related. Try submitting another one");
+        bot.execute(message);
     }
 
 
