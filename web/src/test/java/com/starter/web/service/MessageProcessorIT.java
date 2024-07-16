@@ -101,6 +101,25 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             await().atMost(5, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
         }
+
+        @Test
+        @DisplayName("Rejects zero amount bills")
+        void RejectsZeroAmountBills() {
+            final var message = "Breakfast - $0";
+            doReturn(new MessageClassificationResponse(true))
+                    .when(openAiAssistant).classifyMessage(message);
+            doReturn(response("USD", 0.001))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+            // given
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
+            // then
+            await().atMost(5, TimeUnit.SECONDS).until(() -> true);
+            assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
+        }
     }
 
     private BillAssistantResponse response(String currency, Double amount) {
