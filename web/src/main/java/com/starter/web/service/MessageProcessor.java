@@ -65,6 +65,9 @@ public class MessageProcessor {
 
     private boolean shouldSave(BillAssistantResponse response) {
         // at least MIN_FIELDS_FILLED any fields should be filled
+        if (response.getAmount() == null || response.getAmount() < 0.00001d) {
+            return false;
+        }
         return Arrays.stream(response.getClass().getDeclaredFields())
                 .peek(f -> f.setAccessible(true))
                 .filter(f -> {
