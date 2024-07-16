@@ -17,9 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 
 @Slf4j
@@ -32,6 +30,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String SKIP_BILL_PREFIX = "skip_bill_";
     public static final String ADDME_ACCEPT_PREFIX = "addme_accept_";
     public static final String ADDME_REJECT_PREFIX = "addme_reject_";
+    public static final String RECOGNIZE_BILL_PREFIX = "recognize_";
 
     private final BillRepository billRepository;
     private final GroupRepository groupRepository;
@@ -52,6 +51,8 @@ public class CallbackQueryUpdateListener implements UpdateListener {
             acceptAddMe(bot, callbackQuery, chatId);
         } else if (callbackQuery.data().startsWith(ADDME_REJECT_PREFIX)) {
             rejectAddMe(bot, callbackQuery, chatId);
+        }else if (callbackQuery.data().startsWith(RECOGNIZE_BILL_PREFIX)){
+            bot.execute(renderer.renderRecognizeMyBill(chatId));
         }
     }
 

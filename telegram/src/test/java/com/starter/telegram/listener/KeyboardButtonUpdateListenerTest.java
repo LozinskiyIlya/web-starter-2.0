@@ -27,7 +27,7 @@ class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
             listener.processUpdate(update, bot);
             // then
             assertMessageSentToChatId(bot, chatId);
-            assertSentMessageContainsText(bot, "Feel free to provide bill information");
+            assertSentMessageContainsText(bot, "Let the bot extract all important info");
         }
     }
 }

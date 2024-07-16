@@ -1,3 +1,5 @@
 <b>NEW BILL</b>
 
-Feel free to provide bill information directly to the bot in this chat in any format — mentioning the amount and purpose is recommended. Alternatively, you can manually enter the details using the form accessible through the button below.
+Let the bot extract all important info about your transaction, just send payment-related message or document in any format, for example:
+<i>#example#</i>.
+Or enter the details manually using the form
