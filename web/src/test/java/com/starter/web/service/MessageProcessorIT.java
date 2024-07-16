@@ -76,7 +76,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then - bill is created asynchronously
-            await().atMost(5, TimeUnit.SECONDS).until(() -> billRepository.findAllByGroup(group).size() == 1);
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> billRepository.findAllByGroup(group).size() == 1);
             var bill = billRepository.findAllByGroup(group).get(0);
             assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
             assertThat(bill.getAmount()).isEqualTo(100);
@@ -98,7 +98,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
-            await().atMost(5, TimeUnit.SECONDS).until(() -> true);
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
         }
 
@@ -117,7 +117,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
-            await().atMost(5, TimeUnit.SECONDS).until(() -> true);
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
         }
     }
