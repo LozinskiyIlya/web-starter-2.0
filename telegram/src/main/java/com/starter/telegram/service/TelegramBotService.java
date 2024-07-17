@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class TelegramBotService {
-    public static final String NEW_BILL_BUTTON = "\uD83E\uDDFE NEW BILL";
+    public static final String NEW_BILL_BUTTON = "➕ NEW BILL";
     public static final Set<String> KEYBOARD_BUTTONS = Set.of(NEW_BILL_BUTTON);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);

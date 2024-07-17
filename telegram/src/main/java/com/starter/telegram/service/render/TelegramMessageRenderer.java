@@ -30,6 +30,7 @@ public class TelegramMessageRenderer {
     private final static String BILL_TEMPLATE = "bill.txt";
     private final static String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
+    public static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
 
     private final TemplateReader templateReader;
 
@@ -101,11 +102,16 @@ public class TelegramMessageRenderer {
     }
 
     public SendMessage renderNewBill(Long chatId) {
-        final var textPart = templateReader.read(NEW_BILL_TEMPLATE);
+        final var textPart = templateReader.read(NEW_BILL_TEMPLATE)
+                .replace("#example#", randomExample());
         return new SendMessage(chatId, textPart)
-                .replyMarkup(new InlineKeyboardMarkup(
-                        new InlineKeyboardButton("Add bill")
-                                .webApp(renderWebApp("bill", "new"))))
+                .replyMarkup(
+                        new InlineKeyboardMarkup(
+                                new InlineKeyboardButton[]{new InlineKeyboardButton("⌨\uFE0F OK, recognize my bill")
+                                        .callbackData(RECOGNIZE_BILL_PREFIX)},
+                                new InlineKeyboardButton[]{new InlineKeyboardButton("\uD83E\uDDFE I'll use the form")
+                                        .webApp(renderWebApp("bill", "new"))}
+                        ))
                 .parseMode(ParseMode.HTML);
     }
 
@@ -129,5 +135,10 @@ public class TelegramMessageRenderer {
                     .replaceAll("</tg-spoiler>", "");
         }
         return caption;
+    }
+
+    public SendMessage renderRecognizeMyBill(Long chatId) {
+        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", randomExample());
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 }

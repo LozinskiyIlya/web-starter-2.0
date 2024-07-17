@@ -1,9 +1,9 @@
 package com.starter.web.service;
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.response.SendResponse;
 import com.starter.common.events.TelegramTextMessageEvent;
-import com.starter.domain.entity.Bill;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
@@ -14,17 +14,21 @@ import com.starter.web.service.openai.OpenAiAssistant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 
 class MessageProcessorIT extends AbstractSpringIntegrationTest {
@@ -72,11 +76,49 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then - bill is created asynchronously
-            await().atMost(5, TimeUnit.SECONDS).until(() -> billRepository.findAllByGroup(group).size() == 1);
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> billRepository.findAllByGroup(group).size() == 1);
             var bill = billRepository.findAllByGroup(group).get(0);
             assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
             assertThat(bill.getAmount()).isEqualTo(100);
             assertThat(bill.getCurrency()).isEqualTo("USD");
+        }
+
+        @Test
+        @DisplayName("Sends a message if a message is not payment-related")
+        void sendsMessageIfMessageIsNotPaymentRelated() {
+            final var message = "Hello";
+            doReturn(new MessageClassificationResponse(false))
+                    .when(openAiAssistant).classifyMessage(message);
+            doReturn(response("USD", 100.0))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+            // given
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
+            // then
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
+            assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
+        }
+
+        @Test
+        @DisplayName("Rejects zero amount bills")
+        void RejectsZeroAmountBills() {
+            final var message = "Breakfast - $0";
+            doReturn(new MessageClassificationResponse(true))
+                    .when(openAiAssistant).classifyMessage(message);
+            doReturn(response("USD", 0.001))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+            // given
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
+            // then
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
+            assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
         }
     }
 
@@ -86,5 +128,25 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
         response.setAmount(amount);
         response.setTags(new String[]{"Work"});
         return response;
+    }
+
+    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, String shouldContain, Long chatId) {
+        final var foundTexts = new LinkedList<>();
+        final var containsTimes = getCapturedRequestParams(bot)
+                .filter(params -> params.get("chat_id").equals(chatId))
+                .map(params -> params.get("text"))
+                .peek(foundTexts::add)
+                .filter(text -> ((String) text).contains(shouldContain))
+                .count();
+        assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Stream<Map> getCapturedRequestParams(TelegramBot bot) {
+        final var captor = ArgumentCaptor.forClass(BaseRequest.class);
+        verify(bot, atLeast(0)).execute(captor.capture());
+        return captor.getAllValues()
+                .stream()
+                .map(BaseRequest::getParameters);
     }
 }

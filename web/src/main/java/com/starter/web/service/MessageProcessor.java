@@ -2,9 +2,11 @@ package com.starter.web.service;
 
 
 import com.starter.common.events.BillCreatedEvent;
+import com.starter.common.events.NotPaymentRelatedEvent;
 import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
 import com.starter.common.utils.CustomFileUtils;
+import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
@@ -37,15 +39,13 @@ public class MessageProcessor {
         final var payload = event.getPayload();
         final var groupId = payload.getFirst();
         final var message = payload.getSecond();
+        final var group = groupRepository.findById(groupId).orElseThrow();
         final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();
         if (isPayment) {
-            final var group = groupRepository.findById(groupId).orElseThrow();
             final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
-            if (shouldSave(response)) {
-                final var bill = billService.addBill(group, response);
-                log.info("Bill created: {}", bill);
-                publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));
-            }
+            save(group, response);
+        } else {
+            notRecognized(group);
         }
     }
 
@@ -59,16 +59,15 @@ public class MessageProcessor {
         final var fileUrl = payload.fileUrl();
         final var group = groupRepository.findById(groupId).orElseThrow();
         final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
-        if (shouldSave(response)) {
-            final var bill = billService.addBill(group, response);
-            log.info("Bill created: {}", bill);
-            publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));
-        }
+        save(group, response);
         CustomFileUtils.deleteLocalFile(fileUrl);
     }
 
     private boolean shouldSave(BillAssistantResponse response) {
         // at least MIN_FIELDS_FILLED any fields should be filled
+        if (response.getAmount() == null || response.getAmount() < 0.01d) {
+            return false;
+        }
         return Arrays.stream(response.getClass().getDeclaredFields())
                 .peek(f -> f.setAccessible(true))
                 .filter(f -> {
@@ -88,5 +87,20 @@ public class MessageProcessor {
                         return false;
                     }
                 }).count() >= MIN_FIELDS_FILLED;
+    }
+
+    private void save(Group group, BillAssistantResponse response) {
+        if (shouldSave(response)) {
+            final var bill = billService.addBill(group, response);
+            log.info("Bill created: {}", bill);
+            publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));
+        } else {
+            notRecognized(group);
+        }
+    }
+
+    private void notRecognized(Group group) {
+        log.info("Message is not payment related, skipping processing");
+        publisher.publishEvent(new NotPaymentRelatedEvent(this, group.getChatId()));
     }
 }

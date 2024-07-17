@@ -7,6 +7,7 @@ import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.util.UUID;
 
@@ -14,7 +15,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.params.shadow.com.univocity.parsers.conversions.Conversions.replace;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +31,8 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
     void returnCurrentUser() throws Exception {
         var login = "current user login";
         var pass = "current user password";
+        var session = new MockHttpSession();
+        session.setAttribute("pinEntered", true);
         var chatId = new EasyRandom().nextObject(Long.class);
         final var user = userCreator.givenUserInfoExists(ui -> {
             ui.setUser(userCreator.givenUserExists(u -> {
@@ -53,6 +55,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
                 .replace("%LAST_UPDATED_AT%", settings.getLastUpdatedAt().toString())
                 .replace("\"%TELEGRAM_CHAT_ID%\"", chatId.toString());
         mockMvc.perform(getRequest("")
+                        .session(session)
                         .header(header.getFirst(), header.getSecond()))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(content().json(serializedUser, true));

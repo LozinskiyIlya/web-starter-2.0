@@ -6,6 +6,7 @@
   "role": "ROLE_USER",
   "userType": "TELEGRAM",
   "enabled": true,
+  "pinEntered": true,
   "accountNonExpired": true,
   "accountNonLocked": true,
   "credentialsNonExpired": true,
@@ -13,7 +14,7 @@
     "autoConfirmBills": false,
     "spoilerBills": true,
     "pinCodeEnabled": false,
-    "pinCode": "%PIN_CODE%",
+    "pinCode": "******",
     "lastUpdatedAt": "%LAST_UPDATED_AT%"
   },
   "telegramUser": {

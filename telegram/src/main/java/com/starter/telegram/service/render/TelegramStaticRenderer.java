@@ -102,4 +102,32 @@ public class TelegramStaticRenderer {
                         """
         );
     }
+
+    public static String randomExample() {
+        return NEW_BILL_EXAMPLES[(int) (Math.random() * NEW_BILL_EXAMPLES.length)];
+    }
+
+    private static final String[] NEW_BILL_EXAMPLES = {
+            "45$ dinner at Portabello Bistro",
+            "120.50$ for groceries at Whole Foods",
+            "15£ for taxi fare to downtown",
+            "13.99$ for monthly subscription for Netflix",
+            "4.50€ coffee at Starbucks",
+            "60$ for gas station refill",
+            "12.75$ for lunch at Chipotle",
+            "35£ for office supplies from Staples",
+            "25$ for movie night at AMC Theatres",
+            "70$ for dinner at Olive Garden",
+            "30$ gym membership this month",
+            "150€ stay at Hilton",
+            "350$ flight booking to New York",
+            "85$ concert tickets for Coldplay",
+            "45.20$ for books from Amazon",
+            "19.99$ for online course from Udemy",
+            "75$ for electricity bill",
+            "40$ for water bill",
+            "60$ for internet bill from Comcast",
+            "55$ for phone bill from Verizon"
+    };
+
 }

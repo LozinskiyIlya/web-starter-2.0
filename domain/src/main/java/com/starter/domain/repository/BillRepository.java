@@ -72,7 +72,9 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
 
     List<Bill> findAllByGroup(Group group);
 
-    List<Bill> findAllByGroupIn(List<Group> groups);
+    Page<Bill> findAllByGroupAndStatusEquals(Group group, Bill.BillStatus status, Pageable pageable);
+
+    void deleteAllByGroupAndStatus(Group group, Bill.BillStatus billStatus);
 
     interface TagAmount {
         String getName();
