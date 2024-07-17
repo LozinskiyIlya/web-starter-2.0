@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/session")
 @Schema(title = "Session management")
-@LogApiAction
+//@LogApiAction()
 public class SessionController {
 
     @GetMapping("/checkPin")
