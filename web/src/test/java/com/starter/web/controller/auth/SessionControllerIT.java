@@ -30,6 +30,21 @@ class SessionControllerIT extends AbstractSpringIntegrationTest {
         }
 
         @Test
+        @DisplayName("using existing session")
+        void usingExistingSession() throws Exception {
+            final var user = userCreator.givenUserExists();
+            final var token = userAuthHeader(user);
+            final var session = new MockHttpSession();
+            session.setAttribute("pinEntered", true);
+
+            mockMvc.perform(getRequest("/checkPin")
+                            .session(session)
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", is(true)));
+        }
+
+        @Test
         @DisplayName("should correctly set and check pin status")
         void shouldCorrectlySetAndCheckPinStatus() throws Exception {
             final var user = userCreator.givenUserExists();
