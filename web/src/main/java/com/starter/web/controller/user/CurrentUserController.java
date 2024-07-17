@@ -52,7 +52,7 @@ public class CurrentUserController {
                     dto.setTelegramUser(telegramUser);
                 });
         userSettingsRepository.findOneByUser(current)
-                .map(userSettingsMapper::toDto)
+                .map(userSettingsMapper::toDtoMaskedPin)
                 .ifPresent(dto::setSettings);
         Optional.ofNullable(session.getAttribute("pinEntered"))
                 .map(Boolean.class::cast)

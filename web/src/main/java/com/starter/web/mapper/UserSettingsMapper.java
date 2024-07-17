@@ -18,4 +18,8 @@ public interface UserSettingsMapper {
     UserSettings updateEntityFromDto(UserSettingsDto dto, @MappingTarget UserSettings settings);
 
     UserSettingsDto toDto(UserSettings settings);
+
+
+    @Mapping(target = "pinCode", constant = "******")
+    UserSettingsDto toDtoMaskedPin(UserSettings settings);
 }

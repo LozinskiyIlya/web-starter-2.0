@@ -14,7 +14,7 @@
     "autoConfirmBills": false,
     "spoilerBills": true,
     "pinCodeEnabled": false,
-    "pinCode": "%PIN_CODE%",
+    "pinCode": "******",
     "lastUpdatedAt": "%LAST_UPDATED_AT%"
   },
   "telegramUser": {
