@@ -41,16 +41,6 @@ public class TelegramController {
         return new AuthController.AuthResponse(token, user.getFirstLogin());
     }
 
-    @PostMapping("/auth/pin")
-    public boolean verifyPin(@RequestBody @Valid PinAuthRequest request) {
-        return authService.verifyPin(request.getChatId(), request.getPin());
-    }
-
-    @PostMapping("/auth/pin/reset")
-    public void resetPin() {
-        authService.resetPin();
-    }
-
     @PostMapping("/bills/{billId}/send")
     public void confirmBill(@PathVariable UUID billId) {
         billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill.getId())));
@@ -70,16 +60,5 @@ public class TelegramController {
         @NotEmpty(message = "Init data is required")
         @Schema(description = "Init data", example = "initData")
         private String initDataEncoded;
-    }
-
-    @Data
-    @EqualsAndHashCode(callSuper = true)
-    @Schema(description = "DTO for verifying pin")
-    public static class PinAuthRequest extends TelegramAuthRequest {
-        @NotEmpty(message = "Pin is required")
-        @Size(min = 6, max = 6, message = "Pin must be exactly 6 digits")
-        @Pattern(regexp = "\\d{6}", message = "Pin can only contain digits")
-        @Schema(description = "6-digits pin", example = "123456")
-        private String pin;
     }
 }

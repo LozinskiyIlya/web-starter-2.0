@@ -1,12 +1,8 @@
 package com.starter.web.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pengrad.telegrambot.TelegramBot;
 import com.starter.common.exception.Exceptions;
-import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.User;
-import com.starter.domain.entity.UserInfo;
-import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.configuration.TelegramProperties;
 import lombok.RequiredArgsConstructor;
@@ -21,18 +17,14 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.starter.telegram.service.render.TelegramStaticRenderer.renderPin;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramAuthService {
 
     private final TelegramProperties telegramProperties;
-    private final CurrentUserService currentUserService;
     private final UserInfoRepository userInfoRepository;
     private final ObjectMapper objectMapper;
-    private final TelegramBot bot;
 
     public User login(Long chatId, String initDataEncoded) {
         final var user = userInfoRepository.findByTelegramChatId(chatId)
@@ -41,22 +33,6 @@ public class TelegramAuthService {
             return user;
         }
         throw new Exceptions.UnauthorizedException("Invalid telegram credentials");
-    }
-
-    public boolean verifyPin(Long chatId, String pin) {
-        return userInfoRepository.findByTelegramChatId(chatId)
-                .map(UserInfo::getUser)
-                .map(User::getUserSettings)
-                .map(UserSettings::getPinCode)
-                .map(pin::equals)
-                .orElseThrow(Exceptions.UserNotFoundException::new);
-    }
-
-    public void resetPin() {
-        final var user = currentUserService.getUser()
-                .orElseThrow(Exceptions.WrongUserException::new);
-        final var chatId = user.getUserInfo().getTelegramChatId();
-        bot.execute(renderPin(chatId));
     }
 
     private boolean initDataIsValid(Long chatId, String initDataEncoded) {
