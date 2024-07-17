@@ -61,4 +61,8 @@ public class Group extends AbstractEntity {
     public boolean contains(User user) {
         return members.contains(user);
     }
+
+    public enum GroupMode{
+
+    }
 }
