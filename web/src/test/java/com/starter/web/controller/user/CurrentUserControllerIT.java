@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpSession;
 
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -49,10 +50,14 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
             us.setPinCode("123456");
         });
         var header = userAuthHeader(login);
+        // Define the desired format with nanosecond precision
+        final var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");
+        final var formattedLastUpdate = settings.getLastUpdatedAt().atOffset(java.time.ZoneOffset.UTC).format(formatter);
+
         var serializedUser = readResource("responses/user/current_user.json")
                 .replace("%USER_ID%", user.getId().toString())
                 .replace("%PIN_CODE%", settings.getPinCode())
-                .replace("%LAST_UPDATED_AT%", settings.getLastUpdatedAt().toString())
+                .replace("%LAST_UPDATED_AT%", formattedLastUpdate)
                 .replace("\"%TELEGRAM_CHAT_ID%\"", chatId.toString());
         mockMvc.perform(getRequest("")
                         .session(session)
