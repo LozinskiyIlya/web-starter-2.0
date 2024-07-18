@@ -70,7 +70,7 @@ public class TelegramBotService {
     @PostConstruct
     public void start() {
         bot.setUpdatesListener(updates -> {
-            updates.forEach(update ->
+            updates.stream().map(UpdateWrapper::new).forEach(update ->
                     updatesExecutor.submit(() -> {
                         try {
                             if (update.message() != null && update.message().from().isBot()) {

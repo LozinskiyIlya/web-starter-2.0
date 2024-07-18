@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static com.starter.telegram.service.TelegramBillService.NOT_RECOGNIZED_MESSAGE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -99,7 +100,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
-            assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
+            assertSentMessageToChatIdContainsText(bot, NOT_RECOGNIZED_MESSAGE, group.getChatId());
         }
 
         @Test
@@ -118,7 +119,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
-            assertSentMessageToChatIdContainsText(bot, "The message is not recognized as payment related. Try submitting another one", group.getChatId());
+            assertSentMessageToChatIdContainsText(bot, NOT_RECOGNIZED_MESSAGE, group.getChatId());
         }
     }
 
