@@ -5,7 +5,6 @@ import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.events.NotPaymentRelatedEvent;
 import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
-import com.starter.common.utils.CustomFileUtils;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.fragments.BillAssistantResponse;
@@ -20,6 +19,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+
+import static com.starter.common.utils.CustomFileUtils.deleteLocalFile;
 
 @Slf4j
 @Service
@@ -60,7 +61,7 @@ public class MessageProcessor {
         final var group = groupRepository.findById(groupId).orElseThrow();
         final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
         save(group, response);
-        CustomFileUtils.deleteLocalFile(fileUrl);
+        deleteLocalFile(fileUrl);
     }
 
     private boolean shouldSave(BillAssistantResponse response) {
