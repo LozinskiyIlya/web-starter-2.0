@@ -23,6 +23,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -109,8 +111,8 @@ public class TelegramBillService {
     @EventListener
     public void onNotRecognizedBill(NotPaymentRelatedEvent event) {
         final var chatId = event.getPayload();
-        final var message = new SendMessage(chatId,"The message is not recognized as payment related. Try submitting another one");
-        bot.execute(message);
+        final var message = new SendMessage(chatId, "The message is not recognized as payment related. Try submitting another one");
+        bot.execute(message.replyMarkup(latestKeyboard()));
     }
 
 

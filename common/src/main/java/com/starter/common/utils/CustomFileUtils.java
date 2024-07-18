@@ -39,11 +39,15 @@ public class CustomFileUtils {
     }
 
     public static void deleteLocalFile(String filePath) {
-        File file = new File(filePath);
-        if (file.delete()) {
-            log.info("File deleted successfully from local: " + filePath);
-        } else {
-            log.error("Failed to delete local the file: " + filePath);
+        try {
+            File file = new File(filePath);
+            if (file.delete()) {
+                log.info("File deleted successfully from local: " + filePath);
+            } else {
+                log.error("Failed to delete local the file: " + filePath);
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete local the file: " + filePath, e);
         }
     }
 }

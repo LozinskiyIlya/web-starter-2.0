@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import static com.starter.common.utils.CustomFileUtils.deleteLocalFile;
 
 @Slf4j
 @Service
@@ -39,18 +39,7 @@ public class OpenAiFileManager {
     private void postProcessFile(Pair<String, Boolean> processedFilePath) {
         final var needToDelete = processedFilePath.getSecond();
         if (needToDelete) {
-            delete(processedFilePath);
-        }
-    }
-
-    private static void delete(Pair<String, Boolean> processedFilePath) {
-        try {
-            final var deleted = new File(processedFilePath.getFirst()).delete();
-            log.info("File delete status : {}", deleted);
-        } catch (SecurityException e) {
-            log.error("SecurityException occurred while deleting file: {}", processedFilePath.getFirst(), e);
-        } catch (Exception e) {
-            log.error("Exception occurred while deleting file: {}", processedFilePath.getFirst(), e);
+            deleteLocalFile(processedFilePath.getFirst());
         }
     }
 
