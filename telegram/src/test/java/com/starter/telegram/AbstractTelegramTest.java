@@ -3,6 +3,7 @@ package com.starter.telegram;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.*;
 import com.pengrad.telegrambot.request.BaseRequest;
+import com.pengrad.telegrambot.response.GetChatResponse;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.telegram.configuration.TelegramProperties;
@@ -108,6 +109,25 @@ public abstract class AbstractTelegramTest {
         when(user.languageCode()).thenReturn("en");
         when(user.isPremium()).thenReturn(true);
         return user;
+    }
+
+    protected static GetChatResponse mockReturnedChatData(Long chatId, String bio) {
+        GetChatResponse response = mock(GetChatResponse.class);
+        Chat chat = mock(Chat.class);
+        ChatPhoto chatPhoto = mockChatPhoto();
+        when(response.chat()).thenReturn(chat);
+        when(chat.id()).thenReturn(chatId);
+        when(chat.bio()).thenReturn(bio);
+        when(chat.photo()).thenReturn(chatPhoto);
+        when(chat.birthdate()).thenReturn(new Birthdate());
+        return response;
+    }
+
+    protected static ChatPhoto mockChatPhoto() {
+        ChatPhoto photo = mock(ChatPhoto.class);
+        when(photo.smallFileId()).thenReturn("AQADAgADy6cxGzECFxEACAIAAzECFxEABML2Cb7Tv3otNQQ");
+        when(photo.bigFileId()).thenReturn("AQADAgADy6cxGzECFxEACAMAAzECFxEABML2Cb7Tv3otNQQ");
+        return photo;
     }
 
     protected static void assertMessageNotSentToChatId(TelegramBot bot, Long chatId) {

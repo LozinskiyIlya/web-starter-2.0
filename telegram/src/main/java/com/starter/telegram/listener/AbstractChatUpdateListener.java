@@ -32,11 +32,12 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
     @Override
     @Transactional
     public void processUpdate(Update update, TelegramBot bot) {
-        log.info("Processing group update: {}", update);
+        log.info("Processing chat update: {}", update);
         checkIdMigration(update);
         final var group = getGroup(update, bot);
         final var text = update.message().text();
         doBillWork(bot, update, group, text);
+        telegramUserService.updateUserInfo(update.message().from(), bot);
     }
 
     protected abstract Group getGroup(Update update, TelegramBot bot);

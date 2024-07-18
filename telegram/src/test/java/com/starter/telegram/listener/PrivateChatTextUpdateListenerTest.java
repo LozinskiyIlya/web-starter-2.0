@@ -1,5 +1,6 @@
 package com.starter.telegram.listener;
 
+import com.pengrad.telegrambot.request.GetChat;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.AbstractTelegramTest;
@@ -7,11 +8,15 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -26,6 +31,33 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
     @Nested
     @DisplayName("On text message")
     class OnTextMessage {
+
+        @Test
+        @Transactional
+        @DisplayName("Updates userInfo")
+        void updatesUserInfoOnTextMessage() {
+            // given
+            final var userChatId = random.nextLong();
+            final var updatedBio = UUID.randomUUID().toString();
+            final var existingUserInfo = userTestDataCreator.givenUserInfoExists(ui -> {
+                ui.setTelegramChatId(userChatId);
+                ui.setFirstName("John");
+                ui.setLastName("Doe");
+            });
+            assertNull(existingUserInfo.getAvatar());
+            final var update = mockGroupUpdate("some text", userChatId, userChatId);
+            final var chatResponse = mockReturnedChatData(userChatId, updatedBio);
+            when(bot.execute(Mockito.any(GetChat.class))).thenReturn(chatResponse);
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true); // info update is async
+            final var updatedUserInfo = userTestDataCreator.userInfoRepository().findById(existingUserInfo.getId()).orElseThrow();
+            assertNotEquals("John", updatedUserInfo.getFirstName());
+            assertNotEquals("Doe", updatedUserInfo.getLastName());
+            assertEquals(updatedBio, updatedUserInfo.getBio());
+            assertNotNull(updatedUserInfo.getAvatar());
+        }
 
         @Test
         @Transactional
