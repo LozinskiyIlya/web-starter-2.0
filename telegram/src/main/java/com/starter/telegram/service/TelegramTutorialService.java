@@ -28,7 +28,7 @@ public class TelegramTutorialService {
     private static final String TUTORIAL_TEMPLATE = "<b>%s</b>\n\n%s";
     private static final List<TutorialStep> steps = List.of(
             new TutorialStep(
-                    "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                    "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Step1.gif",
                     "\uD83D\uDC4B Welcome to the AI Counting Bot!",
                     "Forward any payment-related text to this bot to get structured info"
             ),
