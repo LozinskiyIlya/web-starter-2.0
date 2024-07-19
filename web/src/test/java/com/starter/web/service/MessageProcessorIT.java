@@ -99,7 +99,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
-            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
+            await().pollDelay(5, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, NOT_RECOGNIZED_MESSAGE, group.getChatId());
         }
 

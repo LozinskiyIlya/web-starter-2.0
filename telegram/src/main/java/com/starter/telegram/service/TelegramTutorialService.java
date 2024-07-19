@@ -1,10 +1,12 @@
 package com.starter.telegram.service;
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
-import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
+import com.pengrad.telegrambot.model.request.*;
+import com.pengrad.telegrambot.request.BaseRequest;
+import com.pengrad.telegrambot.request.EditMessageMedia;
 import com.pengrad.telegrambot.request.SendAnimation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -48,18 +50,19 @@ public class TelegramTutorialService {
     );
 
     public void onTutorialCommand(Update update, TelegramBot bot) {
-        final var message = getNextStep(update.message().chat().id(), 0);
+        final var message = getNextStep(update.message().chat().id(), 0, null);
         bot.execute(message);
     }
 
     public void onStepChanged(Update update, TelegramBot bot) {
-        final var data = update.callbackQuery().data().split("_");
-        final var step = Integer.parseInt(data[2]);
-        final var message = getNextStep(update.callbackQuery().from().id(), step);
+        final var query = update.callbackQuery();
+        final var index = query.data().split("_")[2];
+        final var step = Integer.parseInt(index);
+        final var message = getNextStep(update.callbackQuery().from().id(), step, query.maybeInaccessibleMessage());
         bot.execute(message);
     }
 
-    private SendAnimation getNextStep(Long chatId, int step) {
+    private BaseRequest<?, ?> getNextStep(Long chatId, int step, MaybeInaccessibleMessage message) {
         final var nextStep = steps.get(step);
         final var buttons = new LinkedList<InlineKeyboardButton>();
         if (step > 0) {
@@ -68,10 +71,20 @@ public class TelegramTutorialService {
         if (step < steps.size() - 1) {
             buttons.add(new InlineKeyboardButton("Next >").callbackData(TUTORIAL_NEXT_PREFIX + (step + 1)));
         }
+        final var keyboard = new InlineKeyboardMarkup(buttons.toArray(new InlineKeyboardButton[0]));
+
+        if (message instanceof Message && message.messageId() != null) {
+            return new EditMessageMedia(chatId, message.messageId(),
+                    new InputMediaAnimation(nextStep.getGifPath())
+                            .caption(TUTORIAL_TEMPLATE.formatted(nextStep.getTitle(), nextStep.getCaption()))
+                            .parseMode(ParseMode.HTML))
+                    .replyMarkup(keyboard);
+        }
+
         return new SendAnimation(chatId, nextStep.getGifPath())
                 .caption(TUTORIAL_TEMPLATE.formatted(nextStep.getTitle(), nextStep.getCaption()))
-                .replyMarkup(new InlineKeyboardMarkup(buttons.toArray(new InlineKeyboardButton[0])))
-                .parseMode(ParseMode.HTML);
+                .parseMode(ParseMode.HTML)
+                .replyMarkup(keyboard);
     }
 
 

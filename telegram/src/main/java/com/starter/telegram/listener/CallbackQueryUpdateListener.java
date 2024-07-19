@@ -11,7 +11,6 @@ import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.service.TelegramTutorialService;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,7 +43,6 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     private final TelegramTutorialService tutorialService;
 
     @Override
-    @Transactional
     public void processUpdate(Update update, TelegramBot bot) {
         final var callbackQuery = update.callbackQuery();
         final var chatId = callbackQuery.from().id();
