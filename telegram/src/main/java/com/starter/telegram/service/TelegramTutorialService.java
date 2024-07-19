@@ -29,22 +29,22 @@ public class TelegramTutorialService {
     private static final List<TutorialStep> steps = List.of(
             new TutorialStep(
                     "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-                    "Welcome to the AI Counting Bot!",
+                    "\uD83D\uDC4B Welcome to the AI Counting Bot!",
                     "Forward any payment-related text to this bot to get structured info"
             ),
             new TutorialStep(
                     "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-                    "Send PDFs or images",
+                    "Send PDFs or images \uD83E\uDDFE",
                     "The bot will extract the payment info"
             ),
             new TutorialStep(
                     "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-                    "Use groups to keep track of shared expenses",
+                    "Use groups \uD83D\uDC65 to keep track of shared expenses",
                     "Each bill is attached to a group. When you send private message to the bot, the expense will be attached to the <b>\"Personal\"</b> group"
             ),
             new TutorialStep(
                     "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-                    "Check out other functions!",
+                    "\uD83C\uDF00 Check out other functions!",
                     "Add bills manually, view stats and insights, share bills with friends and much more!"
             )
     );
@@ -72,17 +72,18 @@ public class TelegramTutorialService {
             buttons.add(new InlineKeyboardButton("Next >").callbackData(TUTORIAL_NEXT_PREFIX + (step + 1)));
         }
         final var keyboard = new InlineKeyboardMarkup(buttons.toArray(new InlineKeyboardButton[0]));
+        final var caption = TUTORIAL_TEMPLATE.formatted(nextStep.getTitle(), nextStep.getCaption());
 
         if (message instanceof Message && message.messageId() != null) {
             return new EditMessageMedia(chatId, message.messageId(),
                     new InputMediaAnimation(nextStep.getGifPath())
-                            .caption(TUTORIAL_TEMPLATE.formatted(nextStep.getTitle(), nextStep.getCaption()))
+                            .caption(caption)
                             .parseMode(ParseMode.HTML))
                     .replyMarkup(keyboard);
         }
 
         return new SendAnimation(chatId, nextStep.getGifPath())
-                .caption(TUTORIAL_TEMPLATE.formatted(nextStep.getTitle(), nextStep.getCaption()))
+                .caption(caption)
                 .parseMode(ParseMode.HTML)
                 .replyMarkup(keyboard);
     }
