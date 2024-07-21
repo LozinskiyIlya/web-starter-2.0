@@ -17,9 +17,12 @@ public interface UserSettingsMapper {
     @Mapping(target = "lastUpdatedAt", expression = "java(Instant.now())")
     UserSettings updateEntityFromDto(UserSettingsDto dto, @MappingTarget UserSettings settings);
 
+
+    @Mapping(target = "dailyReminderAt", source = "dailyReminderAt", dateFormat = "HH:mm")
     UserSettingsDto toDto(UserSettings settings);
 
 
     @Mapping(target = "pinCode", constant = "******")
+    @Mapping(target = "dailyReminderAt", source = "dailyReminderAt", dateFormat = "HH:mm")
     UserSettingsDto toDtoMaskedPin(UserSettings settings);
 }

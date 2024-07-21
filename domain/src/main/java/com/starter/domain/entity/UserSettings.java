@@ -10,8 +10,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -34,6 +33,10 @@ public class UserSettings extends AbstractEntity {
     @NotNull
     @Column(name = "last_updated_at", nullable = false)
     private Instant lastUpdatedAt = Instant.now();
+
+    @NotNull
+    @Column(name = "daily_reminder_at", nullable = false)
+    private LocalTime dailyReminderAt = LocalTime.of(21, 0);
 
     @NotNull
     private String timezone = "UTC";

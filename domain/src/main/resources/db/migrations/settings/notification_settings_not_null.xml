@@ -37,4 +37,25 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="20240721-4" author="ilya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_settings" columnName="daily_reminder_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="user_settings">
+            <column name="daily_reminder_at" type="TIME" defaultValue="21:00">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20240721-5" author="ilya">
+        <!-- add not null constraint to all new columns  -->
+        <addNotNullConstraint columnName="silent_mode" tableName="user_settings"/>
+        <addNotNullConstraint columnName="daily_reminder" tableName="user_settings"/>
+        <addNotNullConstraint columnName="weekly_report" tableName="user_settings"/>
+        <addNotNullConstraint columnName="timezone" tableName="user_settings"/>
+        <addNotNullConstraint columnName="daily_reminder_at" tableName="user_settings"/>
+    </changeSet>
+
 </databaseChangeLog>

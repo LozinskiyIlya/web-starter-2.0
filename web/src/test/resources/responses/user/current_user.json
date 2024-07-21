@@ -19,7 +19,8 @@
     "silentMode": false,
     "timezone": "UTC",
     "pinCode": "******",
-    "lastUpdatedAt": "%LAST_UPDATED_AT%"
+    "lastUpdatedAt": "%LAST_UPDATED_AT%",
+    "dailyReminderAt": "21:00"
   },
   "telegramUser": {
     "id": "%TELEGRAM_CHAT_ID%",

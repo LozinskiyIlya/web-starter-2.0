@@ -19,6 +19,8 @@ public class UserSettingsDto {
     private Boolean dailyReminder;
     @NotNull
     private Boolean weeklyReport;
+    @NotNull
+    private String dailyReminderAt;
     private String pinCode;
     private String lastUpdatedAt;
 }
