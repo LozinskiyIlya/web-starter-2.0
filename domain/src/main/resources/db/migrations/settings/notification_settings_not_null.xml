@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Add columns if not exist  -->
+    <changeSet id="20240721-0" author="ilya">
+        <addColumn tableName="user_settings">
+            <column name="silent_mode" type="boolean" defaultValueBoolean="false"/>
+            <column name="daily_reminder" type="boolean" defaultValueBoolean="true"/>
+            <column name="weekly_report" type="boolean" defaultValueBoolean="true"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20240721-1" author="ilya">
+        <addColumn tableName="user_settings">
+            <column name="timezone" type="varchar(255)" defaultValue="UTC"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
