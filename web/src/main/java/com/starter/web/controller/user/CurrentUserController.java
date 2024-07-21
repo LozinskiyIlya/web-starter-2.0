@@ -8,8 +8,10 @@ import com.starter.domain.repository.UserRepository;
 import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.web.dto.UserSettingsDto;
 import com.starter.web.mapper.UserSettingsMapper;
+import com.starter.web.service.user.TimezoneService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ import java.util.UUID;
 public class CurrentUserController {
 
     private final CurrentUserService currentUserService;
+    private final TimezoneService timezoneService;
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
     private final UserSettingsRepository userSettingsRepository;
@@ -38,7 +41,7 @@ public class CurrentUserController {
 
     @GetMapping("")
     @Operation(summary = "Отобразить данные пользователя")
-    public CurrentUserDto getCurrentUser(HttpSession session) {
+    public CurrentUserDto getCurrentUser(HttpSession session, HttpServletRequest request) {
         UserDetails userDetails = currentUserService.getUserDetails();
         User current = userRepository.findByLogin(userDetails.getUsername()).orElseThrow();
         CurrentUserDto dto = new CurrentUserDto();
@@ -52,6 +55,7 @@ public class CurrentUserController {
                     dto.setTelegramUser(telegramUser);
                 });
         userSettingsRepository.findOneByUser(current)
+                .map(settings -> timezoneService.updateTimezone(settings, request))
                 .map(userSettingsMapper::toDtoMaskedPin)
                 .ifPresent(dto::setSettings);
         Optional.ofNullable(session.getAttribute("pinEntered"))

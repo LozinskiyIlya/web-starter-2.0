@@ -14,6 +14,10 @@
     "autoConfirmBills": false,
     "spoilerBills": true,
     "pinCodeEnabled": false,
+    "dailyReminder": true,
+    "weeklyReport": true,
+    "silentMode": false,
+    "timezone": "UTC",
     "pinCode": "******",
     "lastUpdatedAt": "%LAST_UPDATED_AT%"
   },

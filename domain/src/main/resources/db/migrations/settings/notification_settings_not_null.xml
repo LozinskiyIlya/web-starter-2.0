@@ -5,8 +5,19 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <!-- Add columns if not exist  -->
-    <changeSet id="20240721-0" author="ilya">
+
+    <changeSet id="20240721-2" author="ilya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_settings" columnName="silent_mode"/>
+            </not>
+            <not>
+                <columnExists tableName="user_settings" columnName="daily_reminder"/>
+            </not>
+            <not>
+                <columnExists tableName="user_settings" columnName="weekly_report"/>
+            </not>
+        </preConditions>
         <addColumn tableName="user_settings">
             <column name="silent_mode" type="boolean" defaultValueBoolean="false"/>
             <column name="daily_reminder" type="boolean" defaultValueBoolean="true"/>
@@ -14,7 +25,13 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="20240721-1" author="ilya">
+
+    <changeSet id="20240721-3" author="ilya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_settings" columnName="timezone"/>
+            </not>
+        </preConditions>
         <addColumn tableName="user_settings">
             <column name="timezone" type="varchar(255)" defaultValue="UTC"/>
         </addColumn>
