@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -155,6 +156,11 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             dto.setPinCode("654321");
             dto.setSpoilerBills(false);
             dto.setAutoConfirmBills(false);
+            dto.setTimezone("Europe/Moscow");
+            dto.setSilentMode(true);
+            dto.setDailyReminder(false);
+            dto.setWeeklyReport(false);
+            dto.setDailyReminderAt("12:00");
             final var updatedAt = mockMvc.perform(postRequest("")
                             .header(header.getFirst(), header.getSecond())
                             .content(mapper.writeValueAsString(dto))
@@ -164,6 +170,11 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             assertEquals(dto.getPinCode(), updated.getPinCode());
             assertEquals(dto.getSpoilerBills(), updated.getSpoilerBills());
             assertEquals(dto.getAutoConfirmBills(), updated.getAutoConfirmBills());
+            assertEquals(dto.getTimezone(), updated.getTimezone());
+            assertEquals(dto.getSilentMode(), updated.getSilentMode());
+            assertEquals(dto.getDailyReminder(), updated.getDailyReminder());
+            assertEquals(dto.getWeeklyReport(), updated.getWeeklyReport());
+            assertEquals(LocalTime.parse(dto.getDailyReminderAt()), updated.getDailyReminderAt());
             assertTrue(updated.getLastUpdatedAt().toEpochMilli() - Instant.parse(updatedAt).toEpochMilli() <= 1);
         }
 
