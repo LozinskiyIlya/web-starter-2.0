@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.telegram.service.TelegramTutorialService;
 import com.starter.telegram.service.TelegramUserService;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import static com.starter.telegram.service.render.TelegramStaticRenderer.renderP
 public class PrivateChatCommandListener extends AbstractCommandListener {
 
     private final TelegramUserService telegramUserService;
+    private final TelegramTutorialService tutorialService;
     private final TelegramMessageRenderer messageRenderer;
     public static final String START_COMMAND = "/start";
     public static final String TUTORIAL_COMMAND = "/tutorial";
@@ -86,6 +88,6 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     }
 
     private void onTutorialCommand(Update update, TelegramBot bot) {
-        bot.execute(new SendMessage(update.message().chat().id(), "This is a simple bot"));
+        tutorialService.onTutorialCommand(update, bot);
     }
 }

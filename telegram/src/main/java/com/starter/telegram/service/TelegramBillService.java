@@ -30,6 +30,7 @@ import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 @RequiredArgsConstructor
 public class TelegramBillService {
 
+    public static final String NOT_RECOGNIZED_MESSAGE = "The message does not appear to be payment-related. Please edit the message or send another one";
     private final TelegramBot bot;
     private final TelegramMessageRenderer renderer;
     private final BillRepository billRepository;
@@ -111,7 +112,7 @@ public class TelegramBillService {
     @EventListener
     public void onNotRecognizedBill(NotPaymentRelatedEvent event) {
         final var chatId = event.getPayload();
-        final var message = new SendMessage(chatId, "The message is not recognized as payment related. Try submitting another one");
+        final var message = new SendMessage(chatId, NOT_RECOGNIZED_MESSAGE);
         bot.execute(message.replyMarkup(latestKeyboard()));
     }
 

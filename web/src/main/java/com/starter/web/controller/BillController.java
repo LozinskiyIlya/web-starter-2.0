@@ -61,6 +61,13 @@ public class BillController {
         }
     }
 
+    @GetMapping("/{billId}/preview")
+    public BillDto getBillPreview(@PathVariable UUID billId) {
+        return billRepository.findById(billId)
+                .map(billMapper::toDto)
+                .orElseThrow(Exceptions.ResourceNotFoundException::new);
+    }
+
     @GetMapping("/{billId}")
     public BillDto getBill(@PathVariable UUID billId) {
         return billRepository.findById(billId)

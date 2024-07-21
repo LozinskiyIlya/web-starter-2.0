@@ -9,8 +9,8 @@ import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.UserInfoRepository;
+import com.starter.telegram.service.TelegramTutorialService;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,28 +31,34 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String ADDME_ACCEPT_PREFIX = "addme_accept_";
     public static final String ADDME_REJECT_PREFIX = "addme_reject_";
     public static final String RECOGNIZE_BILL_PREFIX = "recognize_";
+    public static final String TUTORIAL_NEXT_PREFIX = "tutorial_next_";
+    public static final String TUTORIAL_PREV_PREFIX = "tutorial_prev_";
+
 
     private final BillRepository billRepository;
     private final GroupRepository groupRepository;
     private final UserInfoRepository userInfoRepository;
     private final TelegramMessageRenderer renderer;
     private final ApplicationEventPublisher publisher;
+    private final TelegramTutorialService tutorialService;
 
     @Override
-    @Transactional
     public void processUpdate(Update update, TelegramBot bot) {
         final var callbackQuery = update.callbackQuery();
         final var chatId = callbackQuery.from().id();
-        if (callbackQuery.data().startsWith(CONFIRM_BILL_PREFIX)) {
+        final var callbackData = callbackQuery.data();
+        if (callbackData.startsWith(CONFIRM_BILL_PREFIX)) {
             confirmBill(callbackQuery);
-        } else if (callbackQuery.data().startsWith(SKIP_BILL_PREFIX)) {
+        } else if (callbackData.startsWith(SKIP_BILL_PREFIX)) {
             skipBill(bot, callbackQuery, chatId);
-        } else if (callbackQuery.data().startsWith(ADDME_ACCEPT_PREFIX)) {
+        } else if (callbackData.startsWith(ADDME_ACCEPT_PREFIX)) {
             acceptAddMe(bot, callbackQuery, chatId);
-        } else if (callbackQuery.data().startsWith(ADDME_REJECT_PREFIX)) {
+        } else if (callbackData.startsWith(ADDME_REJECT_PREFIX)) {
             rejectAddMe(bot, callbackQuery, chatId);
-        }else if (callbackQuery.data().startsWith(RECOGNIZE_BILL_PREFIX)){
+        } else if (callbackData.startsWith(RECOGNIZE_BILL_PREFIX)) {
             bot.execute(renderer.renderRecognizeMyBill(chatId));
+        } else if (callbackData.startsWith(TUTORIAL_NEXT_PREFIX) || callbackData.startsWith(TUTORIAL_PREV_PREFIX)) {
+            tutorialService.onStepChanged(update, bot);
         }
     }
 
