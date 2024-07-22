@@ -23,6 +23,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.starter.telegram.service.render.TelegramStaticRenderer.randomExample;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -124,6 +126,7 @@ public class TelegramBotService {
                 .map(KeyboardButton::new)
                 .toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true)
-                .oneTimeKeyboard(false);
+                .oneTimeKeyboard(false)
+                .inputFieldPlaceholder(randomExample());
     }
 }
