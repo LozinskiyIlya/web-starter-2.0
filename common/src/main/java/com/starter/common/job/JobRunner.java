@@ -27,7 +27,10 @@ public class JobRunner {
     @Value("${spring.profiles.active:Unknown}")
     private String activeProfile;
 
-    private final static Set<String> LOCAL_PROFILES = Set.of("local", "Unknown");
+    private final static Set<String> IGNORED_PROFILES = Set.of(
+//            "local",
+            "Unknown"
+    );
 
     private final Collection<JobExecutor> jobs;
     private final JobInvocationDetailsRepository repo;
@@ -39,7 +42,7 @@ public class JobRunner {
 
     @Scheduled(cron = "0 */5 * * * *") // once per 5 minutes at the start of the minute
     public void runJobsIfNecessary() {
-        if (jobs == null || jobs.isEmpty() || LOCAL_PROFILES.contains(activeProfile)) {
+        if (jobs == null || jobs.isEmpty() || IGNORED_PROFILES.contains(activeProfile)) {
             return;
         }
         jobs.forEach(this::runIfNecessary);

@@ -32,7 +32,7 @@ public class TelegramMessageRenderer {
     private final static String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     public static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
-    public static final String DAILY_REMINDER_TEMPLATE = "Good evening #name#!\n, just a friendly reminder to upload your expense details for the day 📊\nKeeping your records up-to-date helps you stay on top of your finances! 💰";
+    public static final String DAILY_REMINDER_TEMPLATE = "Good evening #name#!\nJust a friendly reminder to upload your expense details for the day 📊\nKeeping your records up-to-date helps you stay on top of your finances!";
 
     private final TemplateReader templateReader;
 
