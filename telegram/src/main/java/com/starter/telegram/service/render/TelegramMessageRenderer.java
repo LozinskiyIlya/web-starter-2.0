@@ -131,6 +131,18 @@ public class TelegramMessageRenderer {
                 .parseMode(ParseMode.HTML);
     }
 
+    public SendMessage renderRecognizeMyBill(Long chatId) {
+        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", randomExample());
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderStartMessage(Long chatId, String firstName) {
+        final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
+                .replace("#name#", StringUtils.hasText(firstName)? firstName : "Anonymous")
+                .replace("#example#", randomExample());
+        return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
+    }
+
     private WebAppInfo renderWebApp(String path, String pathVariable) {
         return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
     }
@@ -151,17 +163,5 @@ public class TelegramMessageRenderer {
                     .replaceAll("</tg-spoiler>", "");
         }
         return caption;
-    }
-
-    public SendMessage renderRecognizeMyBill(Long chatId) {
-        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", randomExample());
-        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
-    }
-
-    public SendMessage renderStartMessage(Long chatId, String firstName) {
-        final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
-                .replace("#name#", StringUtils.hasText(firstName)? firstName : "Anonymous")
-                .replace("#example#", randomExample());
-        return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard());
     }
 }

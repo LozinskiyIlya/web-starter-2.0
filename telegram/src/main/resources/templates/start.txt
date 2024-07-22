@@ -1,5 +1,6 @@
-Hello #name#,
-Thanks for using a bot!
+<b>👋 Hello #name#, </b>
+<b>Welcome to the AI Counting Bot!</b>
+
 You can use the following commands:
 /tutorial - how to use the bot
 /settings - change your preferences
