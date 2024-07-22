@@ -100,7 +100,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
             await().pollDelay(5, TimeUnit.SECONDS).until(() -> true);
-            assertSentMessageToChatIdContainsText(bot, NOT_RECOGNIZED_MESSAGE, group.getChatId());
+            assertSentMessageToChatIdContainsText(bot, group.getChatId(), NOT_RECOGNIZED_MESSAGE);
         }
 
         @Test
@@ -119,7 +119,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
-            assertSentMessageToChatIdContainsText(bot, NOT_RECOGNIZED_MESSAGE, group.getChatId());
+            assertSentMessageToChatIdContainsText(bot, group.getChatId(), NOT_RECOGNIZED_MESSAGE);
         }
     }
 
@@ -131,7 +131,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
         return response;
     }
 
-    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, String shouldContain, Long chatId) {
+    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
         final var foundTexts = new LinkedList<>();
         final var containsTimes = getCapturedRequestParams(bot)
                 .filter(params -> params.get("chat_id").equals(chatId))

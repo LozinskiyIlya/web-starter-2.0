@@ -124,7 +124,8 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
-            Mockito.verify(bot, Mockito.times(1)).execute(Mockito.any(SendMessage.class));
+            assertSentMessageToChatIdContainsText(bot, chatId, "Hello firstName");
+            assertSentMessageToChatIdContainsKeyboard(bot, chatId);
         }
     }
 

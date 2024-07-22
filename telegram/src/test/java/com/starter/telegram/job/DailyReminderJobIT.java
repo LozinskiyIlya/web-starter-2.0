@@ -135,7 +135,7 @@ class DailyReminderJobIT extends AbstractTelegramTest {
             // when
             job.run();
             // then
-            assertSentMessageToChatIdContainsText(bot, "Good evening " + userInfo.getFirstName(), userInfo.getTelegramChatId());
+            assertSentMessageToChatIdContainsText(bot, userInfo.getTelegramChatId(), "Good evening " + userInfo.getFirstName());
         }
     }
 
