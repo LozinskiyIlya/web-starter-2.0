@@ -28,8 +28,8 @@ public class DailyReminderJob implements Job {
         // run once per hour at the start of the hour
         return details
                 .map(JobInvocationDetails::getCreatedAt)
-                .map(lastRun -> Duration.between(lastRun, Instant.now()).toMinutes())
-                .map(minutesSinceLastRun -> minutesSinceLastRun > 59)
+                .map(lastRun -> Duration.between(lastRun, Instant.now()).toHours())
+                .map(hoursSinceLastRun -> hoursSinceLastRun >= 1)
                 .orElse(true);
     }
 
