@@ -4,6 +4,7 @@ import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.UserSettingsRepository;
+import com.starter.telegram.service.TelegramUserService;
 import com.starter.web.dto.UserSettingsDto;
 import com.starter.web.mapper.UserSettingsMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,17 +26,13 @@ public class UserSettingsController {
     private final CurrentUserService currentUserService;
     private final UserSettingsRepository userSettingsRepository;
     private final UserSettingsMapper userSettingsMapper;
+    private final TelegramUserService telegramUserService;
 
     @GetMapping("")
     @Operation(summary = "Отобразить настройки пользователя")
     public UserSettingsDto getUserSettings() {
         final var current = currentUserService.getUser().orElseThrow();
-        final var settings = userSettingsRepository.findOneByUser(current)
-                .orElseGet(() -> {
-                    final var newSettings = new UserSettings();
-                    newSettings.setUser(current);
-                    return userSettingsRepository.save(newSettings);
-                });
+        final var settings = telegramUserService.createOrFindUserSettings(current);
         return userSettingsMapper.toDto(settings);
     }
 
@@ -43,12 +40,7 @@ public class UserSettingsController {
     @Operation(summary = "Изменить настройки пользователя")
     public String updateUserSettings(@RequestBody @Valid UserSettingsDto dto) {
         final var current = currentUserService.getUser().orElseThrow();
-        var settings = userSettingsRepository.findOneByUser(current)
-                .orElseGet(() -> {
-                    final var newSettings = new UserSettings();
-                    newSettings.setUser(current);
-                    return userSettingsRepository.save(newSettings);
-                });
+        final var settings = telegramUserService.createOrFindUserSettings(current);
         validate(dto);
         var updated = userSettingsMapper.updateEntityFromDto(dto, settings);
         updated = userSettingsRepository.save(settings);

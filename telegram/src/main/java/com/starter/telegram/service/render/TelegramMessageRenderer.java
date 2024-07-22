@@ -17,14 +17,17 @@ import com.starter.domain.entity.UserSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramMessageRenderer {
+    private final static String START_COMMAND_TEMPLATE = "start.txt";
     private final static String ADD_ME_TEMPLATE = "add_me.txt";
     private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
     private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
@@ -153,5 +156,12 @@ public class TelegramMessageRenderer {
     public SendMessage renderRecognizeMyBill(Long chatId) {
         final var textPart = EXAMPLE_TEMPLATE.replace("#example#", randomExample());
         return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderStartMessage(Long chatId, String firstName) {
+        final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
+                .replace("#name#", StringUtils.hasText(firstName)? firstName : "Anonymous")
+                .replace("#example#", randomExample());
+        return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard());
     }
 }

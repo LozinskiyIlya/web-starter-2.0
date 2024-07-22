@@ -14,7 +14,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Set;
 
-import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderPin;
 
 
@@ -65,24 +64,15 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     }
 
     private void onStartCommand(Update update, TelegramBot bot, String startParameter) {
-        // Create a reply keyboard that remains visible after use
-        final var keyboard = latestKeyboard();
-        // Send a message with the reply keyboard
         final var from = update.message().from();
         telegramUserService.createOrFindUser(from, bot);
-        final var message = new SendMessage(from.id(), """
-                                Hello! Thanks for using a bot!
-                You can use the following commands:
-                /tutorial - how to use the bot
-                /settings - change your preferences
-                /pin - set a pin code
-                                """)
-                .replyMarkup(keyboard);
+        final var message = messageRenderer.renderStartMessage(from.id(), from.firstName());
         bot.execute(message);
     }
 
     private void onSettingsCommand(Update update, TelegramBot bot) {
         final var chatId = update.message().chat().id();
+        telegramUserService.createOrFindUserSettings(chatId);
         final var message = messageRenderer.renderSettings(chatId);
         bot.execute(message);
     }

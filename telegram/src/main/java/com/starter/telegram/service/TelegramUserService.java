@@ -76,6 +76,16 @@ public class TelegramUserService {
                         })).orElseThrow();
     }
 
+    @Transactional
+    public UserSettings createOrFindUserSettings(User user) {
+        return userSettingsRepository.findOneByUser(user)
+                .orElseGet(() -> {
+                    final var settings = new UserSettings();
+                    settings.setUser(user);
+                    return userSettingsRepository.save(settings);
+                });
+    }
+
     public void updateUserInfo(com.pengrad.telegrambot.model.User from, TelegramBot telegramBot) {
         final var chatId = from.id();
         userInfoRepository.findByTelegramChatId(chatId)

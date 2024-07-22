@@ -1,0 +1,11 @@
+Hello #name#,
+Thanks for using a bot!
+You can use the following commands:
+/tutorial - how to use the bot
+/settings - change your preferences
+/pin - set a pin code
+
+💸 Let's get your first bill submitted!
+Just send a payment-related message or document in any format. For example:
+
+<i>#example#</i>
