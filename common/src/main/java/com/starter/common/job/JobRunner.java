@@ -37,7 +37,7 @@ public class JobRunner {
         this.jobs = jobs.stream().map(JobExecutor::new).collect(Collectors.toSet());
     }
 
-    @Scheduled(fixedRate = 300_000)//once per 5 minutes
+    @Scheduled(cron = "0 */5 * * * *") // once per 5 minutes at the start of the minute
     public void runJobsIfNecessary() {
         if (jobs == null || jobs.isEmpty() || LOCAL_PROFILES.contains(activeProfile)) {
             return;

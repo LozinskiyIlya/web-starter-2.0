@@ -13,6 +13,7 @@ import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
+import com.starter.domain.entity.UserSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class TelegramMessageRenderer {
     private final static String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     public static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
+    public static final String DAILY_REMINDER_TEMPLATE = "Good evening #name#!\n, just a friendly reminder to upload your expense details for the day 📊\nKeeping your records up-to-date helps you stay on top of your finances! 💰";
 
     private final TemplateReader templateReader;
 
@@ -99,6 +101,17 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, "Settings").replyMarkup(new InlineKeyboardMarkup(
                 new InlineKeyboardButton("View and edit").webApp(renderWebApp("settings", ""))
         ));
+    }
+
+    public SendMessage renderDailyReminder(UserSettings settings) {
+        final var userInfo = settings.getUser().getUserInfo();
+        final var textPart = DAILY_REMINDER_TEMPLATE
+                .replaceAll("#name#", userInfo.getFirstName());
+        return new SendMessage(userInfo.getTelegramChatId(), textPart)
+                .disableNotification(settings.getSilentMode())
+                .replyMarkup(new InlineKeyboardMarkup(
+                        new InlineKeyboardButton("Notification settings").webApp(renderWebApp("settings", ""))
+                ));
     }
 
     public SendMessage renderNewBill(Long chatId) {
