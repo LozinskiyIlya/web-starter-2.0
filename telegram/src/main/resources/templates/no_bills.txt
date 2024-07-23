@@ -1,0 +1,6 @@
+📅 <b>#time_range#</b>
+
+Nothing was tracked for the selected time range.
+To add a new bill, simply send a payment-related message or document in any format, for example:
+
+<i>#example#</i>

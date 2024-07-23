@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 @Slf4j
 public class TelegramStaticRenderer {
 
-    public final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
+    public static final URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
 
     public static String renderTags(Bill bill) {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);

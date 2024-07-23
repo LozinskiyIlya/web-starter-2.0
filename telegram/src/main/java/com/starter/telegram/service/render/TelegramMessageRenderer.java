@@ -29,15 +29,16 @@ import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
 @Service
 @RequiredArgsConstructor
 public class TelegramMessageRenderer {
-    private final static String START_COMMAND_TEMPLATE = "start.txt";
-    private final static String ADD_ME_TEMPLATE = "add_me.txt";
-    private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
-    private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
-    private final static String BILL_TEMPLATE = "bill.txt";
-    private final static String DAILY_REMINDER_TEMPLATE = "daily.txt";
-    private final static String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
-    private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
-    private final static String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
+    private static final String START_COMMAND_TEMPLATE = "start.txt";
+    private static final String ADD_ME_TEMPLATE = "add_me.txt";
+    private static final String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
+    private static final String NEW_BILL_TEMPLATE = "new_bill.txt";
+    private static final String BILL_TEMPLATE = "bill.txt";
+    private static final String DAILY_REMINDER_TEMPLATE = "daily.txt";
+    private static final String NO_BILLS = "no_bills.txt";
+    private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
+    private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
+    private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
 
     private final TemplateReader templateReader;
 

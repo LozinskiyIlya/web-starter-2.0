@@ -15,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,10 +30,10 @@ import static com.starter.telegram.service.render.TelegramStaticRenderer.randomE
 @RequiredArgsConstructor
 public class TelegramBotService {
     public static final String NEW_BILL_BUTTON = "➕ NEW BILL";
-    public static final String TODAY_STATS = "Today's Stats";
-    public static final String MY_GROUPS = "My Groups";
+    public static final String THIS_MONTH = "This month";
+    public static final String GROUPS = "Groups";
     public static final String HELP = "Help";
-    private static final List<String> KEYBOARD_BUTTONS = List.of(TODAY_STATS, MY_GROUPS, HELP);
+    private static final List<String> KEYBOARD_BUTTONS = List.of(THIS_MONTH, GROUPS, HELP);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);
 

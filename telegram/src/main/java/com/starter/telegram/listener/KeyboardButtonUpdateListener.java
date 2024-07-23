@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import static com.starter.telegram.service.TelegramBotService.NEW_BILL_BUTTON;
-
+import static com.starter.telegram.service.TelegramBotService.*;
 
 @Slf4j
 @Component
@@ -26,9 +25,27 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
                 final var message = renderer.renderNewBill(chatId);
                 bot.execute(message);
             }
+            case THIS_MONTH -> onTodayStats(chatId, bot);
+            case GROUPS -> onMyGroups(chatId, bot);
+            case HELP -> onHelp(chatId, bot);
             default -> {
             }
         }
+    }
+
+    private void onTodayStats(Long chatId, TelegramBot bot) {
+        final var message = renderer.renderSettings(chatId);
+        bot.execute(message);
+    }
+
+    private void onMyGroups(Long chatId, TelegramBot bot) {
+        final var message = renderer.renderSettings(chatId);
+        bot.execute(message);
+    }
+
+    private void onHelp(Long chatId, TelegramBot bot) {
+        final var message = renderer.renderSettings(chatId);
+        bot.execute(message);
     }
 
 }

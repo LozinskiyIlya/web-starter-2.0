@@ -27,7 +27,7 @@ public class JobRunner {
     @Value("${spring.profiles.active:Unknown}")
     private String activeProfile;
 
-    private final static Set<String> IGNORED_PROFILES = Set.of(
+    private static final Set<String> IGNORED_PROFILES = Set.of(
 //            "local",
             "Unknown"
     );

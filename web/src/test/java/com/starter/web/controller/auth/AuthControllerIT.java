@@ -186,7 +186,7 @@ class AuthControllerIT extends AbstractSpringIntegrationTest implements UserTest
     @DisplayName("Saves api action")
     class SavesApiAction {
 
-        private final static String password = "password";
+        private static final String password = "password";
 
         @Test
         @DisplayName("On successful login request")
