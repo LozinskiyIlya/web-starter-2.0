@@ -61,4 +61,13 @@ public class Group extends AbstractEntity {
     public boolean contains(User user) {
         return members.contains(user);
     }
+
+    public static Group personal(Long chatId) {
+        final var personal = new Group();
+        personal.setChatId(chatId);
+        personal.setTitle(PERSONAL);
+        return personal;
+    }
+
+    public static final String PERSONAL = "Personal";
 }

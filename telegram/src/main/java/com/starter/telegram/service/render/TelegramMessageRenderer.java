@@ -35,7 +35,7 @@ public class TelegramMessageRenderer {
     private static final String NEW_BILL_TEMPLATE = "new_bill.txt";
     private static final String BILL_TEMPLATE = "bill.txt";
     private static final String DAILY_REMINDER_TEMPLATE = "daily.txt";
-    private static final String NO_BILLS = "no_bills.txt";
+    private static final String NO_BILLS_TEMPLATE = "no_bills.txt";
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
@@ -145,6 +145,13 @@ public class TelegramMessageRenderer {
                 .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
                 .replace("#example#", randomExample());
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderNoBills(Long chatId, String timeRange) {
+        final var textPart = templateReader.read(NO_BILLS_TEMPLATE)
+                .replace("#time_range#", timeRange)
+                .replace("#example#", randomExample());
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {

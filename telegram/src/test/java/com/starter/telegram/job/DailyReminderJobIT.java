@@ -29,10 +29,15 @@ class DailyReminderJobIT extends AbstractTelegramTest {
 
 
         @Test
-        @DisplayName("should return true when details is empty")
+        @DisplayName("should return true when details is empty and now is less than 5 minutes past the hour")
         void shouldReturnTrueWhenDetailsIsEmpty() {
             Optional<JobInvocationDetails> details = Optional.empty();
-            assertTrue(job.shouldRun(details));
+            final var currentMinute = Instant.now().atZone(ZoneId.systemDefault()).getMinute();
+            if (currentMinute < 5) {
+                assertTrue(job.shouldRun(details));
+            } else {
+                assertFalse(job.shouldRun(details));
+            }
         }
 
         @Test

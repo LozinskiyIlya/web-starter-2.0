@@ -29,13 +29,11 @@ public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
         // as user's chatId or create new "group" if not found
         final var chatId = update.message().from().id();
         return groupRepository.findByChatId(chatId).orElseGet(() -> {
-            final var newGroup = new Group();
-            newGroup.setChatId(chatId);
-            newGroup.setTitle("Personal");
+            final var personal = Group.personal(chatId);
             final var owner = telegramUserService.createOrFindUser(update.message().from(), bot);
-            newGroup.setOwner(owner);
-            newGroup.setMembers(List.of(owner));
-            return groupRepository.save(newGroup);
+            personal.setOwner(owner);
+            personal.setMembers(List.of(owner));
+            return groupRepository.save(personal);
         });
     }
 

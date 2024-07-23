@@ -26,11 +26,12 @@ public class DailyReminderJob implements Job {
     @Override
     public boolean shouldRun(Optional<JobInvocationDetails> details) {
         // run once per hour at the start of the hour
+        final var now = Instant.now();
         return details
                 .map(JobInvocationDetails::getCreatedAt)
-                .map(lastRun -> Duration.between(lastRun, Instant.now()).toHours())
+                .map(lastRun -> Duration.between(lastRun, now).toHours())
                 .map(hoursSinceLastRun -> hoursSinceLastRun >= 1)
-                .orElse(true);
+                .orElse(now.atZone(ZoneId.systemDefault()).getMinute() < 5);
     }
 
     @Override
