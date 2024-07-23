@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.UUID;
+
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
@@ -32,10 +34,10 @@ public class TelegramMessageRenderer {
     private final static String ADD_ME_APPROVED_TEMPLATE = "add_me_approved.txt";
     private final static String NEW_BILL_TEMPLATE = "new_bill.txt";
     private final static String BILL_TEMPLATE = "bill.txt";
+    private final static String DAILY_REMINDER_TEMPLATE = "daily.txt";
     private final static String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private final static String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
-    public static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
-    public static final String DAILY_REMINDER_TEMPLATE = "Good evening #name#!\nJust a friendly reminder to upload your expense details for the day 📊\nKeeping your records up-to-date helps you stay on top of your finances!";
+    private final static String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
 
     private final TemplateReader templateReader;
 
@@ -108,13 +110,14 @@ public class TelegramMessageRenderer {
 
     public SendMessage renderDailyReminder(UserSettings settings) {
         final var userInfo = settings.getUser().getUserInfo();
-        final var textPart = DAILY_REMINDER_TEMPLATE
-                .replaceAll("#name#", userInfo.getFirstName());
+        final var textPart = templateReader.read(DAILY_REMINDER_TEMPLATE)
+                .replace("#name#", userInfo.getFirstName())
+                .replace("#settings_url#", renderWebAppDirectUrl("settings"));
         return new SendMessage(userInfo.getTelegramChatId(), textPart)
                 .disableNotification(settings.getSilentMode())
-                .replyMarkup(new InlineKeyboardMarkup(
-                        new InlineKeyboardButton("Notification settings").webApp(renderWebApp("settings", ""))
-                ));
+                .disableWebPagePreview(true)
+                .parseMode(ParseMode.HTML)
+                .replyMarkup(latestKeyboard());
     }
 
     public SendMessage renderNewBill(Long chatId) {
@@ -138,7 +141,7 @@ public class TelegramMessageRenderer {
 
     public SendMessage renderStartMessage(Long chatId, String firstName) {
         final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
-                .replace("#name#", StringUtils.hasText(firstName)? firstName : "Anonymous")
+                .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
                 .replace("#example#", randomExample());
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }

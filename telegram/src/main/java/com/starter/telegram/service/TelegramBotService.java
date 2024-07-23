@@ -121,10 +121,11 @@ public class TelegramBotService {
     }
 
     public static Keyboard latestKeyboard() {
-        return new ReplyKeyboardMarkup(KEYBOARD_BUTTONS
-                .stream()
-                .map(KeyboardButton::new)
-                .toArray(KeyboardButton[]::new))
+        return new ReplyKeyboardMarkup(
+                KEYBOARD_BUTTONS
+                        .stream()
+                        .map(KeyboardButton::new)
+                        .toArray(KeyboardButton[]::new))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false)
                 .inputFieldPlaceholder(randomExample());

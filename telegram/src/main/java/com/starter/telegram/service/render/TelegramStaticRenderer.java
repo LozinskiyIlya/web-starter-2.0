@@ -74,7 +74,11 @@ public class TelegramStaticRenderer {
     }
 
     public static String renderWebAppDirectUrl(String paramName, UUID id) {
-        return WEB_APP_DIRECT_URL + "?startapp=" + paramName + "_" + id;
+        return renderWebAppDirectUrl(paramName) + "_" + id;
+    }
+
+    public static String renderWebAppDirectUrl(String paramName) {
+        return WEB_APP_DIRECT_URL + "?startapp=" + paramName;
     }
 
     public static String renderAmount(Double amount, String currencySymbol) {
