@@ -39,7 +39,7 @@ public class TelegramTutorialService {
             ),
             new TutorialStep(
                     "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-                    "Use groups \uD83D\uDC65 to keep track of shared expenses",
+                    "Use <code>Groups</code> \uD83D\uDC65 to keep track of shared expenses",
                     "Each bill is attached to a group. When you send private message to the bot, the expense will be attached to the <b>\"Personal\"</b> group"
             ),
             new TutorialStep(

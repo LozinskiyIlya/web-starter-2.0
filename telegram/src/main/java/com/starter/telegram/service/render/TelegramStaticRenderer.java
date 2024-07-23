@@ -107,6 +107,10 @@ public class TelegramStaticRenderer {
         );
     }
 
+    public static String renderExample() {
+        return "<code>" + randomExample() + "</code>";
+    }
+
     public static String randomExample() {
         return NEW_BILL_EXAMPLES[(int) (Math.random() * NEW_BILL_EXAMPLES.length)];
     }

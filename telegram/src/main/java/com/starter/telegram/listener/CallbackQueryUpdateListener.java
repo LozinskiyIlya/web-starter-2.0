@@ -34,6 +34,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String TUTORIAL_NEXT_PREFIX = "tutorial_next_";
     public static final String TUTORIAL_PREV_PREFIX = "tutorial_prev_";
     public static final String DEBUG_DAILY_REMINDER_PREFIX = "DEBUG_daily_reminder_";
+    public static final String DEBUG_NO_BILLS_STATS_PREFIX = "DEBUG_no_bills_stats_";
 
 
     private final BillRepository billRepository;
@@ -65,7 +66,9 @@ public class CallbackQueryUpdateListener implements UpdateListener {
             final var userSettings = userInfo.getUser().getUserSettings();
             final var message = renderer.renderDailyReminder(userSettings);
             bot.execute(message);
-
+        } else if (callbackData.startsWith(DEBUG_NO_BILLS_STATS_PREFIX)) {
+            final var message = renderer.renderNoBills(chatId, "July");
+            bot.execute(message);
         }
     }
 

@@ -3,8 +3,10 @@ package com.starter.telegram.listener;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
+import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
     private final TelegramMessageRenderer renderer;
     private final GroupRepository groupRepository;
     private final BillRepository billRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
@@ -49,7 +52,8 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
     private void onThisMonth(Long chatId, TelegramBot bot) {
         //find personal group with the same as user's chatId
         final var personal = groupRepository.findByChatId(chatId).orElseThrow();
-        final var timezone = ZoneId.of(personal.getOwner().getUserSettings().getTimezone());
+        final var userSettings = userSettingsRepository.findOneByUser(personal.getOwner());
+        final var timezone = ZoneId.of(userSettings.map(UserSettings::getTimezone).orElse("UTC"));
         final var currentMonth = getCurrentMonthForUserLocalDate(timezone);
         final var totals = billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(
                         List.of(personal),

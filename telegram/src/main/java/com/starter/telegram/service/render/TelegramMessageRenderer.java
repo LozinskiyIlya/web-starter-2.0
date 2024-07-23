@@ -19,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.UUID;
-
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
@@ -38,7 +36,7 @@ public class TelegramMessageRenderer {
     private static final String NO_BILLS_TEMPLATE = "no_bills.txt";
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
-    private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: <i>#example#</i>";
+    private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
 
     private final TemplateReader templateReader;
 
@@ -123,7 +121,7 @@ public class TelegramMessageRenderer {
 
     public SendMessage renderNewBill(Long chatId) {
         final var textPart = templateReader.read(NEW_BILL_TEMPLATE)
-                .replace("#example#", randomExample());
+                .replace("#example#", renderExample());
         return new SendMessage(chatId, textPart)
                 .replyMarkup(
                         new InlineKeyboardMarkup(
@@ -136,22 +134,34 @@ public class TelegramMessageRenderer {
     }
 
     public SendMessage renderRecognizeMyBill(Long chatId) {
-        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", randomExample());
+        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", renderExample());
         return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
     public SendMessage renderStartMessage(Long chatId, String firstName) {
         final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
                 .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
-                .replace("#example#", randomExample());
+                .replace("#example#", renderExample());
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }
 
     public SendMessage renderNoBills(Long chatId, String timeRange) {
         final var textPart = templateReader.read(NO_BILLS_TEMPLATE)
                 .replace("#time_range#", timeRange)
-                .replace("#example#", randomExample());
-        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+                .replace("#example#", renderExample());
+        return new SendMessage(chatId, textPart)
+                .replyMarkup(new InlineKeyboardMarkup(
+                        new InlineKeyboardButton[]{
+                                new InlineKeyboardButton("Today").callbackData("today"),
+                                new InlineKeyboardButton("This week").callbackData("this_week"),
+                                new InlineKeyboardButton("This month").callbackData("this_month")
+                        },
+                        new InlineKeyboardButton[]{
+                                new InlineKeyboardButton("View all stats")
+                                        .webApp(renderWebApp("dashboard", ""))
+                        }
+                ))
+                .parseMode(ParseMode.HTML);
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.DEBUG_DAILY_REMINDER_PREFIX;
+import static com.starter.telegram.listener.CallbackQueryUpdateListener.DEBUG_NO_BILLS_STATS_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 
 public abstract class AbstractCommandListener implements UpdateListener {
@@ -31,7 +32,8 @@ public abstract class AbstractCommandListener implements UpdateListener {
             bot.execute(new SendMessage(update.message().chat().id(), "Debug actions:")
                     .replyMarkup(
                             new InlineKeyboardMarkup(
-                                    new InlineKeyboardButton("Send daily reminder").callbackData(DEBUG_DAILY_REMINDER_PREFIX)
+                                    new InlineKeyboardButton("Send daily reminder").callbackData(DEBUG_DAILY_REMINDER_PREFIX),
+                                    new InlineKeyboardButton("Show no bills stats").callbackData(DEBUG_NO_BILLS_STATS_PREFIX)
                             )));
             return;
         }

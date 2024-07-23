@@ -30,9 +30,9 @@ import static com.starter.telegram.service.render.TelegramStaticRenderer.randomE
 @RequiredArgsConstructor
 public class TelegramBotService {
     public static final String NEW_BILL_BUTTON = "➕ NEW BILL";
-    public static final String THIS_MONTH = "This month";
-    public static final String GROUPS = "Groups";
-    public static final String HELP = "Help";
+    public static final String THIS_MONTH = "This month  \uD83D\uDCC5";
+    public static final String GROUPS = "Groups  \uD83D\uDC65";
+    public static final String HELP = "Help  \uD83D\uDCAC";
     private static final List<String> KEYBOARD_BUTTONS = List.of(THIS_MONTH, GROUPS, HELP);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);

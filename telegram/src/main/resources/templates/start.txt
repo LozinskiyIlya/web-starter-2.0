@@ -9,4 +9,4 @@ You can use the following commands:
 💸 Let's get your first bill submitted!
 Just send a payment-related message or document in any format. For example:
 
-<i>#example#</i>
+#example#
