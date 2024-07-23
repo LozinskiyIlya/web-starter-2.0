@@ -15,10 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +27,10 @@ import static com.starter.telegram.service.render.TelegramStaticRenderer.randomE
 @RequiredArgsConstructor
 public class TelegramBotService {
     public static final String NEW_BILL_BUTTON = "➕ NEW BILL";
-    public static final Set<String> KEYBOARD_BUTTONS = Set.of(NEW_BILL_BUTTON);
+    public static final String TODAY_STATS = "Today's Stats";
+    public static final String MY_GROUPS = "My Groups";
+    public static final String HELP = "Help";
+    private static final List<String> KEYBOARD_BUTTONS = List.of(TODAY_STATS, MY_GROUPS, HELP);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);
 
@@ -125,7 +125,8 @@ public class TelegramBotService {
                 KEYBOARD_BUTTONS
                         .stream()
                         .map(KeyboardButton::new)
-                        .toArray(KeyboardButton[]::new))
+                        .map(button -> new KeyboardButton[]{button})
+                        .toArray(KeyboardButton[][]::new))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false)
                 .inputFieldPlaceholder(randomExample());

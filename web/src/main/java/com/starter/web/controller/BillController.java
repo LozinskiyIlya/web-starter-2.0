@@ -50,6 +50,7 @@ public class BillController {
     private final ApplicationEventPublisher publisher;
     private final ExecutorService billMessageExecutor = Executors.newFixedThreadPool(4);
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @PreDestroy
     public void destroy() {
         billMessageExecutor.shutdown();

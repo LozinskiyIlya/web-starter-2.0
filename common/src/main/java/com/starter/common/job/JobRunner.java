@@ -122,6 +122,7 @@ public class JobRunner {
             executor.shutdown();
         }
 
+        @SuppressWarnings("ResultOfMethodCallIgnored")
         void awaitTermination() throws InterruptedException {
             executor.awaitTermination(15, TimeUnit.SECONDS);
         }

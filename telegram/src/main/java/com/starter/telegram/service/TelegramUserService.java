@@ -33,6 +33,7 @@ public class TelegramUserService {
     private final UserSettingsRepository userSettingsRepository;
     private final ExecutorService userInfoUpdateExecutor = Executors.newFixedThreadPool(2);
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @PreDestroy
     public void destroy() {
         userInfoUpdateExecutor.shutdown();
