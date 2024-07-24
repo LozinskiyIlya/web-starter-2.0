@@ -22,6 +22,7 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
@@ -96,25 +97,29 @@ public class TelegramStatsService implements CallbackExecutor {
                 start = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
                 yield start.plusMonths(1);
             }
-            default -> throw new IllegalArgumentException("Unsupported ChronoUnit: " + unit);
+            default -> throw new IllegalArgumentException("Unsupported Chrono Unit: " + unit);
         };
 
         return Pair.of(start.toInstant(), end.toInstant());
     }
 
     private static String getTimeRangeDisplayText(Pair<Instant, Instant> range, ZoneId zone, ChronoUnit timeUnit) {
-        switch (timeUnit) {
-            case DAYS:
-                return "Today " + ZonedDateTime.ofInstant(range.getFirst(), zone).toLocalDate().toString();
-            case WEEKS:
-                final var startDate = ZonedDateTime.ofInstant(range.getFirst(), zone);
-                final var endDate = ZonedDateTime.ofInstant(range.getSecond(), zone);
-                return startDate.toLocalDate().toString() + " - " + endDate.toLocalDate().toString();
-            case MONTHS:
-                final var zonedDateTime = ZonedDateTime.ofInstant(range.getFirst(), zone);
-                return zonedDateTime.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
-            default:
-                throw new IllegalArgumentException("Unsupported time unit: " + timeUnit);
-        }
+        ZonedDateTime startDate = ZonedDateTime.ofInstant(range.getFirst(), zone);
+        ZonedDateTime endDate = ZonedDateTime.ofInstant(range.getSecond(), zone);
+        return switch (timeUnit) {
+            case DAYS -> {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E dd"); // Mon 27
+                yield "Today, " + startDate.format(formatter);
+            }
+            case WEEKS -> {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd"); // Jul 20 - Jul 27
+                yield startDate.format(formatter) + " - " + endDate.format(formatter);
+            }
+            case MONTHS -> {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM yyyy"); // Jul 2024
+                yield startDate.format(formatter);
+            }
+            default -> throw new IllegalArgumentException("Unsupported time unit: " + timeUnit);
+        };
     }
 }
