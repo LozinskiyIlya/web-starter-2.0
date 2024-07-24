@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class BillCallbackExecutor implements CallbackExecutor {
 
-    private static final String CALLBACK_PREFIX = "bill_";
-    public static final String CONFIRM_BILL_PREFIX = CALLBACK_PREFIX + "confirm_";
-    public static final String SKIP_BILL_PREFIX = CALLBACK_PREFIX + "skip_";
+    private static final String PREFIX = "bill_";
+    public static final String CONFIRM_BILL_PREFIX = PREFIX + "confirm_";
+    public static final String SKIP_BILL_PREFIX = PREFIX + "skip_";
 
     private final BillRepository billRepository;
     private final ApplicationEventPublisher publisher;
@@ -52,6 +52,6 @@ public class BillCallbackExecutor implements CallbackExecutor {
 
     @Override
     public String getPrefix() {
-        return CALLBACK_PREFIX;
+        return PREFIX;
     }
 }

@@ -18,9 +18,9 @@ import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QU
 @RequiredArgsConstructor
 public class AddmeCallbackExecutor implements CallbackExecutor {
 
-    private static final String CALLBACK_PREFIX = "addme_";
-    public static final String ADDME_ACCEPT_PREFIX = CALLBACK_PREFIX + "accept_";
-    public static final String ADDME_REJECT_PREFIX = CALLBACK_PREFIX + "reject_";
+    private static final String PREFIX = "addme_";
+    public static final String ADDME_ACCEPT_PREFIX = PREFIX + "accept_";
+    public static final String ADDME_REJECT_PREFIX = PREFIX + "reject_";
 
     private final GroupRepository groupRepository;
     private final UserInfoRepository userInfoRepository;
@@ -64,6 +64,6 @@ public class AddmeCallbackExecutor implements CallbackExecutor {
 
     @Override
     public String getPrefix() {
-        return CALLBACK_PREFIX;
+        return PREFIX;
     }
 }
