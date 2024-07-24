@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
 import static org.junit.jupiter.api.Assertions.*;
 
 

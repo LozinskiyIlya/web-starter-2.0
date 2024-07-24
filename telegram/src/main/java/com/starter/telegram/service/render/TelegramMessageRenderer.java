@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
+import static com.starter.telegram.listener.query.BillCallbackExecutor.SKIP_BILL_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
 
