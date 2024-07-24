@@ -3,9 +3,7 @@ package com.starter.telegram.service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
-import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
-import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
@@ -24,11 +22,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,7 +33,7 @@ import java.util.stream.Collectors;
 public class TelegramStatsService implements CallbackExecutor {
 
     public final static String STATS_CALLBACK_QUERY_PREFIX = "stats_";
-
+    private final static int LATEST_BILLS_COUNT = 5;
     private final GroupRepository groupRepository;
     private final BillRepository billRepository;
     private final UserSettingsRepository userSettingsRepository;
@@ -63,11 +59,11 @@ public class TelegramStatsService implements CallbackExecutor {
         sendStats(bot, timeUnit, chatId, query.maybeInaccessibleMessage());
     }
 
-    public void sendLastBills(TelegramBot bot, Long chatId) {
+    public void sendLatestBills(TelegramBot bot, Long chatId) {
         final var personal = groupRepository.findByChatId(chatId).orElseThrow();
-        final var lastBills = billRepository.findAllNotSkippedByGroup(personal, Pageable.ofSize(5));
-//        final var message = renderer.renderLastBills(chatId, lastBills);
-        bot.execute(new SendMessage(chatId, "asd"));
+        final var lastBills = billRepository.findAllNotSkippedByGroup(personal, Pageable.ofSize(LATEST_BILLS_COUNT));
+        final var message = renderer.renderLatestBills(chatId, lastBills);
+        bot.execute(message);
     }
 
     private void sendStats(TelegramBot bot, ChronoUnit timeUnit, Long chatId, MaybeInaccessibleMessage previousMessage) {

@@ -28,7 +28,7 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
                 final var message = renderer.renderNewBill(chatId);
                 bot.execute(message);
             }
-            case LATEST_BILLS -> statsService.sendLastBills(bot, chatId);
+            case LATEST_BILLS -> statsService.sendLatestBills(bot, chatId);
             case GROUPS -> onMyGroups(chatId, bot);
             case HELP -> onHelp(chatId, bot);
             default -> {

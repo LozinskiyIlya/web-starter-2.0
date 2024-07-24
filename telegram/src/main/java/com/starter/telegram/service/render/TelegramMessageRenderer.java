@@ -16,23 +16,23 @@ import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
-import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.SKIP_BILL_PREFIX;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QUERY_SEPARATOR;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.RECOGNIZE_BILL_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.TelegramStatsService.AVAILABLE_UNITS;
 import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
-import static java.util.function.Predicate.not;
 
 @Slf4j
 @Service
@@ -46,10 +46,11 @@ public class TelegramMessageRenderer {
     private static final String DAILY_REMINDER_TEMPLATE = "daily.txt";
     private static final String NO_BILLS_TEMPLATE = "no_bills.txt";
     private static final String STATS_TEMPLATE = "stats.txt";
+    private static final String LATEST_BILLS_TEMPLATE = "latest_bills.txt";
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
-    private static final String TOTAL_ENTRY_TEMPLATE = "◾\uFE0F#currency#  <b>#amount#</b>";
+    private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F#first#  <b>#second#</b>";
 
     private final TemplateReader templateReader;
 
@@ -170,15 +171,30 @@ public class TelegramMessageRenderer {
                 .map(entry -> {
                     final var currency = entry.getKey();
                     final var amount = renderAmount(entry.getValue(), currenciesService.getSymbol(currency));
-                    return TOTAL_ENTRY_TEMPLATE
-                            .replaceAll("#currency#", currency)
-                            .replaceAll("#amount#", amount);
+                    return STAT_ENTRY_TEMPLATE
+                            .replaceAll("#first#", currency)
+                            .replaceAll("#second#", amount);
                 })
                 .collect(Collectors.joining("\n"));
         final var textPart = templateReader.read(STATS_TEMPLATE)
                 .replace("#time_range#", timeRangeText)
                 .replace("#stats#", stats);
         return tryUpdateMessage(chatId, previousMessage, textPart, keyboard.inlineKeyboard());
+    }
+
+    public SendMessage renderLatestBills(Long chatId, Page<Bill> lastBills) {
+        final var keyboard = renderStatsKeyboard();
+        final var bills = lastBills.stream()
+                .map(bill -> STAT_ENTRY_TEMPLATE
+                        .replace("#first#", bill.getPurpose())
+                        .replace("#second#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency()))))
+                .collect(Collectors.joining("\n"));
+        final var textPart = templateReader.read(LATEST_BILLS_TEMPLATE)
+                .replace("#num#", "" + lastBills.getSize())
+                .replace("#bills#", bills);
+        return new SendMessage(chatId, textPart)
+                .replyMarkup(keyboard)
+                .parseMode(ParseMode.HTML);
     }
 
     private BaseRequest<?, ?> renderNoBills(Long chatId,
