@@ -19,6 +19,9 @@ public class UpdateWrapper extends Update {
         return origin.updateId();
     }
 
+    /**
+     * The only method that is actually overridden in this class.
+     */
     @Override
     public Message message() {
         return origin.message() == null ? origin.editedMessage() : origin.message();

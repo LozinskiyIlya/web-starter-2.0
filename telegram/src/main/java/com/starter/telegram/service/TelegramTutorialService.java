@@ -5,9 +5,7 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.pengrad.telegrambot.model.request.*;
-import com.pengrad.telegrambot.request.BaseRequest;
-import com.pengrad.telegrambot.request.EditMessageMedia;
-import com.pengrad.telegrambot.request.SendAnimation;
+import com.pengrad.telegrambot.request.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.TUTORIAL_NEXT_PREFIX;
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.TUTORIAL_PREV_PREFIX;
+import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
 
 @Slf4j
 @Service
@@ -58,8 +55,15 @@ public class TelegramTutorialService {
         final var query = update.callbackQuery();
         final var index = query.data().split("_")[2];
         final var step = Integer.parseInt(index);
-        final var message = getNextStep(update.callbackQuery().from().id(), step, query.maybeInaccessibleMessage());
+        final var message = getNextStep(query.from().id(), step, query.maybeInaccessibleMessage());
         bot.execute(message);
+    }
+
+    public void onPinTutorial(Update update, TelegramBot bot) {
+        final var chatId = update.callbackQuery().from().id();
+        final var messageId = update.callbackQuery().maybeInaccessibleMessage().messageId();
+        final var pinRequest = new PinChatMessage(chatId, messageId);
+        bot.execute(pinRequest);
     }
 
     private BaseRequest<?, ?> getNextStep(Long chatId, int step, MaybeInaccessibleMessage message) {
@@ -70,6 +74,8 @@ public class TelegramTutorialService {
         }
         if (step < steps.size() - 1) {
             buttons.add(new InlineKeyboardButton("Next >").callbackData(TUTORIAL_NEXT_PREFIX + (step + 1)));
+        } else {
+            buttons.add(new InlineKeyboardButton("Pin \uD83D\uDCCC").callbackData(TUTORIAL_PIN_PREFIX));
         }
         final var keyboard = new InlineKeyboardMarkup(buttons.toArray(new InlineKeyboardButton[0]));
         final var caption = TUTORIAL_TEMPLATE.formatted(nextStep.getTitle(), nextStep.getCaption());

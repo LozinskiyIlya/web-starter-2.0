@@ -4,6 +4,7 @@ package com.starter.telegram.listener;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.PinChatMessage;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.repository.BillRepository;
@@ -33,6 +34,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String RECOGNIZE_BILL_PREFIX = "recognize_";
     public static final String TUTORIAL_NEXT_PREFIX = "tutorial_next_";
     public static final String TUTORIAL_PREV_PREFIX = "tutorial_prev_";
+    public static final String TUTORIAL_PIN_PREFIX = "tutorial_pin_";
     public static final String DEBUG_DAILY_REMINDER_PREFIX = "DEBUG_daily_reminder_";
     public static final String DEBUG_NO_BILLS_STATS_PREFIX = "DEBUG_no_bills_stats_";
 
@@ -61,6 +63,8 @@ public class CallbackQueryUpdateListener implements UpdateListener {
             bot.execute(renderer.renderRecognizeMyBill(chatId));
         } else if (callbackData.startsWith(TUTORIAL_NEXT_PREFIX) || callbackData.startsWith(TUTORIAL_PREV_PREFIX)) {
             tutorialService.onStepChanged(update, bot);
+        } else if (callbackData.startsWith(TUTORIAL_PIN_PREFIX)) {
+            tutorialService.onPinTutorial(update, bot);
         } else if (callbackData.startsWith(DEBUG_DAILY_REMINDER_PREFIX)) {
             final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
             final var userSettings = userInfo.getUser().getUserSettings();
