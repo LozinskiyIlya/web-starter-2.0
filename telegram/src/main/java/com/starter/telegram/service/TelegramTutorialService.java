@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.*;
 
 @Slf4j
 @Service

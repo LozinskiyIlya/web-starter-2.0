@@ -2,6 +2,7 @@ package com.starter.telegram.listener;
 
 import com.starter.domain.entity.Bill;
 import com.starter.telegram.AbstractTelegramTest;
+import com.starter.telegram.listener.query.CallbackQueryUpdateListener;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -10,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
+import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
 import static org.junit.jupiter.api.Assertions.*;
 

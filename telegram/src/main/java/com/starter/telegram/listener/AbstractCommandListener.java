@@ -8,8 +8,8 @@ import com.pengrad.telegrambot.request.SendMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.DEBUG_DAILY_REMINDER_PREFIX;
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.DEBUG_NO_BILLS_STATS_PREFIX;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.DEBUG_DAILY_REMINDER_PREFIX;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.DEBUG_NO_BILLS_STATS_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 
 public abstract class AbstractCommandListener implements UpdateListener {

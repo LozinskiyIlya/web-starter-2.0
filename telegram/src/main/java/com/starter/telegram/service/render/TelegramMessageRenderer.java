@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import static com.starter.telegram.listener.CallbackQueryUpdateListener.*;
+import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
+import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.SKIP_BILL_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
