@@ -161,11 +161,10 @@ public class TelegramMessageRenderer {
     public BaseRequest<?, ?> renderStats(Long chatId,
                                          String timeRangeText,
                                          Map<String, Double> totals,
-                                         ChronoUnit timeUnit,
-                                         MaybeInaccessibleMessage message) {
-        final var keyboard = renderStatsKeyboard(timeUnit);
+                                         MaybeInaccessibleMessage previousMessage) {
+        final var keyboard = renderStatsKeyboard();
         if (totals.isEmpty()) {
-            return renderNoBills(chatId, timeRangeText, keyboard, message);
+            return renderNoBills(chatId, timeRangeText, keyboard, previousMessage);
         }
         final var stats = totals.entrySet().stream()
                 .map(entry -> {
@@ -179,25 +178,24 @@ public class TelegramMessageRenderer {
         final var textPart = templateReader.read(STATS_TEMPLATE)
                 .replace("#time_range#", timeRangeText)
                 .replace("#stats#", stats);
-        return tryUpdateMessage(chatId, message, textPart, keyboard.inlineKeyboard());
+        return tryUpdateMessage(chatId, previousMessage, textPart, keyboard.inlineKeyboard());
     }
 
     private BaseRequest<?, ?> renderNoBills(Long chatId,
                                             String timeRange,
                                             InlineKeyboardMarkup keyboard,
-                                            MaybeInaccessibleMessage message) {
+                                            MaybeInaccessibleMessage previousMessage) {
         final var textPart = templateReader.read(NO_BILLS_TEMPLATE)
                 .replace("#time_range#", timeRange)
                 .replace("#example#", renderExample());
-        return tryUpdateMessage(chatId, message, textPart, keyboard.inlineKeyboard());
+        return tryUpdateMessage(chatId, previousMessage, textPart, keyboard.inlineKeyboard());
     }
 
-    public InlineKeyboardMarkup renderStatsKeyboard(ChronoUnit unitToIgnore) {
+    public InlineKeyboardMarkup renderStatsKeyboard() {
         final var keyboard = new InlineKeyboardMarkup();
         final var firstRow = AVAILABLE_UNITS
                 .keySet()
                 .stream()
-                .filter(not(unitToIgnore::equals))
                 .map(key -> new InlineKeyboardButton(AVAILABLE_UNITS.get(key))
                         .callbackData(STATS_CALLBACK_QUERY_PREFIX + key.name()))
                 .toArray(InlineKeyboardButton[]::new);

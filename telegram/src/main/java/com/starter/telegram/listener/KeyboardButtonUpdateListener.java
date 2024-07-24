@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.temporal.ChronoUnit;
-
 import static com.starter.telegram.service.TelegramBotService.*;
 
 @Slf4j
@@ -30,7 +28,7 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
                 final var message = renderer.renderNewBill(chatId);
                 bot.execute(message);
             }
-            case THIS_MONTH -> statsService.sendStats(bot, ChronoUnit.MONTHS, chatId, null);
+            case LATEST_BILLS -> statsService.sendLastBills(bot, chatId);
             case GROUPS -> onMyGroups(chatId, bot);
             case HELP -> onHelp(chatId, bot);
             default -> {

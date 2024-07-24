@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
+import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
@@ -51,18 +52,25 @@ public class TelegramStatsService implements CallbackExecutor {
     }
 
     @Override
+    public String getPrefix() {
+        return STATS_CALLBACK_QUERY_PREFIX;
+    }
+
+    @Override
     public void execute(TelegramBot bot, CallbackQuery query, Long chatId) {
         final var callbackData = query.data();
         final var timeUnit = ChronoUnit.valueOf(callbackData.replace(STATS_CALLBACK_QUERY_PREFIX, ""));
         sendStats(bot, timeUnit, chatId, query.maybeInaccessibleMessage());
     }
 
-    @Override
-    public String getPrefix() {
-        return STATS_CALLBACK_QUERY_PREFIX;
+    public void sendLastBills(TelegramBot bot, Long chatId) {
+        final var personal = groupRepository.findByChatId(chatId).orElseThrow();
+        final var lastBills = billRepository.findAllNotSkippedByGroup(personal, Pageable.ofSize(5));
+//        final var message = renderer.renderLastBills(chatId, lastBills);
+        bot.execute(new SendMessage(chatId, "asd"));
     }
 
-    public void sendStats(TelegramBot bot, ChronoUnit timeUnit, Long chatId, MaybeInaccessibleMessage previousMessage) {
+    private void sendStats(TelegramBot bot, ChronoUnit timeUnit, Long chatId, MaybeInaccessibleMessage previousMessage) {
         //find personal group with the same as user's chatId
         final var personal = groupRepository.findByChatId(chatId).orElseThrow();
         final var userSettings = userSettingsRepository.findOneByUser(personal.getOwner());
@@ -76,10 +84,9 @@ public class TelegramStatsService implements CallbackExecutor {
                 ).stream()
                 .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)));
         final var timeRangeText = getTimeRangeDisplayText(timeRange, timezone, timeUnit);
-        final var message = renderer.renderStats(chatId, timeRangeText, totals, timeUnit, previousMessage);
+        final var message = renderer.renderStats(chatId, timeRangeText, totals, previousMessage);
         bot.execute(message);
     }
-
 
     private static Pair<Instant, Instant> getZonedTimeRange(ChronoUnit unit, ZoneId zone) {
         final ZonedDateTime now = ZonedDateTime.now(zone);

@@ -12,7 +12,7 @@ import java.time.format.TextStyle;
 import java.util.Locale;
 
 import static com.starter.telegram.service.TelegramBotService.NEW_BILL_BUTTON;
-import static com.starter.telegram.service.TelegramBotService.THIS_MONTH;
+import static com.starter.telegram.service.TelegramBotService.LATEST_BILLS;
 import static java.time.ZoneOffset.UTC;
 
 class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
@@ -50,7 +50,7 @@ class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
             // given
             final var currentMonth = Instant.now().atZone(UTC).toLocalDate().getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
             final var chatId = random.nextLong();
-            final var update = mockCommandUpdate(THIS_MONTH, chatId);
+            final var update = mockCommandUpdate(LATEST_BILLS, chatId);
             billTestDataCreator.givenGroupExists(g -> {
                 g.setChatId(chatId);
                 g.setOwner(userTestDataCreator.givenUserExists());
