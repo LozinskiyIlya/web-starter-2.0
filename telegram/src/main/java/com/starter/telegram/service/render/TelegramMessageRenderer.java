@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
@@ -94,7 +95,7 @@ public class TelegramMessageRenderer {
                 new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getTelegramChatId()
                         + QUERY_SEPARATOR + group.getChatId())
         );
-        return linkPreviewOff(new SendMessage(owner.getTelegramChatId(), textPart).replyMarkup(keyboard));
+        return linkPreviewOff(new SendMessage(owner.getTelegramChatId(), textPart), keyboard);
     }
 
     public BaseRequest<?, ?> renderAddMeAcceptedUpdate(Long chatId, MaybeInaccessibleMessage message, UserInfo userInfo, Group group) {
@@ -154,13 +155,23 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }
 
-    public SendMessage renderNoBills(Long chatId, String timeRange, ChronoUnit timeUnit) {
+    public BaseRequest<?, ?> renderStats(Long chatId,
+                                         String timeRangeText,
+                                         Map<String, Double> totals,
+                                         ChronoUnit timeUnit,
+                                         MaybeInaccessibleMessage message) {
+        if (totals.isEmpty()) {
+            return renderNoBills(chatId, timeRangeText, timeUnit, message);
+        }
+        return null;
+    }
+
+    private BaseRequest<?, ?> renderNoBills(Long chatId, String timeRange, ChronoUnit timeUnit, MaybeInaccessibleMessage message) {
         final var textPart = templateReader.read(NO_BILLS_TEMPLATE)
                 .replace("#time_range#", timeRange)
                 .replace("#example#", renderExample());
-        return new SendMessage(chatId, textPart)
-                .replyMarkup(renderStatsKeyboard(timeUnit))
-                .parseMode(ParseMode.HTML);
+        final var keyboard = renderStatsKeyboard(timeUnit);
+        return tryUpdateMessage(chatId, message, textPart, keyboard.inlineKeyboard());
     }
 
     public InlineKeyboardMarkup renderStatsKeyboard(ChronoUnit unitToIgnore) {
@@ -169,8 +180,8 @@ public class TelegramMessageRenderer {
                 .keySet()
                 .stream()
                 .filter(not(unitToIgnore::equals))
-                .map(AVAILABLE_UNITS::get)
-                .map(text -> new InlineKeyboardButton(text).callbackData(STATS_CALLBACK_QUERY_PREFIX + text.toUpperCase()))
+                .map(key -> new InlineKeyboardButton(AVAILABLE_UNITS.get(key))
+                        .callbackData(STATS_CALLBACK_QUERY_PREFIX + key.name()))
                 .toArray(InlineKeyboardButton[]::new);
         keyboard.addRow(firstRow);
         keyboard.addRow(new InlineKeyboardButton("View all stats")

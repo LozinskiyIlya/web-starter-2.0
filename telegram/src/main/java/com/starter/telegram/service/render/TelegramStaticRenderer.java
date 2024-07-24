@@ -32,16 +32,17 @@ public class TelegramStaticRenderer {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
     }
 
-    public static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
+    public static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton[]... buttons) {
         // if the message is accessible, update it
+        final var keyboard = buttons != null && buttons.length > 0 ? new InlineKeyboardMarkup(buttons) : null;
         try {
             if (message instanceof Message && message.messageId() != Bill.DEFAULT_MESSAGE_ID) {
                 final var editRequest = new EditMessageText(chatId, message.messageId(), text)
                         .parseMode(ParseMode.HTML)
                         .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
                         .disableWebPagePreview(true);
-                if (buttons != null && buttons.length > 0) {
-                    editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
+                if (keyboard != null) {
+                    editRequest.replyMarkup(keyboard);
                 }
                 return editRequest;
             }
@@ -49,11 +50,15 @@ public class TelegramStaticRenderer {
             log.error("Error while updating message", e);
         }
         // if the message is not accessible, send a new message
-        return linkPreviewOff(new SendMessage(chatId, text));
+        return linkPreviewOff(new SendMessage(chatId, text), keyboard);
     }
 
-    public static SendMessage linkPreviewOff(SendMessage request) {
-        return request.parseMode(ParseMode.HTML)
+    public static SendMessage linkPreviewOff(SendMessage request, InlineKeyboardMarkup keyboard) {
+        if (keyboard != null) {
+            request = request.replyMarkup(keyboard);
+        }
+        return request
+                .parseMode(ParseMode.HTML)
                 .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
                 .disableWebPagePreview(true);
     }

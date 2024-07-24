@@ -3,6 +3,8 @@ package com.starter.telegram.service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
+import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -48,7 +51,9 @@ public class TelegramStatsService implements CallbackExecutor {
 
     @Override
     public void execute(TelegramBot bot, CallbackQuery query, Long chatId) {
-
+        final var callbackData = query.data();
+        final var timeUnit = ChronoUnit.valueOf(callbackData.replace(STATS_CALLBACK_QUERY_PREFIX, ""));
+        sendStats(bot, timeUnit, chatId, query.maybeInaccessibleMessage());
     }
 
     @Override
@@ -56,44 +61,60 @@ public class TelegramStatsService implements CallbackExecutor {
         return STATS_CALLBACK_QUERY_PREFIX;
     }
 
-    public void sendStats(TelegramBot bot, ChronoUnit timeUnit, Long chatId) {
-        switch (timeUnit) {
-            case MONTHS -> onThisMonth(bot, chatId);
-            default -> {
-            }
-        }
-    }
-
-    public void onThisMonth(TelegramBot bot, Long chatId) {
+    public void sendStats(TelegramBot bot, ChronoUnit timeUnit, Long chatId, MaybeInaccessibleMessage previousMessage) {
         //find personal group with the same as user's chatId
         final var personal = groupRepository.findByChatId(chatId).orElseThrow();
         final var userSettings = userSettingsRepository.findOneByUser(personal.getOwner());
         final var timezone = ZoneId.of(userSettings.map(UserSettings::getTimezone).orElse("UTC"));
-        final var currentMonth = getCurrentMonthForUserLocalDate(timezone);
+        final var timeRange = getZonedTimeRange(timeUnit, timezone);
         final var totals = billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(
                         List.of(personal),
-                        currentMonth.getFirst(),
-                        currentMonth.getSecond(),
+                        timeRange.getFirst(),
+                        timeRange.getSecond(),
                         Pageable.unpaged()
                 ).stream()
                 .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)));
-        if (totals.isEmpty()) {
-            final var timeRange = getMonthName(currentMonth.getFirst(), timezone);
-            final var message = renderer.renderNoBills(chatId, timeRange, ChronoUnit.MONTHS);
-            bot.execute(message);
-            return;
+        final var timeRangeText = getTimeRangeDisplayText(timeRange, timezone, timeUnit);
+        final var message = renderer.renderStats(chatId, timeRangeText, totals, timeUnit, previousMessage);
+        bot.execute(message);
+    }
+
+
+    private static Pair<Instant, Instant> getZonedTimeRange(ChronoUnit unit, ZoneId zone) {
+        final ZonedDateTime now = ZonedDateTime.now(zone);
+        ZonedDateTime start;
+        ZonedDateTime end = switch (unit) {
+            case DAYS -> {
+                start = now.truncatedTo(ChronoUnit.DAYS);
+                yield start.plusDays(1);
+            }
+            case WEEKS -> {
+                start = now.with(DayOfWeek.MONDAY).truncatedTo(ChronoUnit.DAYS);
+                yield start.plusWeeks(1);
+            }
+            case MONTHS -> {
+                start = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+                yield start.plusMonths(1);
+            }
+            default -> throw new IllegalArgumentException("Unsupported ChronoUnit: " + unit);
+        };
+
+        return Pair.of(start.toInstant(), end.toInstant());
+    }
+
+    private static String getTimeRangeDisplayText(Pair<Instant, Instant> range, ZoneId zone, ChronoUnit timeUnit) {
+        switch (timeUnit) {
+            case DAYS:
+                return "Today " + ZonedDateTime.ofInstant(range.getFirst(), zone).toLocalDate().toString();
+            case WEEKS:
+                final var startDate = ZonedDateTime.ofInstant(range.getFirst(), zone);
+                final var endDate = ZonedDateTime.ofInstant(range.getSecond(), zone);
+                return startDate.toLocalDate().toString() + " - " + endDate.toLocalDate().toString();
+            case MONTHS:
+                final var zonedDateTime = ZonedDateTime.ofInstant(range.getFirst(), zone);
+                return zonedDateTime.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
+            default:
+                throw new IllegalArgumentException("Unsupported time unit: " + timeUnit);
         }
-    }
-
-    private Pair<Instant, Instant> getCurrentMonthForUserLocalDate(ZoneId zone) {
-        final var localTime = ZonedDateTime.now(zone);
-        final var startOfMonth = localTime.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        final var endOfMonth = localTime.withDayOfMonth(localTime.toLocalDate().lengthOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
-        return Pair.of(startOfMonth.toInstant(), endOfMonth.toInstant());
-    }
-
-    private static String getMonthName(Instant instant, ZoneId zone) {
-        final var zonedDateTime = ZonedDateTime.ofInstant(instant, zone);
-        return zonedDateTime.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
     }
 }

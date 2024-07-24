@@ -30,7 +30,7 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
                 final var message = renderer.renderNewBill(chatId);
                 bot.execute(message);
             }
-            case THIS_MONTH -> statsService.sendStats(bot, ChronoUnit.MONTHS, chatId);
+            case THIS_MONTH -> statsService.sendStats(bot, ChronoUnit.MONTHS, chatId, update.message());
             case GROUPS -> onMyGroups(chatId, bot);
             case HELP -> onHelp(chatId, bot);
             default -> {

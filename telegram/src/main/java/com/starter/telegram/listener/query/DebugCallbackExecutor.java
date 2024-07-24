@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 
 @Slf4j
@@ -32,7 +33,7 @@ public class DebugCallbackExecutor implements CallbackExecutor {
             final var message = renderer.renderDailyReminder(userSettings);
             bot.execute(message);
         } else if (callbackData.startsWith(DEBUG_NO_BILLS_STATS_PREFIX)) {
-            final var message = renderer.renderNoBills(chatId, "July", ChronoUnit.MONTHS);
+            final var message = renderer.renderStats(chatId, "July", Map.of(), ChronoUnit.MONTHS, query.maybeInaccessibleMessage());
             bot.execute(message);
         }
     }
