@@ -4,7 +4,6 @@ package com.starter.telegram.listener;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.PinChatMessage;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.repository.BillRepository;
@@ -26,9 +25,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CallbackQueryUpdateListener implements UpdateListener {
 
-    public static final String ID_SEPARATOR = "_";
-    public static final String CONFIRM_BILL_PREFIX = "confirm_bill_";
-    public static final String SKIP_BILL_PREFIX = "skip_bill_";
+    public static final String QUERY_SEPARATOR = "_";
+    public static final String CONFIRM_BILL_PREFIX = "bill_confirm_";
+    public static final String SKIP_BILL_PREFIX = "bill_skip_";
     public static final String ADDME_ACCEPT_PREFIX = "addme_accept_";
     public static final String ADDME_REJECT_PREFIX = "addme_reject_";
     public static final String RECOGNIZE_BILL_PREFIX = "recognize_";
@@ -95,7 +94,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     private void acceptAddMe(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
         final var message = callbackQuery.maybeInaccessibleMessage();
         final var removedPrefix = callbackQuery.data().substring(ADDME_ACCEPT_PREFIX.length());
-        final var parts = removedPrefix.split(ID_SEPARATOR);
+        final var parts = removedPrefix.split(QUERY_SEPARATOR);
         final var userChatId = Long.valueOf(parts[0]);
         final var groupChatId = Long.valueOf(parts[1]);
         final var userInfo = userInfoRepository.findByTelegramChatId(userChatId).orElseThrow();

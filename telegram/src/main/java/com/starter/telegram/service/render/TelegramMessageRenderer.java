@@ -83,7 +83,7 @@ public class TelegramMessageRenderer {
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("❌ Decline").callbackData(ADDME_REJECT_PREFIX),
                 new InlineKeyboardButton("✅ Accept").callbackData(ADDME_ACCEPT_PREFIX + requestingPermission.getTelegramChatId()
-                        + ID_SEPARATOR + group.getChatId())
+                        + QUERY_SEPARATOR + group.getChatId())
         );
         return linkPreviewOff(new SendMessage(owner.getTelegramChatId(), textPart).replyMarkup(keyboard));
     }

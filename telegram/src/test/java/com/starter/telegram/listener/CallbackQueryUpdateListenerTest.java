@@ -34,7 +34,7 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
             final var group = billTestDataCreator.givenGroupExists(g -> g.setOwner(owner.getUser()));
             final var newMember = userTestDataCreator.givenUserInfoExists(ui -> {
             });
-            final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
+            final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + QUERY_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
 
             // when
@@ -59,7 +59,7 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
                 g.setOwner(owner.getUser());
                 g.setMembers(List.of(owner.getUser(), newMember.getUser()));
             });
-            final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + ID_SEPARATOR + group.getChatId();
+            final var query = ADDME_ACCEPT_PREFIX + newMember.getTelegramChatId() + QUERY_SEPARATOR + group.getChatId();
             final var update = mockCallbackQueryUpdate(query, owner.getTelegramChatId());
 
             // when
