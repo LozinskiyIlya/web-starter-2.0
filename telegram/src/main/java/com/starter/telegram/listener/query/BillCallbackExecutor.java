@@ -34,7 +34,6 @@ public class BillCallbackExecutor implements CallbackExecutor {
         }
     }
 
-
     private void confirmBill(CallbackQuery query) {
         final var billId = extractId(query, CONFIRM_BILL_PREFIX);
         publisher.publishEvent(new BillConfirmedEvent(this, billId));
