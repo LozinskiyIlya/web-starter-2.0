@@ -2,6 +2,7 @@ package com.starter.telegram.listener.query;
 
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Update;
 import com.starter.telegram.listener.UpdateListener;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
@@ -41,11 +42,16 @@ public class CallbackQueryUpdateListener implements UpdateListener {
                 .filter(callbackData::startsWith)
                 .findFirst()
                 .map(executors::get)
-                .ifPresent(callbackExecutor -> callbackExecutor.execute(bot, callbackQuery, chatId));
+                .ifPresentOrElse(callbackExecutor -> callbackExecutor.execute(bot, callbackQuery, chatId),
+                        () -> processLocally(bot, callbackQuery, chatId));
+    }
+
+    private void processLocally(TelegramBot bot, CallbackQuery query, Long chatId) {
+        final var callbackData = query.data();
         if (callbackData.startsWith(RECOGNIZE_BILL_PREFIX)) {
             bot.execute(renderer.renderRecognizeMyBill(chatId));
         } else {
-            log.warn("Unknown callback query: {}", callbackData);
+            log.warn("Unknown callback query: {} for chatId: {}", callbackData, chatId);
         }
     }
 }
