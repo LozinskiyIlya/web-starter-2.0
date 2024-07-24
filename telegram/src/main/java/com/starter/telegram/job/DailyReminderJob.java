@@ -31,7 +31,7 @@ public class DailyReminderJob implements Job {
                 .map(JobInvocationDetails::getCreatedAt)
                 .map(lastRun -> Duration.between(lastRun, now).toHours())
                 .map(hoursSinceLastRun -> hoursSinceLastRun >= 1)
-                .orElse(now.atZone(ZoneId.systemDefault()).getMinute() < 5);
+                .orElse(LocalTime.ofInstant(now, ZoneId.systemDefault()).getMinute() <= 1);
     }
 
     @Override
