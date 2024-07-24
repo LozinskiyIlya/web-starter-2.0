@@ -33,7 +33,7 @@ public class DebugCallbackExecutor implements CallbackExecutor {
             final var message = renderer.renderDailyReminder(userSettings);
             bot.execute(message);
         } else if (callbackData.startsWith(DEBUG_NO_BILLS_STATS_PREFIX)) {
-            final var message = renderer.renderStats(chatId, "July", Map.of(), ChronoUnit.MONTHS, query.maybeInaccessibleMessage());
+            final var message = renderer.renderStats(chatId, "July", Map.of(), ChronoUnit.MONTHS, null);
             bot.execute(message);
         }
     }

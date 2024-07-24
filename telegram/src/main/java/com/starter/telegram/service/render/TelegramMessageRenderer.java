@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
@@ -44,9 +45,11 @@ public class TelegramMessageRenderer {
     private static final String BILL_TEMPLATE = "bill.txt";
     private static final String DAILY_REMINDER_TEMPLATE = "daily.txt";
     private static final String NO_BILLS_TEMPLATE = "no_bills.txt";
+    private static final String STATS_TEMPLATE = "stats.txt";
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
+    private static final String TOTAL_ENTRY_TEMPLATE = "◾\uFE0F#currency#  <b>#amount#</b>";
 
     private final TemplateReader templateReader;
 
@@ -160,17 +163,32 @@ public class TelegramMessageRenderer {
                                          Map<String, Double> totals,
                                          ChronoUnit timeUnit,
                                          MaybeInaccessibleMessage message) {
+        final var keyboard = renderStatsKeyboard(timeUnit);
         if (totals.isEmpty()) {
-            return renderNoBills(chatId, timeRangeText, timeUnit, message);
+            return renderNoBills(chatId, timeRangeText, keyboard, message);
         }
-        return null;
+        final var stats = totals.entrySet().stream()
+                .map(entry -> {
+                    final var currency = entry.getKey();
+                    final var amount = renderAmount(entry.getValue(), currenciesService.getSymbol(currency));
+                    return TOTAL_ENTRY_TEMPLATE
+                            .replaceAll("#currency#", currency)
+                            .replaceAll("#amount#", amount);
+                })
+                .collect(Collectors.joining("\n"));
+        final var textPart = templateReader.read(STATS_TEMPLATE)
+                .replace("#time_range#", timeRangeText)
+                .replace("#stats#", stats);
+        return tryUpdateMessage(chatId, message, textPart, keyboard.inlineKeyboard());
     }
 
-    private BaseRequest<?, ?> renderNoBills(Long chatId, String timeRange, ChronoUnit timeUnit, MaybeInaccessibleMessage message) {
+    private BaseRequest<?, ?> renderNoBills(Long chatId,
+                                            String timeRange,
+                                            InlineKeyboardMarkup keyboard,
+                                            MaybeInaccessibleMessage message) {
         final var textPart = templateReader.read(NO_BILLS_TEMPLATE)
                 .replace("#time_range#", timeRange)
                 .replace("#example#", renderExample());
-        final var keyboard = renderStatsKeyboard(timeUnit);
         return tryUpdateMessage(chatId, message, textPart, keyboard.inlineKeyboard());
     }
 
