@@ -19,13 +19,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.temporal.ChronoUnit;
+
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.SKIP_BILL_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+import static com.starter.telegram.service.TelegramStatsService.AVAILABLE_UNITS;
+import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
+import static java.util.function.Predicate.not;
 
 @Slf4j
 @Service
@@ -149,23 +154,28 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }
 
-    public SendMessage renderNoBills(Long chatId, String timeRange) {
+    public SendMessage renderNoBills(Long chatId, String timeRange, ChronoUnit timeUnit) {
         final var textPart = templateReader.read(NO_BILLS_TEMPLATE)
                 .replace("#time_range#", timeRange)
                 .replace("#example#", renderExample());
         return new SendMessage(chatId, textPart)
-                .replyMarkup(new InlineKeyboardMarkup(
-                        new InlineKeyboardButton[]{
-                                new InlineKeyboardButton("Today").callbackData("today"),
-                                new InlineKeyboardButton("This week").callbackData("this_week"),
-                                new InlineKeyboardButton("This month").callbackData("this_month")
-                        },
-                        new InlineKeyboardButton[]{
-                                new InlineKeyboardButton("View all stats")
-                                        .webApp(renderWebApp("dashboard", ""))
-                        }
-                ))
+                .replyMarkup(renderStatsKeyboard(timeUnit))
                 .parseMode(ParseMode.HTML);
+    }
+
+    public InlineKeyboardMarkup renderStatsKeyboard(ChronoUnit unitToIgnore) {
+        final var keyboard = new InlineKeyboardMarkup();
+        final var firstRow = AVAILABLE_UNITS
+                .keySet()
+                .stream()
+                .filter(not(unitToIgnore::equals))
+                .map(AVAILABLE_UNITS::get)
+                .map(text -> new InlineKeyboardButton(text).callbackData(STATS_CALLBACK_QUERY_PREFIX + text.toUpperCase()))
+                .toArray(InlineKeyboardButton[]::new);
+        keyboard.addRow(firstRow);
+        keyboard.addRow(new InlineKeyboardButton("View all stats")
+                .webApp(renderWebApp("dashboard", "")));
+        return keyboard;
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {

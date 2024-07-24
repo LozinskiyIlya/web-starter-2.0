@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.temporal.ChronoUnit;
+
 
 @Slf4j
 @Service
@@ -30,7 +32,7 @@ public class DebugCallbackExecutor implements CallbackExecutor {
             final var message = renderer.renderDailyReminder(userSettings);
             bot.execute(message);
         } else if (callbackData.startsWith(DEBUG_NO_BILLS_STATS_PREFIX)) {
-            final var message = renderer.renderNoBills(chatId, "July");
+            final var message = renderer.renderNoBills(chatId, "July", ChronoUnit.MONTHS);
             bot.execute(message);
         }
     }
