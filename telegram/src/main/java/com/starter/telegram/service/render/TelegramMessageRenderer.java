@@ -225,7 +225,7 @@ public class TelegramMessageRenderer {
     public SendMessage renderGroups(Long chatId, List<Pair<Group, Long>> groups) {
         final var textPart = TelegramStaticRenderer.renderGroups(groups);
         final var keyboard = new InlineKeyboardMarkup(
-                renderWebAppButton("Manage groups", "group", "")
+                renderWebAppButton("Manage groups", "groups", "")
         );
         return new SendMessage(chatId, textPart)
                 .replyMarkup(keyboard)

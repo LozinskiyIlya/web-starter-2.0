@@ -1,5 +1,6 @@
 package com.starter.telegram.listener;
 
+import com.starter.domain.entity.Group;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.telegram.AbstractTelegramTest;
 import org.junit.jupiter.api.DisplayName;
@@ -7,8 +8,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static com.starter.telegram.service.TelegramBotService.LATEST_BILLS;
-import static com.starter.telegram.service.TelegramBotService.NEW_BILL_BUTTON;
+import java.util.List;
+
+import static com.starter.telegram.service.TelegramBotService.*;
 
 class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
 
@@ -39,10 +41,9 @@ class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
     @DisplayName("On Latest Bills")
     class onLatestBills {
 
-
         @Test
-        @DisplayName("Sends latest bills")
-        void sendsLatestBills() {
+        @DisplayName("send latest bills")
+        void sendLatestBills() {
             // given
             final var chatId = random.nextLong();
             final var update = mockCommandUpdate(LATEST_BILLS, chatId);
@@ -63,6 +64,42 @@ class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
             // then
             assertSentMessageToChatIdContainsText(bot, chatId, "Dinner");
             assertSentMessageToChatIdContainsText(bot, chatId, "Rent");
+        }
+    }
+
+    @Nested
+    @DisplayName("On My Groups")
+    class OnMyGroups {
+
+        @Test
+        @DisplayName("sends user's groups")
+        void sendsLatestBills() {
+            // given
+            final var chatId = random.nextLong();
+            final var update = mockCommandUpdate(GROUPS, chatId);
+            final var owner = userTestDataCreator.givenUserInfoExists(ui ->
+                    ui.setTelegramChatId(chatId)).getUser();
+            final var personal = billTestDataCreator.givenGroupExists(g -> {
+                g.setTitle(Group.PERSONAL);
+                g.setOwner(owner);
+            });
+            final var member = userTestDataCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            final var other = billTestDataCreator.givenGroupExists(g -> {
+                g.setOwner(owner);
+                g.setMembers(List.of(owner, member));
+                g.setTitle("Other");
+            });
+            billTestDataCreator.givenBillExists(b -> b.setGroup(personal));
+            billTestDataCreator.givenBillExists(b -> b.setGroup(personal));
+            billTestDataCreator.givenBillExists(b -> b.setGroup(other));
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsText(bot, chatId, Group.PERSONAL);
+            assertSentMessageToChatIdContainsText(bot, chatId, "Other");
+            assertSentMessageToChatIdContainsText(bot, chatId, "2 bills • 1 members");
+            assertSentMessageToChatIdContainsText(bot, chatId, "1 bills • 2 members");
         }
     }
 }
