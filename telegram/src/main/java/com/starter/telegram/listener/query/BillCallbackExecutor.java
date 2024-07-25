@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderBillSkipped;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,7 +48,7 @@ public class BillCallbackExecutor implements CallbackExecutor {
         bill.setStatus(Bill.BillStatus.SKIPPED);
         billRepository.save(bill);
         log.info("Bill skipped: {}", bill);
-        final var messageUpdate = renderer.renderBillSkipped(chatId, bill, message);
+        final var messageUpdate = renderBillSkipped(chatId, bill, message);
         bot.execute(messageUpdate);
     }
 

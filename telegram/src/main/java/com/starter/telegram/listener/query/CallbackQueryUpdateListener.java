@@ -5,7 +5,6 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Update;
 import com.starter.telegram.listener.UpdateListener;
-import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderRecognizeMyBill;
 
 
 @Slf4j
@@ -24,7 +25,6 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     public static final String QUERY_SEPARATOR = "_";
     public static final String RECOGNIZE_BILL_PREFIX = "recognize_";
 
-    private final TelegramMessageRenderer renderer;
     private final Map<String, CallbackExecutor> executors = new HashMap<>();
 
     @Autowired
@@ -49,7 +49,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
     private void processLocally(TelegramBot bot, CallbackQuery query, Long chatId) {
         final var callbackData = query.data();
         if (callbackData.startsWith(RECOGNIZE_BILL_PREFIX)) {
-            bot.execute(renderer.renderRecognizeMyBill(chatId));
+            bot.execute(renderRecognizeMyBill(chatId));
         } else {
             log.warn("Unknown callback query: {} for chatId: {}", callbackData, chatId);
         }

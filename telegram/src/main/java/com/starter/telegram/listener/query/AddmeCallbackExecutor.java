@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedList;
 
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QUERY_SEPARATOR;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderAddMeRejectedUpdate;
 
 @Slf4j
 @Service
@@ -57,7 +58,7 @@ public class AddmeCallbackExecutor implements CallbackExecutor {
 
     private void rejectAddMe(TelegramBot bot, CallbackQuery callbackQuery, Long chatId) {
         final var message = callbackQuery.maybeInaccessibleMessage();
-        final var messageUpdate = renderer.renderAddMeRejectedUpdate(chatId, message);
+        final var messageUpdate = renderAddMeRejectedUpdate(chatId, message);
         bot.execute(messageUpdate);
     }
 

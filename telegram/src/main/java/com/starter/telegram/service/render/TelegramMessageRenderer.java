@@ -14,17 +14,18 @@ import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.starter.domain.repository.BillRepository.*;
+import static com.starter.domain.repository.BillRepository.TagAmount;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
@@ -51,8 +52,6 @@ public class TelegramMessageRenderer {
     private static final String STATS_TEMPLATE = "stats.txt";
     private static final String LATEST_BILLS_TEMPLATE = "latest_bills.txt";
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
-    private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
-    private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
     private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F #first#  <b>#second#</b>";
     private static final String TOP_EXPENSE_TEMPLATE = "<i>#first#</i>  <b>#second#</b>";
 
@@ -84,13 +83,6 @@ public class TelegramMessageRenderer {
         return tryUpdateMessage(chatId, message, textPart);
     }
 
-    public BaseRequest<?, ?> renderBillSkipped(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
-        final var textPart = BILL_SKIP_TEMPLATE
-                .replaceAll("#id#", renderId(bill.getId()))
-                .replaceAll("#archive_url#", renderWebAppDirectUrl("archive", bill.getId()));
-        return tryUpdateMessage(chatId, message, textPart);
-    }
-
     public SendMessage renderAddMeMessage(UserInfo owner, UserInfo requestingPermission, Group group) {
         log.info("Rendering add me message for user {} in group {}", requestingPermission, group);
         // message notifying an owner that a user wants to join the group with 2 buttons: accept and decline
@@ -111,11 +103,6 @@ public class TelegramMessageRenderer {
                 .replaceAll("#edit_url#", renderWebAppDirectUrl("group", group.getId()))
                 .replaceAll("#user_name#", renderTelegramUsername(userInfo))
                 .replaceAll("#group_name#", group.getTitle());
-        return tryUpdateMessage(chatId, message, textPart);
-    }
-
-    public BaseRequest<?, ?> renderAddMeRejectedUpdate(Long chatId, MaybeInaccessibleMessage message) {
-        final var textPart = "Rejected";
         return tryUpdateMessage(chatId, message, textPart);
     }
 
@@ -149,11 +136,6 @@ public class TelegramMessageRenderer {
                                         .webApp(renderWebApp("bill", "new"))}
                         ))
                 .parseMode(ParseMode.HTML);
-    }
-
-    public SendMessage renderRecognizeMyBill(Long chatId) {
-        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", renderExample());
-        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
     public SendMessage renderStartMessage(Long chatId, String firstName) {
@@ -241,6 +223,16 @@ public class TelegramMessageRenderer {
                 .replyMarkup(keyboard)
                 .parseMode(ParseMode.HTML)
                 .disableNotification(silentMode);
+    }
+
+    public SendMessage renderGroups(Long chatId, List<Pair<Group, Long>> groups) {
+        final var textPart = TelegramStaticRenderer.renderGroups(groups);
+        final var keyboard = new InlineKeyboardMarkup(
+                new InlineKeyboardButton("Manage groups").webApp(renderWebApp("groups", "new"))
+        );
+        return new SendMessage(chatId, textPart)
+                .replyMarkup(keyboard)
+                .parseMode(ParseMode.HTML);
     }
 
     public InlineKeyboardMarkup renderStatsKeyboard() {

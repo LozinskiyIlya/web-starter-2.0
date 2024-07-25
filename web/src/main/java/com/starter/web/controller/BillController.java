@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static com.starter.telegram.service.TelegramBillService.SelfMadeTelegramMessage;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderBillSkipped;
 
 @Slf4j
 @RestController
@@ -144,7 +145,7 @@ public class BillController {
         billMessageExecutor.submit(() -> {
             final var tgMessage = new SelfMadeTelegramMessage();
             tgMessage.setMessageId(bill.getMessageId());
-            final var message = messageRenderer.renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
+            final var message = renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
             telegramBot.execute(message);
         });
     }
