@@ -54,6 +54,7 @@ public class TelegramMessageRenderer {
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
     private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F #first#  <b>#second#</b>";
+    private static final String TOP_EXPENSE_TEMPLATE = "<i>#first#</i>  <b>#second#</b>";
 
     private final TemplateReader templateReader;
 
@@ -189,8 +190,8 @@ public class TelegramMessageRenderer {
         final var keyboard = renderStatsKeyboard();
         final var bills = lastBills.stream()
                 .map(bill -> STAT_ENTRY_TEMPLATE
-                        .replace("#first#", bill.getPurpose())
-                        .replace("#second#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency()))))
+                        .replaceAll("#first#", bill.getPurpose())
+                        .replaceAll("#second#", renderAmount(bill.getAmount(), currenciesService.getSymbol(bill.getCurrency()))))
                 .collect(Collectors.joining("\n"));
         final var textPart = templateReader.read(LATEST_BILLS_TEMPLATE)
                 .replace("#num#", "" + lastBills.getSize())
@@ -223,15 +224,17 @@ public class TelegramMessageRenderer {
                 new InlineKeyboardButton("View all stats")
                         .webApp(renderWebApp("dashboard", "")));
         final var totalSpendText = renderAmount(totalSpend, currenciesService.getSymbol(topTagCurrency));
-        final var maxSpendText = STAT_ENTRY_TEMPLATE.replace("#first#", maxSpend.getPurpose())
-                .replace("#second#", renderAmount(maxSpend.getAmount(), currenciesService.getSymbol(maxSpend.getCurrency())));
-        final var minSpendText = STAT_ENTRY_TEMPLATE.replace("#first#", minSpend.getPurpose())
-                .replace("#second#", renderAmount(minSpend.getAmount(), currenciesService.getSymbol(minSpend.getCurrency())));
+        final var maxSpendText = TOP_EXPENSE_TEMPLATE
+                .replaceAll("#first#", maxSpend.getPurpose())
+                .replaceAll("#second#", renderAmount(maxSpend.getAmount(), currenciesService.getSymbol(maxSpend.getCurrency())));
+        final var minSpendText = TOP_EXPENSE_TEMPLATE
+                .replaceAll("#first#", minSpend.getPurpose())
+                .replaceAll("#second#", renderAmount(minSpend.getAmount(), currenciesService.getSymbol(minSpend.getCurrency())));
         final var text = templateReader.read(WEEKLY_REPORT_TEMPLATE)
                 .replace("#name#", firstName)
                 .replace("#total#", totalSpendText)
                 .replace("#top_tag#", topTag.getName())
-                .replace("#top_tag_amount#", renderAmount(topTag.getAmount(), currenciesService.getSymbol(topTagCurrency)))
+                .replaceAll("#top_tag_amount#", renderAmount(topTag.getAmount(), currenciesService.getSymbol(topTagCurrency)))
                 .replace("#max_spend#", maxSpendText)
                 .replace("#min_spend#", minSpendText);
         return new SendMessage(chatId, text)
