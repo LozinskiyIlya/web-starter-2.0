@@ -65,7 +65,7 @@ public class TelegramMessageRenderer {
         final var caption = renderCaption(bill, spoiler);
         final var keyboard = new InlineKeyboardMarkup(
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
-                new InlineKeyboardButton("✏\uFE0F Edit").webApp(renderWebApp("bill", bill.getId().toString())),
+                renderWebAppButton("✏\uFE0F Edit", "bill", bill.getId().toString()),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
         );
         return new SendMessage(chatId, caption).replyMarkup(keyboard).parseMode(ParseMode.HTML);
@@ -107,9 +107,8 @@ public class TelegramMessageRenderer {
     }
 
     public SendMessage renderSettings(Long chatId) {
-        return new SendMessage(chatId, "⚙\uFE0F Bot settings ").replyMarkup(new InlineKeyboardMarkup(
-                new InlineKeyboardButton("View and edit").webApp(renderWebApp("settings", ""))
-        ));
+        return new SendMessage(chatId, "⚙\uFE0F Bot settings ")
+                .replyMarkup(new InlineKeyboardMarkup(renderWebAppButton("View and edit", "settings", "")));
     }
 
     public SendMessage renderDailyReminder(UserSettings settings) {
@@ -132,8 +131,8 @@ public class TelegramMessageRenderer {
                         new InlineKeyboardMarkup(
                                 new InlineKeyboardButton[]{new InlineKeyboardButton("⌨\uFE0F OK, recognize my bill")
                                         .callbackData(RECOGNIZE_BILL_PREFIX)},
-                                new InlineKeyboardButton[]{new InlineKeyboardButton("\uD83E\uDDFE I'll use the form")
-                                        .webApp(renderWebApp("bill", "new"))}
+                                new InlineKeyboardButton[]{
+                                        renderWebAppButton("\uD83E\uDDFE I'll use the form", "bill", "new")}
                         ))
                 .parseMode(ParseMode.HTML);
     }
@@ -202,9 +201,7 @@ public class TelegramMessageRenderer {
                                           Bill minSpend,
                                           String firstName,
                                           boolean silentMode) {
-        final var keyboard = new InlineKeyboardMarkup(
-                new InlineKeyboardButton("View all stats")
-                        .webApp(renderWebApp("dashboard", "")));
+        final var keyboard = new InlineKeyboardMarkup(renderWebAppButton("View all stats", "dashboard", ""));
         final var totalSpendText = renderAmount(totalSpend, currenciesService.getSymbol(topTagCurrency));
         final var maxSpendText = TOP_EXPENSE_TEMPLATE
                 .replaceAll("#first#", maxSpend.getPurpose())
@@ -228,7 +225,7 @@ public class TelegramMessageRenderer {
     public SendMessage renderGroups(Long chatId, List<Pair<Group, Long>> groups) {
         final var textPart = TelegramStaticRenderer.renderGroups(groups);
         final var keyboard = new InlineKeyboardMarkup(
-                new InlineKeyboardButton("Manage groups").webApp(renderWebApp("groups", "new"))
+                renderWebAppButton("Manage groups", "group", "")
         );
         return new SendMessage(chatId, textPart)
                 .replyMarkup(keyboard)
@@ -244,9 +241,12 @@ public class TelegramMessageRenderer {
                         .callbackData(STATS_CALLBACK_QUERY_PREFIX + key.name()))
                 .toArray(InlineKeyboardButton[]::new);
         keyboard.addRow(firstRow);
-        keyboard.addRow(new InlineKeyboardButton("View all stats")
-                .webApp(renderWebApp("dashboard", "")));
+        keyboard.addRow(renderWebAppButton("View all stats", "dashboard", ""));
         return keyboard;
+    }
+
+    private InlineKeyboardButton renderWebAppButton(String text, String path, String pathVariable) {
+        return new InlineKeyboardButton(text).webApp(renderWebApp(path, pathVariable));
     }
 
     private WebAppInfo renderWebApp(String path, String pathVariable) {
