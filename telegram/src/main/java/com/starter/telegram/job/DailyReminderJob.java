@@ -29,8 +29,8 @@ public class DailyReminderJob implements Job {
         final var now = Instant.now();
         return details
                 .map(JobInvocationDetails::getCreatedAt)
-                .map(lastRun -> Duration.between(lastRun, now).toHours())
-                .map(hoursSinceLastRun -> hoursSinceLastRun >= 1)
+                .map(lastRun -> Duration.between(lastRun, now).toMinutes())
+                .map(minutesSinceLastRun -> minutesSinceLastRun >= 59)
                 .orElse(LocalTime.ofInstant(now, ZoneId.systemDefault()).getMinute() <= 1);
     }
 

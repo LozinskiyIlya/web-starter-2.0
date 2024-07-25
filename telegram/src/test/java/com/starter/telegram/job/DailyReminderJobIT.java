@@ -27,7 +27,6 @@ class DailyReminderJobIT extends AbstractTelegramTest {
     @DisplayName("should run")
     class ShouldRun {
 
-
         @Test
         @DisplayName("should return true when details is empty and now is less than 5 minutes past the hour")
         void shouldReturnTrueWhenDetailsIsEmpty() {
@@ -46,6 +45,17 @@ class DailyReminderJobIT extends AbstractTelegramTest {
             Instant lastRun = Instant.now().minus(Duration.ofMinutes(30));
             Optional<JobInvocationDetails> details = createJobInvocationDetails(lastRun);
             assertFalse(job.shouldRun(details));
+        }
+
+        @Test
+        @DisplayName("should return true when last run was almost 1 hour ago")
+        void shouldReturnTrueWhenLastRunAlmostOneHourAgo() {
+            Instant lastRun = Instant.now()
+                    .minus(Duration.ofMinutes(59))
+                    .minus(Duration.ofSeconds(59))
+                    .minus(Duration.ofNanos(999_999));
+            Optional<JobInvocationDetails> details = createJobInvocationDetails(lastRun);
+            assertTrue(job.shouldRun(details));
         }
 
         @Test

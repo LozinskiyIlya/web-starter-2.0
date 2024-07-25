@@ -50,7 +50,7 @@ public class TelegramMessageRenderer {
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
-    private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F#first#  <b>#second#</b>";
+    private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F #first#  <b>#second#</b>";
 
     private final TemplateReader templateReader;
 
