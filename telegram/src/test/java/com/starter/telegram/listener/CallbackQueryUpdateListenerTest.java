@@ -9,12 +9,16 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
-import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.*;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
+import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QUERY_SEPARATOR;
+import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
+import static java.time.ZoneOffset.UTC;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -116,6 +120,30 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
             // then
             final var confirmedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertEquals(Bill.BillStatus.CONFIRMED, confirmedBill.getStatus());
+        }
+    }
+
+    @Nested
+    @DisplayName("stats keyboard")
+    class StatsKeyboard {
+        @Test
+        @DisplayName("renders no bills placeholder")
+        void rendersPlaceholder() {
+            // given
+            final var currentMonth = DateTimeFormatter.ofPattern("MMM yyyy").format(Instant.now().atZone(UTC));
+            final var chatId = random.nextLong();
+            final var update = mockCallbackQueryUpdate(STATS_CALLBACK_QUERY_PREFIX + "MONTHS", chatId);
+            billTestDataCreator.givenGroupExists(g -> {
+                g.setChatId(chatId);
+                g.setOwner(userTestDataCreator.givenUserExists());
+            });
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertMessageSentToChatId(bot, chatId);
+            assertSentMessageToChatIdContainsText(bot, chatId, "Nothing was tracked for the selected time range");
+            assertSentMessageToChatIdContainsText(bot, chatId, currentMonth);
+            assertSentMessageToChatIdContainsKeyboard(bot, chatId);
         }
     }
 }

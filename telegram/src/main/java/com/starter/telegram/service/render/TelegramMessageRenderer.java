@@ -14,6 +14,7 @@ import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.starter.domain.repository.BillRepository.*;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_ACCEPT_PREFIX;
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
@@ -44,6 +46,7 @@ public class TelegramMessageRenderer {
     private static final String NEW_BILL_TEMPLATE = "new_bill.txt";
     private static final String BILL_TEMPLATE = "bill.txt";
     private static final String DAILY_REMINDER_TEMPLATE = "daily.txt";
+    private static final String WEEKLY_REPORT_TEMPLATE = "weekly.txt";
     private static final String NO_BILLS_TEMPLATE = "no_bills.txt";
     private static final String STATS_TEMPLATE = "stats.txt";
     private static final String LATEST_BILLS_TEMPLATE = "latest_bills.txt";
@@ -116,7 +119,7 @@ public class TelegramMessageRenderer {
     }
 
     public SendMessage renderSettings(Long chatId) {
-        return new SendMessage(chatId, "Settings").replyMarkup(new InlineKeyboardMarkup(
+        return new SendMessage(chatId, "⚙\uFE0F Bot settings ").replyMarkup(new InlineKeyboardMarkup(
                 new InlineKeyboardButton("View and edit").webApp(renderWebApp("settings", ""))
         ));
     }
@@ -206,6 +209,35 @@ public class TelegramMessageRenderer {
                 .replace("#time_range#", timeRange)
                 .replace("#example#", renderExample());
         return tryUpdateMessage(chatId, previousMessage, textPart, keyboard.inlineKeyboard());
+    }
+
+    public SendMessage renderWeeklyReport(Long chatId,
+                                          Double totalSpend,
+                                          TagAmount topTag,
+                                          String topTagCurrency,
+                                          Bill maxSpend,
+                                          Bill minSpend,
+                                          String firstName,
+                                          boolean silentMode) {
+        final var keyboard = new InlineKeyboardMarkup(
+                new InlineKeyboardButton("View all stats")
+                        .webApp(renderWebApp("dashboard", "")));
+        final var totalSpendText = renderAmount(totalSpend, currenciesService.getSymbol(topTagCurrency));
+        final var maxSpendText = STAT_ENTRY_TEMPLATE.replace("#first#", maxSpend.getPurpose())
+                .replace("#second#", renderAmount(maxSpend.getAmount(), currenciesService.getSymbol(maxSpend.getCurrency())));
+        final var minSpendText = STAT_ENTRY_TEMPLATE.replace("#first#", minSpend.getPurpose())
+                .replace("#second#", renderAmount(minSpend.getAmount(), currenciesService.getSymbol(minSpend.getCurrency())));
+        final var text = templateReader.read(WEEKLY_REPORT_TEMPLATE)
+                .replace("#name#", firstName)
+                .replace("#total#", totalSpendText)
+                .replace("#top_tag#", topTag.getName())
+                .replace("#top_tag_amount#", renderAmount(topTag.getAmount(), currenciesService.getSymbol(topTagCurrency)))
+                .replace("#max_spend#", maxSpendText)
+                .replace("#min_spend#", minSpendText);
+        return new SendMessage(chatId, text)
+                .replyMarkup(keyboard)
+                .parseMode(ParseMode.HTML)
+                .disableNotification(silentMode);
     }
 
     public InlineKeyboardMarkup renderStatsKeyboard() {

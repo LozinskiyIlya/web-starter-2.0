@@ -222,7 +222,7 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
-            assertSentMessageContainsText(bot, "Settings");
+            assertSentMessageContainsText(bot, "settings");
         }
     }
 }

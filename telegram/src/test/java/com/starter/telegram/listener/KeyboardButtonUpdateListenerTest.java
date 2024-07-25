@@ -7,13 +7,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Instant;
-import java.time.format.TextStyle;
-import java.util.Locale;
-
-import static com.starter.telegram.service.TelegramBotService.NEW_BILL_BUTTON;
 import static com.starter.telegram.service.TelegramBotService.LATEST_BILLS;
-import static java.time.ZoneOffset.UTC;
+import static com.starter.telegram.service.TelegramBotService.NEW_BILL_BUTTON;
 
 class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
 
@@ -41,27 +36,33 @@ class KeyboardButtonUpdateListenerTest extends AbstractTelegramTest {
     }
 
     @Nested
-    @DisplayName("On This Month")
-    class OnThisMonth {
+    @DisplayName("On Latest Bills")
+    class onLatestBills {
+
 
         @Test
-        @DisplayName("renders no bills placeholder")
-        void rendersPlaceholder() {
+        @DisplayName("Sends latest bills")
+        void sendsLatestBills() {
             // given
-            final var currentMonth = Instant.now().atZone(UTC).toLocalDate().getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
             final var chatId = random.nextLong();
             final var update = mockCommandUpdate(LATEST_BILLS, chatId);
-            billTestDataCreator.givenGroupExists(g -> {
+            final var personal = billTestDataCreator.givenGroupExists(g -> {
                 g.setChatId(chatId);
                 g.setOwner(userTestDataCreator.givenUserExists());
+            });
+            billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(personal);
+                b.setPurpose("Dinner");
+            });
+            billTestDataCreator.givenBillExists(b -> {
+                b.setGroup(personal);
+                b.setPurpose("Rent");
             });
             // when
             listener.processUpdate(update, bot);
             // then
-            assertMessageSentToChatId(bot, chatId);
-            assertSentMessageToChatIdContainsText(bot, chatId, "Nothing was tracked for the selected time range");
-            assertSentMessageToChatIdContainsText(bot, chatId, currentMonth);
-            assertSentMessageToChatIdContainsKeyboard(bot, chatId);
+            assertSentMessageToChatIdContainsText(bot, chatId, "Dinner");
+            assertSentMessageToChatIdContainsText(bot, chatId, "Rent");
         }
     }
 }

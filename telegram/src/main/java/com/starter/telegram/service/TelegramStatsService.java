@@ -4,9 +4,7 @@ package com.starter.telegram.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
-import com.starter.domain.entity.Bill;
-import com.starter.domain.entity.Bill_;
-import com.starter.domain.entity.UserSettings;
+import com.starter.domain.entity.*;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.UserSettingsRepository;
@@ -28,6 +26,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -65,8 +65,52 @@ public class TelegramStatsService implements CallbackExecutor {
     public void sendLatestBills(TelegramBot bot, Long chatId) {
         final var personal = groupRepository.findByChatId(chatId).orElseThrow();
         final var pageRequest = PageRequest.of(0, LATEST_BILLS_COUNT, Sort.Direction.DESC, Bill_.MENTIONED_DATE);
-        final var lastBills = billRepository.findAllNotSkippedByGroup(personal, pageRequest);
-        final var message = renderer.renderLatestBills(chatId, lastBills, personal.getTitle());
+        final var latestBills = billRepository.findAllNotSkippedByGroup(personal, pageRequest);
+        final var message = renderer.renderLatestBills(chatId, latestBills, personal.getTitle());
+        bot.execute(message);
+    }
+
+    public void sendWeeklyReport(TelegramBot bot, UserSettings userSettings) {
+        final var userInfo = userSettings.getUser().getUserInfo();
+        final var chatId = userInfo.getTelegramChatId();
+        final var groups = groupRepository.findAllByOwner(userSettings.getUser());
+        final var timezone = ZoneId.of(userSettings.getTimezone());
+        final var timeRange = getZonedTimeRange(ChronoUnit.WEEKS, timezone);
+        final var topCurrency = billRepository.findMostUsedCurrenciesByGroupIn(groups, Pageable.ofSize(1))
+                .stream()
+                .findFirst();
+
+        if (topCurrency.isEmpty()) {
+            log.warn("Weekly report data is missing for chatId: {}", chatId);
+            return;
+        }
+
+        final var topTag = billRepository.findTagAmountsByGroupInAndCurrency(
+                        groups,
+                        topCurrency.get(),
+                        timeRange.getFirst(),
+                        timeRange.getSecond()
+                )
+                .stream()
+                .findFirst();
+        final var maxSpend = getTopSpend(groups, timeRange, Sort.Direction.DESC);
+        final var minSpend = getTopSpend(groups, timeRange, Sort.Direction.ASC);
+        final var totalSpend = getCurrencyDistribution(groups, timeRange);
+
+        if (topTag.isEmpty() || maxSpend.isEmpty() || minSpend.isEmpty() || !totalSpend.containsKey(topCurrency.get())) {
+            log.warn("Weekly report data is missing for chatId: {}", chatId);
+            return;
+        }
+
+        final var message = renderer.renderWeeklyReport(
+                chatId,
+                totalSpend.get(topCurrency.get()),
+                topTag.get(), topCurrency.get(),
+                maxSpend.get(),
+                minSpend.get(),
+                userInfo.getFirstName(),
+                userSettings.getSilentMode()
+        );
         bot.execute(message);
     }
 
@@ -76,16 +120,29 @@ public class TelegramStatsService implements CallbackExecutor {
         final var userSettings = userSettingsRepository.findOneByUser(personal.getOwner());
         final var timezone = ZoneId.of(userSettings.map(UserSettings::getTimezone).orElse("UTC"));
         final var timeRange = getZonedTimeRange(timeUnit, timezone);
-        final var totals = billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(
-                        List.of(personal),
-                        timeRange.getFirst(),
-                        timeRange.getSecond(),
-                        Pageable.unpaged()
-                ).stream()
-                .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)));
+        final var totals = getCurrencyDistribution(List.of(personal), timeRange);
         final var timeRangeText = getTimeRangeDisplayText(timeRange, timezone, timeUnit);
         final var message = renderer.renderStats(chatId, timeRangeText, totals, previousMessage);
         bot.execute(message);
+    }
+
+    private Map<String, Double> getCurrencyDistribution(List<Group> groups, Pair<Instant, Instant> range) {
+        return billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(
+                        groups,
+                        range.getFirst(),
+                        range.getSecond(),
+                        Pageable.unpaged()
+                ).stream()
+                .collect(Collectors.groupingBy(Bill::getCurrency, Collectors.summingDouble(Bill::getAmount)));
+    }
+
+    private Optional<Bill> getTopSpend(List<Group> groups, Pair<Instant, Instant> range, Sort.Direction direction) {
+        return billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(
+                groups,
+                range.getFirst(),
+                range.getSecond(),
+                PageRequest.of(0, 1, direction, Bill_.AMOUNT)
+        ).stream().findFirst();
     }
 
     private static Pair<Instant, Instant> getZonedTimeRange(ChronoUnit unit, ZoneId zone) {
@@ -98,7 +155,7 @@ public class TelegramStatsService implements CallbackExecutor {
             }
             case WEEKS -> {
                 start = now.with(DayOfWeek.MONDAY).truncatedTo(ChronoUnit.DAYS);
-                yield start.plusWeeks(1);
+                yield start.plusDays(7).minusNanos(1);
             }
             case MONTHS -> {
                 start = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
@@ -129,4 +186,5 @@ public class TelegramStatsService implements CallbackExecutor {
             default -> throw new IllegalArgumentException("Unsupported time unit: " + timeUnit);
         };
     }
+
 }

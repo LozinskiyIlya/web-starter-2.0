@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -187,7 +188,14 @@ public abstract class AbstractTelegramTest {
                 .filter(Objects::nonNull)
                 .count();
         assertEquals(1, containsTimes, "Message attribute reply_markup was not found");
+    }
 
+    protected static void assertSendMessageToChatIdIsInSilentMode(TelegramBot bot, Long chatId) {
+        final var silent = getCapturedRequestParams(bot)
+                .filter(params -> params.get("chat_id").equals(chatId))
+                .map(params -> params.get("disable_notification"))
+                .allMatch(Boolean.class::cast);
+        assertTrue(silent, "Message attribute disable_notification was not found or is not true");
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
