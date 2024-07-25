@@ -1,5 +1,5 @@
-Latest #num# bills from <i>Personal</i>
+Latest #num# bills from 👥 <b>#group_name#</b>
 
 #bills#
 
-Stats by period:
+<i>Stats by period:</i>

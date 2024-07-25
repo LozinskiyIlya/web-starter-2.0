@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.Bill_;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
@@ -13,7 +14,9 @@ import com.starter.telegram.listener.query.CallbackExecutor;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -61,8 +64,9 @@ public class TelegramStatsService implements CallbackExecutor {
 
     public void sendLatestBills(TelegramBot bot, Long chatId) {
         final var personal = groupRepository.findByChatId(chatId).orElseThrow();
-        final var lastBills = billRepository.findAllNotSkippedByGroup(personal, Pageable.ofSize(LATEST_BILLS_COUNT));
-        final var message = renderer.renderLatestBills(chatId, lastBills);
+        final var pageRequest = PageRequest.of(0, LATEST_BILLS_COUNT, Sort.Direction.DESC, Bill_.MENTIONED_DATE);
+        final var lastBills = billRepository.findAllNotSkippedByGroup(personal, pageRequest);
+        final var message = renderer.renderLatestBills(chatId, lastBills, personal.getTitle());
         bot.execute(message);
     }
 

@@ -182,7 +182,7 @@ public class TelegramMessageRenderer {
         return tryUpdateMessage(chatId, previousMessage, textPart, keyboard.inlineKeyboard());
     }
 
-    public SendMessage renderLatestBills(Long chatId, Page<Bill> lastBills) {
+    public SendMessage renderLatestBills(Long chatId, Page<Bill> lastBills, String group) {
         final var keyboard = renderStatsKeyboard();
         final var bills = lastBills.stream()
                 .map(bill -> STAT_ENTRY_TEMPLATE
@@ -191,6 +191,7 @@ public class TelegramMessageRenderer {
                 .collect(Collectors.joining("\n"));
         final var textPart = templateReader.read(LATEST_BILLS_TEMPLATE)
                 .replace("#num#", "" + lastBills.getSize())
+                .replace("#group_name#", group)
                 .replace("#bills#", bills);
         return new SendMessage(chatId, textPart)
                 .replyMarkup(keyboard)
