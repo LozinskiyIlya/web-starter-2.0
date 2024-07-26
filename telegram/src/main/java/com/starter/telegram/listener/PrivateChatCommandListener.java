@@ -27,16 +27,17 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     private final TelegramMessageRenderer messageRenderer;
     public static final String START_COMMAND = "/start";
     public static final String TUTORIAL_COMMAND = "/tutorial";
-    public static final String SETTINGS_COMMAND = "/settings";
     public static final String PIN_COMMAND = "/pin";
-    public static final Set<String> COMMANDS = Set.of(START_COMMAND, TUTORIAL_COMMAND, PIN_COMMAND, SETTINGS_COMMAND);
+    public static final String HELP_COMMAND = "/help";
+
+    public static final Set<String> COMMANDS = Set.of(START_COMMAND, TUTORIAL_COMMAND, PIN_COMMAND, HELP_COMMAND);
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
         final var commandParts = parseCommand(update.message().text());
         switch (commandParts.getFirst()) {
             case START_COMMAND -> onStartCommand(update, bot, commandParts.getSecond());
-            case SETTINGS_COMMAND -> onSettingsCommand(update, bot);
+            case HELP_COMMAND -> onHelpCommand(update, bot);
             case TUTORIAL_COMMAND -> onTutorialCommand(update, bot);
             case PIN_COMMAND -> onPinCommand(update, bot, commandParts.getSecond());
             default -> onUnknownCommand(update, bot, commandParts.getFirst());
@@ -70,11 +71,8 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
         bot.execute(message);
     }
 
-    private void onSettingsCommand(Update update, TelegramBot bot) {
-        final var chatId = update.message().chat().id();
-        telegramUserService.createOrFindUserSettings(chatId);
-        final var message = messageRenderer.renderSettings(chatId);
-        bot.execute(message);
+    private void onHelpCommand(Update update, TelegramBot bot) {
+       //todo: implement help command
     }
 
     private void onTutorialCommand(Update update, TelegramBot bot) {

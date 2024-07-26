@@ -8,6 +8,7 @@ import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.service.TelegramStatsService;
+import com.starter.telegram.service.TelegramUserService;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import static com.starter.telegram.service.TelegramBotService.*;
 public class KeyboardButtonUpdateListener implements UpdateListener {
 
     private final TelegramMessageRenderer renderer;
+    private final TelegramUserService telegramUserService;
     private final TelegramStatsService statsService;
     private final UserInfoRepository userInfoRepository;
     private final GroupRepository groupRepository;
@@ -44,7 +46,7 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
             }
             case LATEST_BILLS -> statsService.sendLatestBills(bot, chatId);
             case GROUPS -> onMyGroups(chatId, bot);
-            case HELP -> onHelp(chatId, bot);
+            case SETTINGS -> onSettings(chatId, bot);
             default -> {
             }
         }
@@ -66,7 +68,8 @@ public class KeyboardButtonUpdateListener implements UpdateListener {
                 .collect(Collectors.toList());
     }
 
-    private void onHelp(Long chatId, TelegramBot bot) {
+    private void onSettings(Long chatId, TelegramBot bot) {
+        telegramUserService.createOrFindUserSettings(chatId);
         final var message = renderer.renderSettings(chatId);
         bot.execute(message);
     }

@@ -33,8 +33,8 @@ public class TelegramBotService {
     public static final String NEW_BILL_BUTTON = "➕ NEW BILL";
     public static final String LATEST_BILLS = "Latest Bills  \uD83E\uDDFE";
     public static final String GROUPS = "Groups  \uD83D\uDC65";
-    public static final String HELP = "Help  \uD83D\uDCAC";
-    private static final List<String> KEYBOARD_BUTTONS = List.of(LATEST_BILLS, GROUPS, HELP);
+    public static final String SETTINGS = "Settings  ⚙\uFE0F";
+    private static final List<String> KEYBOARD_BUTTONS = List.of(LATEST_BILLS, GROUPS, SETTINGS);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);
 
