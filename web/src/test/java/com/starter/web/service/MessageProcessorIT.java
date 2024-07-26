@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static com.starter.telegram.service.TelegramBillService.NOT_RECOGNIZED_MESSAGE;
+import static com.starter.telegram.service.TelegramBillService.PROCESSING_ERROR_MESSAGE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -120,6 +121,25 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // then
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, group.getChatId(), NOT_RECOGNIZED_MESSAGE);
+        }
+
+        @Test
+        @DisplayName("Notifies if error occurred")
+        void notifiesIfErrorOccurred() {
+            final var message = "I owe you $100";
+            doReturn(new MessageClassificationResponse(true))
+                    .when(openAiAssistant).classifyMessage(message);
+            doThrow(new RuntimeException("Timeout"))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+            // given
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
+            // then
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
+            assertSentMessageToChatIdContainsText(bot, group.getChatId(), PROCESSING_ERROR_MESSAGE);
         }
     }
 

@@ -1,10 +1,7 @@
 package com.starter.web.service;
 
 
-import com.starter.common.events.BillCreatedEvent;
-import com.starter.common.events.NotPaymentRelatedEvent;
-import com.starter.common.events.TelegramFileMessageEvent;
-import com.starter.common.events.TelegramTextMessageEvent;
+import com.starter.common.events.*;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.fragments.BillAssistantResponse;
@@ -41,12 +38,16 @@ public class MessageProcessor {
         final var groupId = payload.getFirst();
         final var message = payload.getSecond();
         final var group = groupRepository.findById(groupId).orElseThrow();
-        final var isPayment = openAiAssistant.classifyMessage(message).isPaymentRelated();
-        if (isPayment) {
-            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
-            save(group, response);
-        } else {
+        try {
+            if (openAiAssistant.classifyMessage(message).isPaymentRelated()) {
+                final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
+                save(group, response);
+                return;
+            }
             notRecognized(group);
+        } catch (Exception e) {
+            log.error("Error while processing message", e);
+            publisher.publishEvent(new ProcessingErrorEvent(this, group.getChatId()));
         }
     }
 

@@ -7,6 +7,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.events.NotPaymentRelatedEvent;
+import com.starter.common.events.ProcessingErrorEvent;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Bill.BillStatus;
 import com.starter.domain.entity.User;
@@ -31,6 +32,7 @@ import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 public class TelegramBillService {
 
     public static final String NOT_RECOGNIZED_MESSAGE = "The message does not appear to be payment-related. Please edit the message or send another one";
+    public static final String PROCESSING_ERROR_MESSAGE = "We're experiencing too many requests to our recognition services at the moment. Please try sending your message again.";
     private final TelegramBot bot;
     private final TelegramMessageRenderer renderer;
     private final BillRepository billRepository;
@@ -113,6 +115,14 @@ public class TelegramBillService {
     public void onNotRecognizedBill(NotPaymentRelatedEvent event) {
         final var chatId = event.getPayload();
         final var message = new SendMessage(chatId, NOT_RECOGNIZED_MESSAGE);
+        bot.execute(message.replyMarkup(latestKeyboard()));
+    }
+
+    @Async
+    @EventListener
+    public void onProcessingError(ProcessingErrorEvent event) {
+        final var chatId = event.getPayload();
+        final var message = new SendMessage(chatId, PROCESSING_ERROR_MESSAGE);
         bot.execute(message.replyMarkup(latestKeyboard()));
     }
 
