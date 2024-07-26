@@ -10,8 +10,10 @@ import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
 
 import java.net.URI;
 import java.text.DecimalFormat;
@@ -19,29 +21,38 @@ import java.text.DecimalFormatSymbols;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+
 
 @Slf4j
 public class TelegramStaticRenderer {
 
-    public final static URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
+    public static final URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
+    private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
+    private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
+    private static final String GROUP_TITLE_TEMPLATE = "\uD83D\uDC65 #num# groups:\n";
+    private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
+
 
     public static String renderTags(Bill bill) {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
     }
 
-    public static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton... buttons) {
+    public static BaseRequest<?, ?> tryUpdateMessage(Long chatId, MaybeInaccessibleMessage message, String text, InlineKeyboardButton[]... buttons) {
         // if the message is accessible, update it
+        final var keyboard = buttons != null && buttons.length > 0 ? new InlineKeyboardMarkup(buttons) : null;
         try {
             if (message instanceof Message && message.messageId() != Bill.DEFAULT_MESSAGE_ID) {
                 final var editRequest = new EditMessageText(chatId, message.messageId(), text)
                         .parseMode(ParseMode.HTML)
                         .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
                         .disableWebPagePreview(true);
-                if (buttons != null && buttons.length > 0) {
-                    editRequest.replyMarkup(new InlineKeyboardMarkup(buttons));
+                if (keyboard != null) {
+                    editRequest.replyMarkup(keyboard);
                 }
                 return editRequest;
             }
@@ -49,11 +60,15 @@ public class TelegramStaticRenderer {
             log.error("Error while updating message", e);
         }
         // if the message is not accessible, send a new message
-        return linkPreviewOff(new SendMessage(chatId, text));
+        return linkPreviewOff(new SendMessage(chatId, text), keyboard);
     }
 
-    public static SendMessage linkPreviewOff(SendMessage request) {
-        return request.parseMode(ParseMode.HTML)
+    public static SendMessage linkPreviewOff(SendMessage request, InlineKeyboardMarkup keyboard) {
+        if (keyboard != null) {
+            request = request.replyMarkup(keyboard);
+        }
+        return request
+                .parseMode(ParseMode.HTML)
                 .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true))
                 .disableWebPagePreview(true);
     }
@@ -74,7 +89,28 @@ public class TelegramStaticRenderer {
     }
 
     public static String renderWebAppDirectUrl(String paramName, UUID id) {
-        return WEB_APP_DIRECT_URL + "?startapp=" + paramName + "_" + id;
+        return renderWebAppDirectUrl(paramName) + "_" + id;
+    }
+
+    public static String renderWebAppDirectUrl(String paramName) {
+        return WEB_APP_DIRECT_URL + "?startapp=" + paramName;
+    }
+
+    public static SendMessage renderRecognizeMyBill(Long chatId) {
+        final var textPart = EXAMPLE_TEMPLATE.replace("#example#", renderExample());
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+    }
+
+    public static BaseRequest<?, ?> renderBillSkipped(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
+        final var textPart = BILL_SKIP_TEMPLATE
+                .replaceAll("#id#", renderId(bill.getId()))
+                .replaceAll("#archive_url#", renderWebAppDirectUrl("archive", bill.getId()));
+        return tryUpdateMessage(chatId, message, textPart);
+    }
+
+    public static BaseRequest<?, ?> renderAddMeRejectedUpdate(Long chatId, MaybeInaccessibleMessage message) {
+        final var textPart = "Rejected";
+        return tryUpdateMessage(chatId, message, textPart);
     }
 
     public static String renderAmount(Double amount, String currencySymbol) {
@@ -101,6 +137,20 @@ public class TelegramStaticRenderer {
                         Please send me your new 6-digit pin code like this: /pin 123456
                         """
         );
+    }
+
+    public static String renderGroups(List<Pair<Group, Long>> groups) {
+        return GROUP_TITLE_TEMPLATE.replace("#num#", String.valueOf(groups.size())) + "\n" +
+                groups.stream()
+                        .map(it -> GROUP_ENTRY_TEMPLATE
+                                .replace("#title#", it.getFirst().getTitle())
+                                .replace("#members#", "" + it.getFirst().getMembers().size())
+                                .replace("#bills#", "" + it.getSecond()))
+                        .collect(Collectors.joining("\n\n"));
+    }
+
+    public static String renderExample() {
+        return "<code>" + randomExample() + "</code>";
     }
 
     public static String randomExample() {

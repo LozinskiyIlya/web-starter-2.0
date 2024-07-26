@@ -21,4 +21,7 @@ public interface UserSettingsRepository extends Repository<UserSettings> {
     Optional<UserSettings> findOneByUser_Id(UUID userId);
 
     Collection<UserSettings> findAllByUser(User user);
+
+    Collection<UserSettings> findAllByDailyReminder(boolean enabled);
+    Collection<UserSettings> findAllByWeeklyReport(boolean enabled);
 }

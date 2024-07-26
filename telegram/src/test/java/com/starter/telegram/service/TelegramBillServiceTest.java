@@ -53,7 +53,7 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
             service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
             // then
             verify(bot).execute(Mockito.any(SendMessage.class));
-            assertSentMessageToChatIdContainsText(bot, "<tg-spoiler>", ownerInfo.getTelegramChatId());
+            assertSentMessageToChatIdContainsText(bot, ownerInfo.getTelegramChatId(), "<tg-spoiler>");
             // and then bill status changed to SENT
             final var updatedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertEquals(Bill.BillStatus.SENT, updatedBill.getStatus());
@@ -158,11 +158,11 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
             service.onBillConfirmed(new BillConfirmedEvent(this, bill.getId()));
 
             //then bot sends a confirmation to owner
-            assertSentMessageToChatIdContainsText(bot, "confirmed. <a href='", ownerInfo.getTelegramChatId());
+            assertSentMessageToChatIdContainsText(bot, ownerInfo.getTelegramChatId(), "confirmed. <a href='");
 
             //and then bot sends preview to other group members
-            assertSentMessageToChatIdContainsText(bot, bill.getPurpose(), memberInfo.getTelegramChatId());
-            assertSentMessageToChatIdContainsText(bot, bill.getPurpose(), otherMemberInfo.getTelegramChatId());
+            assertSentMessageToChatIdContainsText(bot, memberInfo.getTelegramChatId(), bill.getPurpose());
+            assertSentMessageToChatIdContainsText(bot, otherMemberInfo.getTelegramChatId(), bill.getPurpose());
         }
 
         @Test

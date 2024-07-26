@@ -33,6 +33,7 @@ public class TelegramUserService {
     private final UserSettingsRepository userSettingsRepository;
     private final ExecutorService userInfoUpdateExecutor = Executors.newFixedThreadPool(2);
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @PreDestroy
     public void destroy() {
         userInfoUpdateExecutor.shutdown();
@@ -74,6 +75,16 @@ public class TelegramUserService {
                             settings.setUser(user);
                             return userSettingsRepository.save(settings);
                         })).orElseThrow();
+    }
+
+    @Transactional
+    public UserSettings createOrFindUserSettings(User user) {
+        return userSettingsRepository.findOneByUser(user)
+                .orElseGet(() -> {
+                    final var settings = new UserSettings();
+                    settings.setUser(user);
+                    return userSettingsRepository.save(settings);
+                });
     }
 
     public void updateUserInfo(com.pengrad.telegrambot.model.User from, TelegramBot telegramBot) {

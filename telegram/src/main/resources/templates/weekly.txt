@@ -1,0 +1,11 @@
+<b>👋 Hello #name#, </b>
+
+Your weekly report is ready!
+Total spend was <b>#total#</b> 💵.
+
+This week, you were most frequently spending on  #<b>#top_tag#</b> with a total amount of <b>#top_tag_amount#</b>.
+
+◾️ Biggest expense:  #max_spend#
+◾️ Smallest:  #min_spend#
+
+Thank you for using AI Counting! 🤖

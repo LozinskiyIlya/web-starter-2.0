@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+
+    <changeSet id="20240721-2" author="ilya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_settings" columnName="silent_mode"/>
+            </not>
+            <not>
+                <columnExists tableName="user_settings" columnName="daily_reminder"/>
+            </not>
+            <not>
+                <columnExists tableName="user_settings" columnName="weekly_report"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="user_settings">
+            <column name="silent_mode" type="boolean" defaultValueBoolean="false"/>
+            <column name="daily_reminder" type="boolean" defaultValueBoolean="true"/>
+            <column name="weekly_report" type="boolean" defaultValueBoolean="true"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="20240721-3" author="ilya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_settings" columnName="timezone"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="user_settings">
+            <column name="timezone" type="varchar(255)" defaultValue="UTC"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20240721-4" author="ilya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_settings" columnName="daily_reminder_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="user_settings">
+            <column name="daily_reminder_at" type="TIME" defaultValue="21:00">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20240721-5" author="ilya">
+        <!-- add not null constraint to all new columns  -->
+        <addNotNullConstraint columnName="silent_mode" tableName="user_settings"/>
+        <addNotNullConstraint columnName="daily_reminder" tableName="user_settings"/>
+        <addNotNullConstraint columnName="weekly_report" tableName="user_settings"/>
+        <addNotNullConstraint columnName="timezone" tableName="user_settings"/>
+        <addNotNullConstraint columnName="daily_reminder_at" tableName="user_settings"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,5 @@
+Latest #num# bills from 👥 <b>#group_name#</b>
+
+#bills#
+
+<i>Stats by period:</i>

@@ -124,7 +124,8 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
-            Mockito.verify(bot, Mockito.times(1)).execute(Mockito.any(SendMessage.class));
+            assertSentMessageToChatIdContainsText(bot, chatId, "Hello firstName");
+            assertSentMessageToChatIdContainsKeyboard(bot, chatId);
         }
     }
 
@@ -208,20 +209,20 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
     }
 
     @Nested
-    @DisplayName("on settings command")
-    class OnSettingsCommand {
+    @DisplayName("on help command")
+    class OnHelpCommand {
 
         @Test
-        @DisplayName("should send message with settings")
-        void shouldSendMessageWithSettings() {
+        @DisplayName("should send message with help info")
+        void shouldSendMessageWithHelpInfo() {
             // given
             final var chatId = random.nextLong();
             userTestDataCreator.givenUserInfoExists(it -> it.setTelegramChatId(chatId));
-            final var update = mockCommandUpdate("/settings", chatId);
+            final var update = mockCommandUpdate("/help", chatId);
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
-            assertSentMessageContainsText(bot, "Settings");
+            assertSentMessageToChatIdContainsText(bot, chatId, "feedback");
         }
     }
 }

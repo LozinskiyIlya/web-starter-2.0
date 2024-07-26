@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.starter.telegram.listener.*;
+import com.starter.telegram.listener.query.CallbackQueryUpdateListener;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -17,18 +18,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static com.starter.telegram.service.render.TelegramStaticRenderer.randomExample;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramBotService {
     public static final String NEW_BILL_BUTTON = "➕ NEW BILL";
-    public static final Set<String> KEYBOARD_BUTTONS = Set.of(NEW_BILL_BUTTON);
+    public static final String LATEST_BILLS = "Latest Bills  \uD83E\uDDFE";
+    public static final String GROUPS = "Groups  \uD83D\uDC65";
+    public static final String SETTINGS = "Settings  ⚙\uFE0F";
+    private static final List<String> KEYBOARD_BUTTONS = List.of(LATEST_BILLS, GROUPS, SETTINGS);
     private final Map<Class<? extends UpdateListener>, UpdateListener> listeners = new HashMap<>();
     private final ExecutorService updatesExecutor = Executors.newFixedThreadPool(4);
 
@@ -119,11 +125,14 @@ public class TelegramBotService {
     }
 
     public static Keyboard latestKeyboard() {
-        return new ReplyKeyboardMarkup(KEYBOARD_BUTTONS
-                .stream()
-                .map(KeyboardButton::new)
-                .toArray(KeyboardButton[]::new))
+        return new ReplyKeyboardMarkup(
+                KEYBOARD_BUTTONS
+                        .stream()
+                        .map(KeyboardButton::new)
+                        .map(button -> new KeyboardButton[]{button})
+                        .toArray(KeyboardButton[][]::new))
                 .resizeKeyboard(true)
-                .oneTimeKeyboard(false);
+                .oneTimeKeyboard(false)
+                .inputFieldPlaceholder(randomExample());
     }
 }

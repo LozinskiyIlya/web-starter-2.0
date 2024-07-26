@@ -7,11 +7,13 @@ import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.mock.web.MockHttpSession;
 
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import static com.starter.web.service.user.TimezoneService.TIMEZONE_HEADER;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -94,8 +96,8 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @DisplayName("Save api action")
-    void saveApiAction() throws Exception {
+    @DisplayName("Saves api action")
+    void savesApiAction() throws Exception {
         var user = userCreator.givenUserExists(u -> {
         });
         var header = userAuthHeader(user);
@@ -109,6 +111,20 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
         assertEquals(user.getLogin(), actions.get(0).getUserQualifier());
         assertEquals("/api/user/current", actions.get(0).getPath());
         assertEquals("GET", actions.get(0).getMetadata().getHttpMethod());
+    }
+
+    @Test
+    @DisplayName("Updates timezone")
+    void updatesTimezone() throws Exception {
+        final var settings = userCreator.givenUserSettingsExists();
+        final var token = userAuthHeader(settings.getUser());
+        final var timezone = Pair.of(TIMEZONE_HEADER, "Europe/Moscow");
+        mockMvc.perform(getRequest("")
+                        .header(timezone.getFirst(), timezone.getSecond())
+                        .header(token.getFirst(), token.getSecond()))
+                .andExpect(status().isOk());
+        final var updated = userCreator.userSettingsRepository().findById(settings.getId()).orElseThrow();
+        assertEquals(timezone.getSecond(), updated.getTimezone());
     }
 
     @Override

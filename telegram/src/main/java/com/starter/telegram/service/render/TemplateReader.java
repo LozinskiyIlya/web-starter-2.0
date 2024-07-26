@@ -11,7 +11,7 @@ import java.io.InputStream;
 @Service
 public class TemplateReader {
 
-    private final static String DEFAULT_PREFIX = "templates/";
+    private static final String DEFAULT_PREFIX = "templates/";
 
     @SneakyThrows
     public String read(String templateFile) {

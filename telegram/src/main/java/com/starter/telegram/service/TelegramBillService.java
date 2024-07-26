@@ -116,7 +116,6 @@ public class TelegramBillService {
         bot.execute(message.replyMarkup(latestKeyboard()));
     }
 
-
     @Deprecated
     @Data
     @EqualsAndHashCode(callSuper = true)

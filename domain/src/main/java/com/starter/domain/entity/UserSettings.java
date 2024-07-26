@@ -10,6 +10,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import java.time.Instant;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -34,10 +35,26 @@ public class UserSettings extends AbstractEntity {
     private Instant lastUpdatedAt = Instant.now();
 
     @NotNull
+    @Column(name = "daily_reminder_at", nullable = false)
+    private LocalTime dailyReminderAt = LocalTime.of(21, 0);
+
+    @NotNull
+    private String timezone = "UTC";
+
+    @NotNull
     private Boolean spoilerBills = true;
 
     @NotNull
     private Boolean autoConfirmBills = false;
+
+    @NotNull
+    private Boolean silentMode = false;
+
+    @NotNull
+    private Boolean dailyReminder = true;
+
+    @NotNull
+    private Boolean weeklyReport = true;
 
     @NotNull
     private Boolean pinCodeEnabled = false;

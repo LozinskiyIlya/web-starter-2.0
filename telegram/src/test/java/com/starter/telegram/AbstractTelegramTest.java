@@ -23,7 +23,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -157,11 +159,12 @@ public abstract class AbstractTelegramTest {
         assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
     }
 
-    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, String shouldContain, Long chatId) {
+    protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
         final var foundTexts = new LinkedList<>();
         final var containsTimes = getCapturedRequestParams(bot)
                 .filter(params -> params.get("chat_id").equals(chatId))
                 .map(params -> params.get("text"))
+                .filter(Objects::nonNull)
                 .peek(foundTexts::add)
                 .filter(text -> ((String) text).contains(shouldContain))
                 .count();
@@ -176,6 +179,23 @@ public abstract class AbstractTelegramTest {
                 .filter(text -> ((String) text).contains(shouldNotContain))
                 .count();
         assertEquals(0, containsTimes, "Message containing: \"" + shouldNotContain + "\" was found. Present texts: " + foundTexts);
+    }
+
+    protected static void assertSentMessageToChatIdContainsKeyboard(TelegramBot bot, Long chatId) {
+        final var containsTimes = getCapturedRequestParams(bot)
+                .filter(params -> params.get("chat_id").equals(chatId))
+                .map(params -> params.get("reply_markup"))
+                .filter(Objects::nonNull)
+                .count();
+        assertEquals(1, containsTimes, "Message attribute reply_markup was not found");
+    }
+
+    protected static void assertSendMessageToChatIdIsInSilentMode(TelegramBot bot, Long chatId) {
+        final var silent = getCapturedRequestParams(bot)
+                .filter(params -> params.get("chat_id").equals(chatId))
+                .map(params -> params.get("disable_notification"))
+                .allMatch(Boolean.class::cast);
+        assertTrue(silent, "Message attribute disable_notification was not found or is not true");
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
