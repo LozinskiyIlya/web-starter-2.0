@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.common.config.ServerProperties;
 import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
@@ -16,6 +17,7 @@ import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,8 @@ public class TelegramMessageRenderer {
     private final ServerProperties serverProperties;
 
     private final CurrenciesService currenciesService;
+
+    private final BetaFeaturesProperties betaFeaturesProperties;
 
     public SendMessage renderBill(Long chatId, Bill bill, boolean spoiler) {
         final var caption = renderCaption(bill, spoiler);
@@ -140,7 +144,8 @@ public class TelegramMessageRenderer {
     public SendMessage renderStartMessage(Long chatId, String firstName) {
         final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
                 .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
-                .replace("#example#", renderExample());
+                .replace("#example#", renderExample())
+                .replace("#beta#", renderDocumentsBeta(betaFeaturesProperties));
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }
 

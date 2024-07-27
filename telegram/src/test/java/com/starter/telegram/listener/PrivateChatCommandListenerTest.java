@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.request.GetChat;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.GetChatResponse;
+import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Role;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserSettingsRepository;
@@ -27,6 +28,9 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private PrivateChatCommandListener privateChatCommandListener;
+
+    @Autowired
+    private BetaFeaturesProperties betaFeaturesProperties;
 
     @Nested
     @DisplayName("on start command")
@@ -126,6 +130,20 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
             // then
             assertSentMessageToChatIdContainsText(bot, chatId, "Hello firstName");
             assertSentMessageToChatIdContainsKeyboard(bot, chatId);
+        }
+
+        @Test
+        @DisplayName("should include beta feature notice")
+        void shouldIncludeBetaFeatureNotice() {
+            // given
+            final var chatId = random.nextLong();
+            final var update = mockCommandUpdate("/start", chatId);
+            // when
+            privateChatCommandListener.processUpdate(update, bot);
+            // then
+            if(betaFeaturesProperties.isDocumentsRecognition()){
+                assertSentMessageToChatIdContainsText(bot, chatId, "recognition is in beta");
+            }
         }
     }
 

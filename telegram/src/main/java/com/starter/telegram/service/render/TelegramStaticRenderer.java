@@ -9,6 +9,7 @@ import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
@@ -36,7 +37,7 @@ public class TelegramStaticRenderer {
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String GROUP_TITLE_TEMPLATE = "\uD83D\uDC65 #num# groups:\n";
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
-
+    private static final String DOCUMENTS_BETA = "<i>*Document recognition is in beta and will soon be a premium feature. You can use image and PDF recognition now, but please double-check the results for accuracy.</i>";
 
     public static String renderTags(Bill bill) {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
@@ -155,6 +156,10 @@ public class TelegramStaticRenderer {
 
     public static String randomExample() {
         return NEW_BILL_EXAMPLES[(int) (Math.random() * NEW_BILL_EXAMPLES.length)];
+    }
+
+    public static String renderDocumentsBeta(BetaFeaturesProperties betaFeaturesProperties) {
+        return betaFeaturesProperties.isDocumentsRecognition() ? DOCUMENTS_BETA : "";
     }
 
     private static final String[] NEW_BILL_EXAMPLES = {

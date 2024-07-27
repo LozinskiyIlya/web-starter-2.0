@@ -7,6 +7,8 @@ You can use the following commands:
 /help - get help or post feedback
 
 💸 Let's get your first bill submitted!
-Just send a payment-related message or document in any format. For example:
+Just send a payment-related message or document* in any format. For example:
 
 #example#
+
+#beta#
