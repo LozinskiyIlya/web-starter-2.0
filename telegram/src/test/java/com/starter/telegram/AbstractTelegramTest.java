@@ -87,24 +87,15 @@ public abstract class AbstractTelegramTest {
         return update;
     }
 
-    protected Update mockGroupUpdateWithPhoto(String text, Long userChatId, Long groupChatId) {
-        Update update = mock(Update.class);
-        Message message = mock(Message.class);
-        Chat chat = mock(Chat.class);
-        User user = mockReturnedUserData(userChatId);
+    protected Update mockPhotoUpdate(Update update, String filePath) {
+        Message message = update.message();
         GetFileResponse fileResponse = mock(GetFileResponse.class);
         File file = mock(File.class);
-        when(file.filePath()).thenReturn(UUID.randomUUID().toString());
+        when(file.filePath()).thenReturn(filePath);
         when(fileResponse.file()).thenReturn(file);
-        when(bot.execute(any(GetFile.class))).thenReturn(fileResponse);
-        when(bot.getFullFilePath(any(File.class))).thenReturn(UUID.randomUUID().toString());
-        when(update.message()).thenReturn(message);
-        when(message.chat()).thenReturn(chat);
-        when(message.from()).thenReturn(user);
         when(message.photo()).thenReturn(new PhotoSize[]{new PhotoSize()});
-        when(chat.id()).thenReturn(groupChatId);
-        when(chat.title()).thenReturn(UUID.randomUUID().toString());
-        when(message.text()).thenReturn(text);
+        when(bot.execute(any(GetFile.class))).thenReturn(fileResponse);
+        when(bot.getFullFilePath(any(File.class))).thenReturn(filePath);
         return update;
     }
 
@@ -185,7 +176,7 @@ public abstract class AbstractTelegramTest {
     protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
         final var foundTexts = new LinkedList<>();
         final var containsTimes = getCapturedRequestParams(bot)
-                .filter(params->params.containsKey("chat_id"))
+                .filter(params -> params.containsKey("chat_id"))
                 .filter(params -> params.get("chat_id").equals(chatId))
                 .map(params -> params.get("text"))
                 .filter(Objects::nonNull)

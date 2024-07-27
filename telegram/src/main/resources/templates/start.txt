@@ -11,4 +11,4 @@ Just send a payment-related message or document* in any format. For example:
 
 #example#
 
-#beta#
+*#beta#
