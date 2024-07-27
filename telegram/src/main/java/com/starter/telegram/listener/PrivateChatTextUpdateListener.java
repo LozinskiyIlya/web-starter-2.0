@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.service.TelegramUserService;
+import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,10 +18,11 @@ import java.util.List;
 public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
     public PrivateChatTextUpdateListener(
             TelegramUserService telegramUserService,
+            TelegramMessageRenderer telegramMessageRenderer,
             GroupRepository groupRepository,
             ApplicationEventPublisher publisher,
             @Qualifier("downloadDirectory") String downloadDirectory) {
-        super(telegramUserService, groupRepository, publisher, downloadDirectory);
+        super(telegramUserService, telegramMessageRenderer, groupRepository, publisher, downloadDirectory);
     }
 
     @Override

@@ -56,6 +56,7 @@ public class TelegramMessageRenderer {
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F #first#  <b>#second#</b>";
     private static final String TOP_EXPENSE_TEMPLATE = "<i>#first#</i>  <b>#second#</b>";
+    private static final String FILE_RECEIVED_TEMPLATE = "File received. Processing...\n\n#beta#";
 
     private final TemplateReader templateReader;
 
@@ -235,6 +236,11 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart)
                 .replyMarkup(keyboard)
                 .parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderFileReceivedNotice(Long chatId) {
+        final var textPart = FILE_RECEIVED_TEMPLATE.replace("#beta#", renderDocumentsBeta(betaFeaturesProperties));
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
     public InlineKeyboardMarkup renderStatsKeyboard() {

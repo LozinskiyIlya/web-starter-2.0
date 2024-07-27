@@ -106,4 +106,21 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
             verify(groupRepository, never()).save(any(Group.class));  // Ensure no new group is created
         }
     }
+
+    @Nested
+    @DisplayName("On file message")
+    class OnFileMessage {
+
+        @Test
+        @DisplayName("Send file received notice")
+        void sendFileReceivedNotice() {
+            // given
+            final var userChatId = random.nextLong();
+            final var update = mockGroupUpdateWithPhoto("some text", userChatId, userChatId);
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsText(bot, userChatId, "File received");
+        }
+    }
 }

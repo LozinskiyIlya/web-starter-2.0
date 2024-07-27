@@ -12,6 +12,7 @@ import com.starter.common.utils.CustomFileUtils;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.service.TelegramUserService;
+import com.starter.telegram.service.render.TelegramMessageRenderer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public abstract class AbstractChatUpdateListener implements UpdateListener {
 
     protected final TelegramUserService telegramUserService;
+    protected final TelegramMessageRenderer telegramMessageRenderer;
     protected final GroupRepository groupRepository;
     protected final ApplicationEventPublisher publisher;
     protected final String downloadDirectory;
@@ -48,6 +50,8 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
         final var fileUrl = extractFileFromUpdate(update, bot);
         if (fileUrl != null) {
             publisher.publishEvent(new TelegramFileMessageEvent(this, new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, text)));
+            final var fileReceivedNotice = telegramMessageRenderer.renderFileReceivedNotice(update.message().from().id());
+            bot.execute(fileReceivedNotice);
             return;
         }
         if (text != null) {
