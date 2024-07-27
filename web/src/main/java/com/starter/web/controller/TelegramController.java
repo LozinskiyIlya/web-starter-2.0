@@ -1,5 +1,8 @@
 package com.starter.web.controller;
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.service.JwtProvider;
 import com.starter.domain.repository.BillRepository;
@@ -32,6 +35,7 @@ public class TelegramController {
     private final JwtProvider jwtProvider;
     private final ApplicationEventPublisher publisher;
     private final BillRepository billRepository;
+    private final TelegramBot bot;
 
     @Operation(summary = "Exchange telegram id to token", description = "Exchange telegram id to token")
     @PostMapping("/auth/webapp")
@@ -44,6 +48,15 @@ public class TelegramController {
     @PostMapping("/bills/{billId}/send")
     public void confirmBill(@PathVariable UUID billId) {
         billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill.getId())));
+    }
+
+    @PostMapping("/feedback")
+    public void feedback(@RequestBody @Valid FeedbackRequest request) {
+        final var textPart = "From: <code>#id#</code>\nFeedback: <i>#feedback#</i>"
+                .replace("#id#", request.getChatId().toString())
+                .replace("#feedback#", request.getFeedback());
+        final var message = new SendMessage(424808989, textPart).parseMode(ParseMode.HTML);
+        bot.execute(message);
     }
 
     @Data
@@ -60,5 +73,15 @@ public class TelegramController {
         @NotEmpty(message = "Init data is required")
         @Schema(description = "Init data", example = "initData")
         private String initDataEncoded;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @Schema(description = "DTO for feedback submission")
+    public static class FeedbackRequest extends TelegramAuthRequest {
+        @NotEmpty(message = "Message is required")
+        @Size(max = 2048, message = "Message must be between 1 and 2048 characters")
+        @Schema(description = "Feedback", example = "I like this app")
+        private String feedback;
     }
 }

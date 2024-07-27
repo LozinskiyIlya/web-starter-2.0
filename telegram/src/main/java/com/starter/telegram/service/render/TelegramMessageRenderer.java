@@ -247,7 +247,7 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, "Facing any issue? Contact us at @ai_brozz\n\nOr use the form bellow:")
                 .parseMode(ParseMode.HTML)
                 .replyMarkup(new InlineKeyboardMarkup(
-                        renderWebAppButton("Get help or post feedback", "help", "")
+                        renderWebAppButton("Get help or post feedback", "help?chatId=" + chatId, "")
                 ));
     }
 
