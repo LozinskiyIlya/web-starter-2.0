@@ -243,6 +243,14 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
+    public SendMessage renderHelp(Long chatId) {
+        return new SendMessage(chatId, "Facing any issue? Contact us at @ai_brozz\n\nOr use the form bellow:")
+                .parseMode(ParseMode.HTML)
+                .replyMarkup(new InlineKeyboardMarkup(
+                        renderWebAppButton("Get help or post feedback", "help", "")
+                ));
+    }
+
     public InlineKeyboardMarkup renderStatsKeyboard() {
         final var keyboard = new InlineKeyboardMarkup();
         final var firstRow = AVAILABLE_UNITS

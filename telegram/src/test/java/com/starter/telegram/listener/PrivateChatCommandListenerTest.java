@@ -240,7 +240,7 @@ class PrivateChatCommandListenerTest extends AbstractTelegramTest {
             // when
             privateChatCommandListener.processUpdate(update, bot);
             // then
-            assertSentMessageToChatIdContainsText(bot, chatId, "feedback");
+            assertSentMessageToChatIdContainsText(bot, chatId, "Contact us at");
         }
     }
 }

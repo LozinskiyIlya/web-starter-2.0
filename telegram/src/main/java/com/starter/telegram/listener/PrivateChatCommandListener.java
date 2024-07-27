@@ -72,7 +72,9 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     }
 
     private void onHelpCommand(Update update, TelegramBot bot) {
-       //todo: implement help command
+        final var from = update.message().from();
+        final var message = messageRenderer.renderHelp(from.id());
+        bot.execute(message);
     }
 
     private void onTutorialCommand(Update update, TelegramBot bot) {
