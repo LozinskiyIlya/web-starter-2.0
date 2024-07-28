@@ -117,7 +117,7 @@ public class GroupService {
 
     @SneakyThrows(Exception.class)
     private String requestInsights(Group group) {
-        final var bills = billRepository.findAllNotSkippedByGroup(group, Pageable.unpaged())
+        final var bills = billRepository.findAllNotSkippedByGroup(group, Pageable.ofSize(100))
                 .stream()
                 .map(billMapper::toDto)
                 .toList();

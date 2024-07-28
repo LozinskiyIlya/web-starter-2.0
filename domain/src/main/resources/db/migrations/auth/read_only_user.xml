@@ -1,0 +1,41 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="20240728-8" author="ilya" runAlways="true">
+        <!-- Check if the user exists and raise an error if not -->
+        <sql>
+            DO
+            '
+            DECLARE
+            BEGIN
+                IF
+                    NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ''view_only_user'') THEN
+                    RAISE EXCEPTION ''User view_only_user does not exist. Add view_only_user that can access bills_view'';
+                END IF;
+            END
+            ' LANGUAGE PLPGSQL;
+        </sql>
+
+        <!-- Revoke all privileges to ensure a clean state -->
+        <sql>
+            REVOKE ALL PRIVILEGES ON SCHEMA public FROM view_only_user;
+            REVOKE ALL PRIVILEGES ON TABLE public.bills_view FROM view_only_user;
+        </sql>
+
+        <!-- Grant usage on the schema -->
+        <sql>
+            GRANT
+            USAGE
+            ON
+            SCHEMA
+            public TO view_only_user;
+        </sql>
+
+        <!-- Grant select access to the view -->
+        <sql>
+            GRANT SELECT ON TABLE public.bills_view TO view_only_user;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
