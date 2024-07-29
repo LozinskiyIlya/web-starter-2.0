@@ -39,5 +39,16 @@ services:
       - .env
     depends_on:
       - db
+
+  chat-with-bills:
+    container_name: chat_ai_counting
+    build:
+      context: ../chat-with-bills/
+      dockerfile: ../chat-with-bills/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - web
 volumes:
   test_postgres:
