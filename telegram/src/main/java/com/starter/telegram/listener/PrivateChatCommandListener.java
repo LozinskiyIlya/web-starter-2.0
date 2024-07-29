@@ -15,9 +15,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.web.util.UriBuilder;
 
+import java.net.URI;
 import java.util.Set;
 import java.util.UUID;
 
@@ -34,6 +38,12 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     private final TelegramMessageRenderer messageRenderer;
     private final UserInfoRepository userInfoRepository;
     private final HttpService httpService;
+
+    @Value("${starter.chat-with-bills.host}")
+    private String chatWithBillsHost;
+
+    @Value("${starter.chat-with-bills.port}")
+    private String chatWithBillsPort;
     public static final String START_COMMAND = "/start";
     public static final String TUTORIAL_COMMAND = "/tutorial";
     public static final String PIN_COMMAND = "/pin";
@@ -93,6 +103,7 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     }
 
     private void onChatCommand(Update update, TelegramBot bot, String query) {
+        // todo 1) test, 2) try update message instead of deleting and sending a new one
         final var chatId = update.message().chat().id();
         if (!StringUtils.hasText(query)) {
             bot.execute(new SendMessage(chatId, "Usage: <code>/chat How much did I spend on this week?</code>")
@@ -103,8 +114,9 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
         final var request = new ChatWithBillsRequest(userInfo.getUser().getId(), query);
         final var message = bot.execute(new SendMessage(chatId, "Processing...")).message();
         try {
-            final var response = httpService.postT("http://chat-with-bills/chat", request, String.class);
-            bot.execute(new SendMessage(chatId, response));
+            final var url = chatWithBillsHost + ":" + chatWithBillsPort + "/chat";
+            final var response = httpService.postT(url, request, ChatWithBillsResponse.class);
+            bot.execute(new SendMessage(chatId, response.getOutput()));
         } catch (Exception e) {
             log.error("Error while processing chat command", e);
             bot.execute(new SendMessage(chatId, "Error while processing chat command, please try again"));
@@ -120,5 +132,13 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     public static class ChatWithBillsRequest {
         private UUID ownerId;
         private String query;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ChatWithBillsResponse {
+        private String input;
+        private String output;
     }
 }
