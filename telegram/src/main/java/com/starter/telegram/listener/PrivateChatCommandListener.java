@@ -2,17 +2,24 @@ package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.common.service.HttpService;
+import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.service.TelegramTutorialService;
 import com.starter.telegram.service.TelegramUserService;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.Set;
+import java.util.UUID;
 
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderPin;
 
@@ -25,12 +32,15 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     private final TelegramUserService telegramUserService;
     private final TelegramTutorialService tutorialService;
     private final TelegramMessageRenderer messageRenderer;
+    private final UserInfoRepository userInfoRepository;
+    private final HttpService httpService;
     public static final String START_COMMAND = "/start";
     public static final String TUTORIAL_COMMAND = "/tutorial";
     public static final String PIN_COMMAND = "/pin";
     public static final String HELP_COMMAND = "/help";
+    public static final String CHAT_WITH_BILLS = "/chat";
 
-    public static final Set<String> COMMANDS = Set.of(START_COMMAND, TUTORIAL_COMMAND, PIN_COMMAND, HELP_COMMAND);
+    public static final Set<String> COMMANDS = Set.of(START_COMMAND, TUTORIAL_COMMAND, PIN_COMMAND, HELP_COMMAND, CHAT_WITH_BILLS);
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
@@ -40,6 +50,7 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
             case HELP_COMMAND -> onHelpCommand(update, bot);
             case TUTORIAL_COMMAND -> onTutorialCommand(update, bot);
             case PIN_COMMAND -> onPinCommand(update, bot, commandParts.getSecond());
+            case CHAT_WITH_BILLS -> onChatCommand(update, bot, commandParts.getSecond());
             default -> onUnknownCommand(update, bot, commandParts.getFirst());
         }
         log.info("Received command: {} parameter: {}", commandParts.getFirst(), commandParts.getSecond());
@@ -79,5 +90,35 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
 
     private void onTutorialCommand(Update update, TelegramBot bot) {
         tutorialService.onTutorialCommand(update, bot);
+    }
+
+    private void onChatCommand(Update update, TelegramBot bot, String query) {
+        final var chatId = update.message().chat().id();
+        if (!StringUtils.hasText(query)) {
+            bot.execute(new SendMessage(chatId, "Usage: <code>/chat How much did I spend on this week?</code>")
+                    .parseMode(ParseMode.HTML));
+            return;
+        }
+        final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
+        final var request = new ChatWithBillsRequest(userInfo.getUser().getId(), query);
+        final var message = bot.execute(new SendMessage(chatId, "Processing...")).message();
+        try {
+            final var response = httpService.postT("http://chat-with-bills/chat", request, String.class);
+            bot.execute(new SendMessage(chatId, response));
+        } catch (Exception e) {
+            log.error("Error while processing chat command", e);
+            bot.execute(new SendMessage(chatId, "Error while processing chat command, please try again"));
+        } finally {
+            bot.execute(new DeleteMessage(chatId, message.messageId()));
+        }
+
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ChatWithBillsRequest {
+        private UUID ownerId;
+        private String query;
     }
 }
