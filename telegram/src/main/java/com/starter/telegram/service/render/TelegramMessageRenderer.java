@@ -243,6 +243,12 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
+    public SendMessage renderChatWithBillsUsage(Long chatId) {
+        final var textPart = "Usage: <code>/chat How much did I spend on this week?</code>\n\n";
+        return new SendMessage(chatId, textPart + renderChatWithBillsBeta(betaFeaturesProperties))
+                .parseMode(ParseMode.HTML);
+    }
+
     public SendMessage renderHelp(Long chatId) {
         return new SendMessage(chatId, "Facing any issue? Contact us at @ai_brozz\n\nOr use the form bellow:")
                 .parseMode(ParseMode.HTML)

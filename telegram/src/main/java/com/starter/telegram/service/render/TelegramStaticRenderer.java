@@ -38,6 +38,7 @@ public class TelegramStaticRenderer {
     private static final String GROUP_TITLE_TEMPLATE = "\uD83D\uDC65 #num# groups:\n";
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
     private static final String DOCUMENTS_BETA = "<i>Document recognition is in beta and will soon be a premium feature. You can use image and PDF recognition now, but please double-check the results for accuracy.</i>";
+    private static final String CHAT_WITH_BILLS_BETA = "<i>Chat feature is in beta and will soon be available to premium users only. Please double-check the results for accuracy.</i>";
 
     public static String renderTags(Bill bill) {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
@@ -160,6 +161,10 @@ public class TelegramStaticRenderer {
 
     public static String renderDocumentsBeta(BetaFeaturesProperties betaFeaturesProperties) {
         return betaFeaturesProperties.isDocumentsRecognition() ? DOCUMENTS_BETA : "";
+    }
+
+    public static String renderChatWithBillsBeta(BetaFeaturesProperties betaFeaturesProperties) {
+        return betaFeaturesProperties.isChatWithBills() ? CHAT_WITH_BILLS_BETA : "";
     }
 
     private static final String[] NEW_BILL_EXAMPLES = {

@@ -11,4 +11,5 @@ import org.springframework.validation.annotation.Validated;
 public class BetaFeaturesProperties {
 
     private final boolean documentsRecognition = true;
+    private final boolean chatWithBills = true;
 }

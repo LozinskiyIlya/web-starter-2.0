@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderPin;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.tryUpdateMessage;
 
 
 @Slf4j
@@ -103,27 +104,24 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     }
 
     private void onChatCommand(Update update, TelegramBot bot, String query) {
-        // todo 1) test, 2) try update message instead of deleting and sending a new one
+        // todo: test
         final var chatId = update.message().chat().id();
         if (!StringUtils.hasText(query)) {
-            bot.execute(new SendMessage(chatId, "Usage: <code>/chat How much did I spend on this week?</code>")
-                    .parseMode(ParseMode.HTML));
+            final var message = messageRenderer.renderChatWithBillsUsage(chatId);
+            bot.execute(message);
             return;
         }
         final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
         final var request = new ChatWithBillsRequest(userInfo.getUser().getId(), query);
-        final var message = bot.execute(new SendMessage(chatId, "Processing...")).message();
+        final var processingMessage = bot.execute(new SendMessage(chatId, "Processing...")).message();
         try {
             final var url = chatWithBillsHost + ":" + chatWithBillsPort + "/chat";
             final var response = httpService.postT(url, request, ChatWithBillsResponse.class);
-            bot.execute(new SendMessage(chatId, response.getOutput()));
+            bot.execute(tryUpdateMessage(chatId, processingMessage, response.getOutput()));
         } catch (Exception e) {
             log.error("Error while processing chat command", e);
-            bot.execute(new SendMessage(chatId, "Error while processing chat command, please try again"));
-        } finally {
-            bot.execute(new DeleteMessage(chatId, message.messageId()));
+            bot.execute(tryUpdateMessage(chatId, processingMessage, "Error while processing chat command, please try again"));
         }
-
     }
 
     @Data
