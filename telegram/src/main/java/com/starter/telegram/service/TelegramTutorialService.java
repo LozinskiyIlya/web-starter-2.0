@@ -79,13 +79,13 @@ public class TelegramTutorialService implements CallbackExecutor {
 
         if (message instanceof Message && message.messageId() != null) {
             return new EditMessageMedia(chatId, message.messageId(),
-                    new InputMediaAnimation(nextStep.getGifPath())
+                    new InputMediaAnimation(nextStep.getMediaPath())
                             .caption(caption)
                             .parseMode(ParseMode.HTML))
                     .replyMarkup(keyboard);
         }
 
-        return new SendVideo(chatId, nextStep.getGifPath())
+        return new SendVideo(chatId, nextStep.getMediaPath())
                 .caption(caption)
                 .parseMode(ParseMode.HTML)
                 .replyMarkup(keyboard);
@@ -93,22 +93,22 @@ public class TelegramTutorialService implements CallbackExecutor {
 
     private static final List<TutorialStep> steps = List.of(
             new TutorialStep(
-                    "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Step1.gif",
+                    "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Step1.mp4",
                     "\uD83D\uDC4B Welcome to the AI Counting Bot!",
                     "Forward any payment-related text to this bot to get structured info"
             ),
             new TutorialStep(
-                    "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                    "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Step2.mp4",
                     "Send PDFs or images \uD83E\uDDFE",
                     "The bot will extract the payment info"
             ),
             new TutorialStep(
-                    "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                    "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Step3.mp4",
                     "Use <code>Groups</code> \uD83D\uDC65 to keep track of shared expenses",
                     "Each bill is attached to a group. When you send private message to the bot, the expense will be attached to the <b>\"Personal\"</b> group"
             ),
             new TutorialStep(
-                    "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                    "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Step4.mp4",
                     "\uD83C\uDF00 Check out other functions!",
                     "Add bills manually, view stats and insights, share bills with friends and much more!"
             )
@@ -117,7 +117,7 @@ public class TelegramTutorialService implements CallbackExecutor {
     @Data
     @AllArgsConstructor
     private static class TutorialStep {
-        private String gifPath;
+        private String mediaPath;
         private String title;
         private String caption;
     }
