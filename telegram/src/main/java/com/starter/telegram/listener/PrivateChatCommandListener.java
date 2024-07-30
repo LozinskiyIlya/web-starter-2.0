@@ -109,7 +109,7 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
         }
         final var userInfo = userInfoRepository.findByTelegramChatId(chatId).orElseThrow();
         final var request = new ChatWithBillsRequest(userInfo.getUser().getId(), query);
-        final var processingMessage = bot.execute(new SendMessage(chatId, "Processing...")).message();
+        final var processingMessage = bot.execute(new SendMessage(chatId, "Processing your query...")).message();
         try {
             final var url = chatWithBillsHost + ":" + chatWithBillsPort + "/chat";
             final var response = httpService.postT(url, request, ChatWithBillsResponse.class);
