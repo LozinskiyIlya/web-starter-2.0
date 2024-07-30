@@ -2,6 +2,7 @@
 <b>Welcome to the AI Counting Bot!</b>
 
 You can use the following commands:
+/chat - NEW! Chat with your bills: interact with your invoices and documents through an AI-powered chat
 /tutorial - how to use the bot
 /pin - set a pin code
 /help - get help or post feedback
