@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
+import com.pengrad.telegrambot.request.SendAnimation;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Bill;
@@ -39,6 +40,9 @@ public class TelegramStaticRenderer {
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
     private static final String DOCUMENTS_BETA = "<i>Document recognition is in beta and will soon be a premium feature. You can use image and PDF recognition now, but please double-check the results for accuracy.</i>";
     private static final String CHAT_WITH_BILLS_BETA = "<i>Chat feature is in beta and will soon be available to premium users only. Please double-check the results for accuracy.</i>";
+    private static final String CURRENCY_SET_TEMPLATE = "Default currency <b>#code#</b>(#symbol#) set successfully for this chat.\nYou can always <a href='#change_link#'>change</a> it through the Web App interface.";
+    private static final String CURRENCY_CHANGE_GIF_PATH = "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/CurrencyChange.mp4";
+
 
     public static String renderTags(Bill bill) {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
@@ -166,6 +170,17 @@ public class TelegramStaticRenderer {
     public static String renderChatWithBillsBeta(BetaFeaturesProperties betaFeaturesProperties) {
         return betaFeaturesProperties.isChatWithBills() ? CHAT_WITH_BILLS_BETA : "";
     }
+
+    public static SendAnimation renderCurrencySetMessage(Long chatId, String code, String symbol, UUID groupId) {
+        final var textPart = CURRENCY_SET_TEMPLATE
+                .replace("#code#", code)
+                .replace("#symbol#", symbol)
+                .replace("#change_link#", renderWebAppDirectUrl("group", groupId));
+        return new SendAnimation(chatId, CURRENCY_CHANGE_GIF_PATH)
+                .caption(textPart)
+                .parseMode(ParseMode.HTML);
+    }
+
 
     private static final String[] NEW_BILL_EXAMPLES = {
             "45$ dinner at Portabello Bistro",
