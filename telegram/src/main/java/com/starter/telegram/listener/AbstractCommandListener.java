@@ -8,6 +8,9 @@ import com.pengrad.telegrambot.request.SendMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import static com.starter.telegram.listener.query.DebugCallbackExecutor.*;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 
@@ -23,7 +26,7 @@ public abstract class AbstractCommandListener implements UpdateListener {
         if (commandParts.length == 1) {
             return Pair.of(commandParts[0], "");
         }
-        return Pair.of(commandParts[0], commandParts[1]);
+        return Pair.of(commandParts[0], Arrays.stream(commandParts).skip(1).collect(Collectors.joining(" ")));
     }
 
     protected void onUnknownCommand(Update update, TelegramBot bot, String command) {

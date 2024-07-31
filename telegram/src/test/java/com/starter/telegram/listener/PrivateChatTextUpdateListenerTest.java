@@ -1,6 +1,7 @@
 package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.request.GetChat;
+import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.AbstractTelegramTest;
@@ -24,6 +25,9 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private PrivateChatTextUpdateListener listener;
+
+    @Autowired
+    private BetaFeaturesProperties betaFeaturesProperties;
 
     @SpyBean
     private GroupRepository groupRepository;
@@ -104,6 +108,26 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
             assertEquals(existingTitle, group.get().getTitle());
             assertEquals(owner.getUser().getId(), group.get().getOwner().getId());
             verify(groupRepository, never()).save(any(Group.class));  // Ensure no new group is created
+        }
+    }
+
+    @Nested
+    @DisplayName("On file message")
+    class OnFileMessage {
+
+        @Test
+        @DisplayName("Send file received notice")
+        void sendFileReceivedNotice() {
+            // given
+            final var userChatId = random.nextLong();
+            final var update = mockPhotoUpdate(mockGroupUpdate("some text", userChatId, userChatId), "file_id");
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsText(bot, userChatId, "File received");
+            if (betaFeaturesProperties.isDocumentsRecognition()) {
+                assertSentMessageToChatIdContainsText(bot, userChatId, "recognition is in beta");
+            }
         }
     }
 }

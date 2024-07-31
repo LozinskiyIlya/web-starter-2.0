@@ -8,6 +8,6 @@ import org.springframework.context.annotation.Import;
 @Configuration
 @ComponentScan("com.starter.common")
 @Import({com.starter.domain.configuration.DomainAutoconfiguration.class})
-@EnableConfigurationProperties({ServerProperties.class})
+@EnableConfigurationProperties({ServerProperties.class, BetaFeaturesProperties.class})
 public class CommonAutoconfiguration {
 }

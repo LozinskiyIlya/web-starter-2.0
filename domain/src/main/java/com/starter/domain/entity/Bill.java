@@ -50,10 +50,10 @@ public class Bill extends AbstractEntity {
     @Enumerated(EnumType.STRING)
     private BillStatus status = BillStatus.NEW;
 
-    @Column(name = "purpose", columnDefinition = "TEXT")
+    @Column(name = "purpose", columnDefinition = "TEXT", length = 2000)
     private String purpose;
 
-    @Column(name = "model_response", columnDefinition = "TEXT")
+    @Column(name = "model_response", columnDefinition = "TEXT",  length = 2000)
     private String modelResponse;
 
     private String currency;

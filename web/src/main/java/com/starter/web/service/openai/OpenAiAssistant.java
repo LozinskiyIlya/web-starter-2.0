@@ -112,7 +112,7 @@ public class OpenAiAssistant {
     }
 
     public MessageClassificationResponse classifyMessage(String prompt) {
-        final var response = chatCompletion(PRE_PROCESS_PROMPT, prompt);
+        final var response = chatCompletion(PRE_PROCESS_PROMPT, withMaxTextLength(prompt));
         log.info("Text classification response: {}", response);
         return responseParser.parseClassification(response);
     }

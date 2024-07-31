@@ -3,7 +3,9 @@ package com.starter.telegram;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.*;
 import com.pengrad.telegrambot.request.BaseRequest;
+import com.pengrad.telegrambot.request.GetFile;
 import com.pengrad.telegrambot.response.GetChatResponse;
+import com.pengrad.telegrambot.response.GetFileResponse;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.telegram.configuration.TelegramProperties;
@@ -85,6 +87,18 @@ public abstract class AbstractTelegramTest {
         return update;
     }
 
+    protected Update mockPhotoUpdate(Update update, String filePath) {
+        Message message = update.message();
+        GetFileResponse fileResponse = mock(GetFileResponse.class);
+        File file = mock(File.class);
+        when(file.filePath()).thenReturn(filePath);
+        when(fileResponse.file()).thenReturn(file);
+        when(message.photo()).thenReturn(new PhotoSize[]{new PhotoSize()});
+        when(bot.execute(any(GetFile.class))).thenReturn(fileResponse);
+        when(bot.getFullFilePath(any(File.class))).thenReturn(filePath);
+        return update;
+    }
+
     protected Update mockCallbackQueryUpdate(String data, Long chatId) {
         Update update = mock(Update.class);
         CallbackQuery callbackQuery = mock(CallbackQuery.class);
@@ -162,6 +176,7 @@ public abstract class AbstractTelegramTest {
     protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
         final var foundTexts = new LinkedList<>();
         final var containsTimes = getCapturedRequestParams(bot)
+                .filter(params -> params.containsKey("chat_id"))
                 .filter(params -> params.get("chat_id").equals(chatId))
                 .map(params -> params.get("text"))
                 .filter(Objects::nonNull)

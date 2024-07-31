@@ -14,7 +14,6 @@ import com.starter.web.mapper.BillMapper;
 import com.starter.web.mapper.GroupMapper;
 import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +116,7 @@ public class GroupService {
 
     @SneakyThrows(Exception.class)
     private String requestInsights(Group group) {
-        final var bills = billRepository.findAllNotSkippedByGroup(group, Pageable.unpaged())
+        final var bills = billRepository.findAllNotSkippedByGroup(group, Pageable.ofSize(100))
                 .stream()
                 .map(billMapper::toDto)
                 .toList();

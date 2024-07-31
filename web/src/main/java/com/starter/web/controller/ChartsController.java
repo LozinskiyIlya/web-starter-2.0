@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.starter.domain.entity.Bill.DEFAULT_CURRENCY;
@@ -44,9 +45,12 @@ public class ChartsController {
             @RequestParam(value = "from", required = false) Instant from,
             @RequestParam(value = "to", required = false) Instant to) {
         final var currentUser = currentUserService.getUser().orElseThrow();
-        final var groups = groupId == null ?
-                groupRepository.findAllByOwner(currentUser) :
-                List.of(groupRepository.findById(groupId).orElseThrow());
+        final var groups = Optional.ofNullable(groupId)
+                .flatMap(groupRepository::findById)
+                .map(List::of)
+                .orElse(groupRepository.findByChatId(currentUser.getUserInfo().getTelegramChatId())
+                        .map(List::of)
+                        .orElse(groupRepository.findAllByOwner(currentUser)));
         final var fromDefault = from == null ? LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant() : from;
         final var toDefault = to == null ? Instant.now() : to;
         final var bills = billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(groups, fromDefault, toDefault, Pageable.unpaged()).toList();

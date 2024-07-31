@@ -6,7 +6,9 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
+    <include file="bill/create_bills_view.xml" relativeToChangelogFile="true"/>
     <include file="bill/bill_message_id_not_null.xml" relativeToChangelogFile="true"/>
     <include file="settings/notification_settings_not_null.xml" relativeToChangelogFile="true"/>
+    <include file="auth/read_only_user.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

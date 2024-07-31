@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.common.config.ServerProperties;
 import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Bill;
@@ -16,6 +17,7 @@ import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -54,12 +56,15 @@ public class TelegramMessageRenderer {
     private static final String BILL_CONFIRMED_TEMPLATE = "#amount# confirmed. <a href='#edit_url#'>Edit</a>";
     private static final String STAT_ENTRY_TEMPLATE = "◾\uFE0F #first#  <b>#second#</b>";
     private static final String TOP_EXPENSE_TEMPLATE = "<i>#first#</i>  <b>#second#</b>";
+    private static final String FILE_RECEIVED_TEMPLATE = "File received. Processing...\n\n#beta#";
 
     private final TemplateReader templateReader;
 
     private final ServerProperties serverProperties;
 
     private final CurrenciesService currenciesService;
+
+    private final BetaFeaturesProperties betaFeaturesProperties;
 
     public SendMessage renderBill(Long chatId, Bill bill, boolean spoiler) {
         final var caption = renderCaption(bill, spoiler);
@@ -140,7 +145,8 @@ public class TelegramMessageRenderer {
     public SendMessage renderStartMessage(Long chatId, String firstName) {
         final var textPart = templateReader.read(START_COMMAND_TEMPLATE)
                 .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
-                .replace("#example#", renderExample());
+                .replace("#example#", renderExample())
+                .replace("#beta#", renderDocumentsBeta(betaFeaturesProperties));
         return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }
 
@@ -230,6 +236,25 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart)
                 .replyMarkup(keyboard)
                 .parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderFileReceivedNotice(Long chatId) {
+        final var textPart = FILE_RECEIVED_TEMPLATE.replace("#beta#", renderDocumentsBeta(betaFeaturesProperties));
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderChatWithBillsUsage(Long chatId) {
+        final var textPart = "Usage: <code>/chat How much did I spend on this week?</code>\n\n";
+        return new SendMessage(chatId, textPart + renderChatWithBillsBeta(betaFeaturesProperties))
+                .parseMode(ParseMode.HTML);
+    }
+
+    public SendMessage renderHelp(Long chatId) {
+        return new SendMessage(chatId, "Facing any issue? Contact us at @ai_brozz\n\nOr use the form bellow:")
+                .parseMode(ParseMode.HTML)
+                .replyMarkup(new InlineKeyboardMarkup(
+                        renderWebAppButton("Get help or post feedback", "help?chatId=" + chatId, "")
+                ));
     }
 
     public InlineKeyboardMarkup renderStatsKeyboard() {
