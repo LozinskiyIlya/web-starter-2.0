@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import static com.starter.telegram.service.TelegramStateMachine.State.SET_CURRENCY;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencyExpectedMessage;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderRecognizeMyBill;
 
@@ -27,10 +28,11 @@ public class StartCommandCallbackExecutor implements CallbackExecutor {
         if (callbackData.startsWith(SET_CURRENCY_PREFIX)) {
             final var message = renderCurrencyExpectedMessage(chatId);
             bot.execute(message);
-            stateMachine.setState(chatId, TelegramStateMachine.State.SET_CURRENCY);
+            stateMachine.setState(chatId, SET_CURRENCY);
         } else if (callbackData.startsWith(POST_BILL_PREFIX)) {
             final var message = renderRecognizeMyBill(chatId);
             bot.execute(message);
+            stateMachine.removeState(chatId);
         }
     }
 

@@ -129,7 +129,7 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
         }
 
         @Test
-        @DisplayName("Should send proper message when in SET_CURRENCY state and currency set")
+        @DisplayName("Should send proper message when in SET_CURRENCY state and currency is valid")
         void shouldSendProperMessageWhenInSetCurrencyStateAndCurrencySet() {
             // given
             final var userChatId = random.nextLong();
@@ -140,6 +140,8 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
             // then
             assertSentMessageToChatIdContainsKey(bot, userChatId, "caption", "Default currency <b>USD</b>($) set successfully!");
             assertFalse(stateMachine.inState(userChatId, TelegramStateMachine.State.SET_CURRENCY));
+            final var personal = groupRepository.findByChatId(userChatId).orElseThrow();
+            assertEquals("USD", personal.getDefaultCurrency());
         }
     }
 
