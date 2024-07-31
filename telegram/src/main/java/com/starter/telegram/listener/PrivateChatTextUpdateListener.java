@@ -13,8 +13,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencyExpectedMessage;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencySetMessage;
 
@@ -36,16 +34,7 @@ public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
 
     @Override
     protected Group getGroup(Update update, TelegramBot bot) {
-        // here we are in private messages, find a personal "group" with same chatId
-        // as user's chatId or create new "group" if not found
-        final var chatId = update.message().from().id();
-        return groupRepository.findByChatId(chatId).orElseGet(() -> {
-            final var personal = Group.personal(chatId);
-            final var owner = telegramUserService.createOrFindUser(update.message().from(), bot);
-            personal.setOwner(owner);
-            personal.setMembers(List.of(owner));
-            return groupRepository.save(personal);
-        });
+        return telegramUserService.createOrFindPersonalGroup(update.message().from(), bot);
     }
 
     @Override

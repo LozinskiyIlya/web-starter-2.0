@@ -5,7 +5,6 @@ import com.pengrad.telegrambot.model.CallbackQuery;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.repository.BillRepository;
-import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,7 +23,6 @@ public class BillCallbackExecutor implements CallbackExecutor {
 
     private final BillRepository billRepository;
     private final ApplicationEventPublisher publisher;
-    private final TelegramMessageRenderer renderer;
 
     @Override
     public void execute(TelegramBot bot, CallbackQuery query, Long chatId) {

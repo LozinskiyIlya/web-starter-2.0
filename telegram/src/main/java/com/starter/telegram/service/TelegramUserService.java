@@ -2,13 +2,11 @@ package com.starter.telegram.service;
 
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.starter.domain.entity.Group;
 import com.starter.domain.entity.User;
 import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
-import com.starter.domain.repository.RoleRepository;
-import com.starter.domain.repository.UserInfoRepository;
-import com.starter.domain.repository.UserRepository;
-import com.starter.domain.repository.UserSettingsRepository;
+import com.starter.domain.repository.*;
 import jakarta.annotation.PreDestroy;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +30,7 @@ public class TelegramUserService {
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final GroupRepository groupRepository;
     private final ExecutorService userInfoUpdateExecutor = Executors.newFixedThreadPool(2);
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -85,6 +85,20 @@ public class TelegramUserService {
                     settings.setUser(user);
                     return userSettingsRepository.save(settings);
                 });
+    }
+
+    @Transactional
+    public Group createOrFindPersonalGroup(com.pengrad.telegrambot.model.User from, TelegramBot bot) {
+        // here we are in private messages, find a personal "group" with same chatId
+        // as user's chatId or create new "group" if not found
+        final var chatId = from.id();
+        return groupRepository.findByChatId(chatId).orElseGet(() -> {
+            final var personal = Group.personal(chatId);
+            final var owner = createOrFindUser(from, bot);
+            personal.setOwner(owner);
+            personal.setMembers(List.of(owner));
+            return groupRepository.save(personal);
+        });
     }
 
     public void updateUserInfo(com.pengrad.telegrambot.model.User from, TelegramBot telegramBot) {
