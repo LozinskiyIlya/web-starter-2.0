@@ -146,7 +146,7 @@ public class TelegramMessageRenderer {
                 .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
                 .replace("#example#", renderExample())
                 .replace("#beta#", renderDocumentsBeta(betaFeaturesProperties));
-        return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
     }
 
     public BaseRequest<?, ?> renderStats(Long chatId,

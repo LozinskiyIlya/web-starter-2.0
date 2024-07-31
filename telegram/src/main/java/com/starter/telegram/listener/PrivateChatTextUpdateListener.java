@@ -2,8 +2,6 @@ package com.starter.telegram.listener;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.model.request.ParseMode;
-import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
@@ -17,6 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencyExpectedMessage;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencySetMessage;
 
 @Slf4j
@@ -68,9 +67,7 @@ public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
                 final var message = renderCurrencySetMessage(chatId, code, currenciesService.getSymbol(code), personal.getId());
                 bot.execute(message);
             } else {
-                final var message = new SendMessage(chatId,
-                        "Please send me a currency code in the three-letter alphabetic format (e.g., <b>USD</b> for United States Dollar, <b>EUR</b> for Euro)")
-                        .parseMode(ParseMode.HTML);
+                final var message = renderCurrencyExpectedMessage(chatId);
                 bot.execute(message);
             }
         }
