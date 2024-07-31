@@ -157,6 +157,8 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
     @Nested
     @DisplayName("start command keyboard")
     class StartCommandKeyboard {
+
+
         @Test
         @DisplayName("should set currency state when pressed")
         void shouldSwitchState() {
