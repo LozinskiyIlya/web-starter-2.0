@@ -5,6 +5,7 @@ import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.AbstractTelegramTest;
+import com.starter.telegram.service.TelegramStateMachine;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +29,9 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private BetaFeaturesProperties betaFeaturesProperties;
+
+    @Autowired
+    private TelegramStateMachine stateMachine;
 
     @SpyBean
     private GroupRepository groupRepository;
@@ -108,6 +112,34 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
             assertEquals(existingTitle, group.get().getTitle());
             assertEquals(owner.getUser().getId(), group.get().getOwner().getId());
             verify(groupRepository, never()).save(any(Group.class));  // Ensure no new group is created
+        }
+
+        @Test
+        @DisplayName("Should send proper message when in SET_CURRENCY state")
+        void shouldSendProperMessageWhenInSetCurrencyState() {
+            // given
+            final var userChatId = random.nextLong();
+            final var update = mockGroupUpdate("some text", userChatId, userChatId);
+            stateMachine.setState(userChatId, TelegramStateMachine.State.SET_CURRENCY);
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsText(bot, userChatId, "Please send me a currency code");
+            assertTrue(stateMachine.inState(userChatId, TelegramStateMachine.State.SET_CURRENCY));
+        }
+
+        @Test
+        @DisplayName("Should send proper message when in SET_CURRENCY state and currency set")
+        void shouldSendProperMessageWhenInSetCurrencyStateAndCurrencySet() {
+            // given
+            final var userChatId = random.nextLong();
+            final var update = mockGroupUpdate("USD", userChatId, userChatId);
+            stateMachine.setState(userChatId, TelegramStateMachine.State.SET_CURRENCY);
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsKey(bot, userChatId, "caption", "Default currency <b>USD</b>($) set successfully!");
+            assertFalse(stateMachine.inState(userChatId, TelegramStateMachine.State.SET_CURRENCY));
         }
     }
 

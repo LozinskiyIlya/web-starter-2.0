@@ -5,21 +5,23 @@ import com.pengrad.telegrambot.model.Update;
 import com.starter.common.service.CurrenciesService;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
+import com.starter.telegram.service.TelegramStateMachine;
 import com.starter.telegram.service.TelegramUserService;
 import com.starter.telegram.service.render.TelegramMessageRenderer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencyExpectedMessage;
+import static com.starter.telegram.service.TelegramStateMachine.State.SET_CURRENCY;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencyInvalidFormat;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderCurrencySetMessage;
 
 @Slf4j
 @Component
 public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
 
+    private final TelegramStateMachine stateMachine;
     private final CurrenciesService currenciesService;
 
     public PrivateChatTextUpdateListener(
@@ -27,8 +29,11 @@ public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
             TelegramMessageRenderer telegramMessageRenderer,
             GroupRepository groupRepository,
             ApplicationEventPublisher publisher,
-            @Qualifier("downloadDirectory") String downloadDirectory, CurrenciesService currenciesService) {
+            @Qualifier("downloadDirectory") String downloadDirectory,
+            TelegramStateMachine telegramStateMachine,
+            CurrenciesService currenciesService) {
         super(telegramUserService, telegramMessageRenderer, groupRepository, publisher, downloadDirectory);
+        this.stateMachine = telegramStateMachine;
         this.currenciesService = currenciesService;
     }
 
@@ -44,21 +49,22 @@ public class PrivateChatTextUpdateListener extends AbstractChatUpdateListener {
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
-        final var personal = getGroup(update, bot);
-        if (StringUtils.hasText(personal.getDefaultCurrency())) {
-            super.processUpdate(update, bot);
-        } else {
+        final var chatId = update.message().from().id();
+        if (stateMachine.inState(chatId, SET_CURRENCY)) {
+            final var personal = getGroup(update, bot);
             final var code = update.message().text().toUpperCase();
-            final var chatId = update.message().from().id();
             if (currenciesService.containsCode(code)) {
                 personal.setDefaultCurrency(code);
                 groupRepository.save(personal);
                 final var message = renderCurrencySetMessage(chatId, code, currenciesService.getSymbol(code), personal.getId());
                 bot.execute(message);
+                stateMachine.removeState(chatId);
             } else {
-                final var message = renderCurrencyExpectedMessage(chatId);
+                final var message = renderCurrencyInvalidFormat(chatId);
                 bot.execute(message);
             }
+            return;
         }
+        super.processUpdate(update, bot);
     }
 }

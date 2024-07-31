@@ -29,7 +29,12 @@ public class CallbackQueryUpdateListener implements UpdateListener {
 
     @Autowired
     private void setExecutors(List<CallbackExecutor> executors) {
-        executors.forEach(executor -> this.executors.put(executor.getPrefix(), executor));
+        executors.forEach(executor -> {
+            if (this.executors.containsKey(executor.getPrefix())) {
+                throw new IllegalArgumentException("Duplicate prefix found in callback executors: " + executor.getPrefix());
+            }
+            this.executors.put(executor.getPrefix(), executor);
+        });
     }
 
     @Override

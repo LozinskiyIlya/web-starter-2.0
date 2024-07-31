@@ -174,16 +174,20 @@ public abstract class AbstractTelegramTest {
     }
 
     protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {
+        assertSentMessageToChatIdContainsKey(bot, chatId, "text", shouldContain);
+    }
+
+    protected static void assertSentMessageToChatIdContainsKey(TelegramBot bot, Long chatId, String key, String value) {
         final var foundTexts = new LinkedList<>();
         final var containsTimes = getCapturedRequestParams(bot)
                 .filter(params -> params.containsKey("chat_id"))
                 .filter(params -> params.get("chat_id").equals(chatId))
-                .map(params -> params.get("text"))
+                .map(params -> params.get(key))
                 .filter(Objects::nonNull)
                 .peek(foundTexts::add)
-                .filter(text -> ((String) text).contains(shouldContain))
+                .filter(text -> ((String) text).contains(value))
                 .count();
-        assertEquals(1, containsTimes, "Message containing: \"" + shouldContain + "\" was not found. Present texts: " + foundTexts);
+        assertEquals(1, containsTimes, "Message containing: \"" + key + "\" = \"" + value + "\" was not found. Present texts: " + foundTexts);
     }
 
     protected static void assertSentMessageNotContainsText(TelegramBot bot, String shouldNotContain) {
