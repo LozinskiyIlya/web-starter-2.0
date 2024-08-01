@@ -1,6 +1,7 @@
 package com.starter.web.fragments;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.Instant;
@@ -13,6 +14,7 @@ public class BillAssistantResponse {
     private String purpose;
     private String currency;
     private Double amount;
+    @JsonProperty("date")
     private Instant mentionedDate;
     private String[] tags;
 

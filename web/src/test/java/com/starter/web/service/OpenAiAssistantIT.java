@@ -14,6 +14,8 @@ import java.net.URL;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @SpringBootTest
 @Disabled
 public class OpenAiAssistantIT {
@@ -68,6 +70,7 @@ public class OpenAiAssistantIT {
         final var message = "Байк 700К";
         final var defaultCurrency = "IDR";
         final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, defaultCurrency);
+        assertEquals(defaultCurrency, response.getCurrency());
         System.out.println(response);
     }
 
@@ -78,12 +81,15 @@ public class OpenAiAssistantIT {
         final var message = "Байк 700К RUB";
         final var defaultCurrency = "IDR";
         final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, defaultCurrency);
+        assertEquals("RUB", response.getCurrency());
         System.out.println(response);
     }
 
     abstract class RunFilePipeline {
 
         protected Supplier<String> fileUrl;
+        protected Supplier<Double> expectedAmount;
+        protected Supplier<String> expectedCurrency;
 
         @SneakyThrows
         @Disabled
@@ -92,6 +98,8 @@ public class OpenAiAssistantIT {
         void forSomeFileExtension() {
             final var additionalMessage = "Sending you an invoice for the last tasks";
             final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileUrl.get(), additionalMessage, null);
+            assertEquals(expectedAmount.get(), response.getAmount());
+            assertEquals(expectedCurrency.get(), response.getCurrency());
             System.out.println(response);
         }
     }
@@ -109,14 +117,8 @@ public class OpenAiAssistantIT {
                 throw new RuntimeException(e);
             }
             fileUrl = url::getPath;
-        }
-    }
-
-    @Nested
-    @DisplayName("For PNG files")
-    class RunPNGFilePipeline extends RunFilePipeline {
-        {
-            fileUrl = () -> "https://api.telegram.org/file/bot7126952763:AAH5WcT1TPGBS53WIGYNASsgao8D2UnhRR8/photos/file_0.jpg";
+            expectedAmount = () -> 9100d;
+            expectedCurrency = () -> "EUR";
         }
     }
 
@@ -124,7 +126,19 @@ public class OpenAiAssistantIT {
     @DisplayName("For JPG files")
     class RunJPGFilePipeline extends RunFilePipeline {
         {
-            fileUrl = () -> "https://i.ibb.co.com/23Jhfqm/Invoice1.jpg";
+            fileUrl = () -> "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Invoice1.jpg";
+            expectedAmount = () -> 154500d;
+            expectedCurrency = () -> "IDR";
+        }
+    }
+
+    @Nested
+    @DisplayName("For PNG files")
+    class RunPNGFilePipeline extends RunFilePipeline {
+        {
+            fileUrl = () -> "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Invoice2.png";
+            expectedAmount = () -> 9100d;
+            expectedCurrency = () -> "EUR";
         }
     }
 }

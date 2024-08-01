@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,7 @@ public class OpenAiAssistant {
         try {
             final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                     .assistantId(ASSISTANT_ID)
+                    .instructions(instruct())
                     .metadata(Map.of("user_id", userId.toString()))
                     .thread(ThreadRequest.builder()
                             .messages(List.of(MessageRequest.builder()
@@ -102,7 +104,7 @@ public class OpenAiAssistant {
                 .build());
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
-                .metadata(Map.of("user_id", userId.toString()))
+                .instructions(instruct())
                 .thread(ThreadRequest.builder().messages(listOfMessages).build())
                 .build()
         );
@@ -141,6 +143,10 @@ public class OpenAiAssistant {
     private String withMaxTextLength(String text) {
         final var withed = text != null && text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) + "..." : text;
         return withed.trim();
+    }
+
+    private static String instruct(){
+        return "Current date: " + Instant.now();
     }
 
     private static final String INSIGHTS_INSTRUCTIONS = """
