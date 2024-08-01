@@ -151,8 +151,8 @@ public class TelegramMessageRenderer {
         return new SendMessage(chatId, textPart)
                 .replyMarkup(
                         new InlineKeyboardMarkup(
-                                new InlineKeyboardButton("Set default currency").callbackData(SET_CURRENCY_PREFIX),
-                                new InlineKeyboardButton("Add first bill").callbackData(POST_BILL_PREFIX)
+                                new InlineKeyboardButton("\uD83D\uDCB5 Set currency").callbackData(SET_CURRENCY_PREFIX),
+                                new InlineKeyboardButton("➕ Add first bill").callbackData(POST_BILL_PREFIX)
                         )
                 )
                 .parseMode(ParseMode.HTML);
