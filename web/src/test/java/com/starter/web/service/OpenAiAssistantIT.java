@@ -60,6 +60,8 @@ public class OpenAiAssistantIT {
 
                 Тогда отправим 2026.5 EUR""";
         final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, null);
+        assertEquals(2026.5, response.getAmount());
+        assertEquals("EUR", response.getCurrency());
         System.out.println(response);
     }
 
