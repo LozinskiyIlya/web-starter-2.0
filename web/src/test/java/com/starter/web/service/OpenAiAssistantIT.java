@@ -11,6 +11,12 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -84,6 +90,18 @@ public class OpenAiAssistantIT {
         final var defaultCurrency = "IDR";
         final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, defaultCurrency);
         assertEquals("RUB", response.getCurrency());
+        System.out.println(response);
+    }
+
+    @Test
+    @Disabled
+    @DisplayName("Recognizes current date")
+    void shouldRecognizeCurrentDate() {
+        final var message = "Байк 700К RUB Вчера";
+        final var response = openAiAssistant.runTextPipeline(UUID.randomUUID(), message, null);
+        final var yesterday = Instant.now().minus(1, ChronoUnit.DAYS).atZone(ZoneId.systemDefault()).toLocalDate();
+        final var actualDate = response.getMentionedDate().atZone(ZoneId.systemDefault()).toLocalDate();
+        assertEquals(yesterday, actualDate);
         System.out.println(response);
     }
 

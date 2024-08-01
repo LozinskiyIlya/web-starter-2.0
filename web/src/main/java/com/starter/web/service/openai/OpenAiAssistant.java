@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -61,13 +62,12 @@ public class OpenAiAssistant {
 
     public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
         final var withedCaption = caption != null ? withMaxTextLength(caption) : "";
-        final var currencyPrompt = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
-        final var filePrompt = String.format(FILE_PROMPT, currencyPrompt, withedCaption);
+        final var runInstructions = instruct(defaultCurrency);
+        final var filePrompt = String.format(FILE_PROMPT, runInstructions, withedCaption);
         final var uploaded = openAiFileManager.uploadFile(filePath);
         try {
             final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                     .assistantId(ASSISTANT_ID)
-                    .instructions(instruct())
                     .metadata(Map.of("user_id", userId.toString()))
                     .thread(ThreadRequest.builder()
                             .messages(List.of(MessageRequest.builder()
@@ -77,7 +77,7 @@ public class OpenAiAssistant {
                                             .build(),
                                     MessageRequest.builder()
                                             .role("user")
-                                            .content(FILE_ADDITIONAL_PROMPT)
+                                            .content(FORCE_FILE_USE_PROMPT)
                                             .build()))
                             .build())
                     .build()
@@ -85,26 +85,23 @@ public class OpenAiAssistant {
             final var response = waitForPipelineCompletion(threadRun);
             return responseParser.parse(response);
         } finally {
-            openAiFileManager.deleteFile(uploaded.getId());
+            openAiFileManager.deleteRemoteFile(uploaded.getId());
         }
     }
 
     public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage, @Nullable String defaultCurrency) {
         final var withed = withMaxTextLength(forwardedMessage);
         final var listOfMessages = new LinkedList<MessageRequest>();
-        if (defaultCurrency != null) {
-            listOfMessages.add(MessageRequest.builder()
-                    .role("assistant")
-                    .content(String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency))
-                    .build());
-        }
+        listOfMessages.add(MessageRequest.builder()
+                .role("assistant")
+                .content(instruct(defaultCurrency))
+                .build());
         listOfMessages.add(MessageRequest.builder()
                 .role("user")
                 .content(withed)
                 .build());
         final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                 .assistantId(ASSISTANT_ID)
-                .instructions(instruct())
                 .thread(ThreadRequest.builder().messages(listOfMessages).build())
                 .build()
         );
@@ -145,8 +142,10 @@ public class OpenAiAssistant {
         return withed.trim();
     }
 
-    private static String instruct(){
-        return "Current date: " + Instant.now();
+    private static String instruct(String defaultCurrency) {
+        final var dateInstruction = "Current date: " + LocalDate.now();
+        final var currencyInstruction = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
+        return dateInstruction + "\n" + currencyInstruction;
     }
 
     private static final String INSIGHTS_INSTRUCTIONS = """
@@ -166,5 +165,5 @@ public class OpenAiAssistant {
             """;
     private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
     private static final String FILE_PROMPT = "%s\n%s\nAnalyse the file according to your instructions";
-    private static final String FILE_ADDITIONAL_PROMPT = "Yes, you DO have the file. In case of error try again. DO NOT include any comments, respond only with the resulting JSON filled according to the file's content.";
+    private static final String FORCE_FILE_USE_PROMPT = "Yes, you DO have the file. In case of error try again. DO NOT include any comments, respond only with the resulting JSON filled according to the file's content.";
 }
