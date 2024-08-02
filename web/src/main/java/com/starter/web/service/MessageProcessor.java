@@ -3,7 +3,9 @@ package com.starter.web.service;
 
 import com.starter.common.events.*;
 import com.starter.domain.entity.Group;
+import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.GroupRepository;
+import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
@@ -24,11 +26,13 @@ import static com.starter.common.utils.CustomFileUtils.deleteLocalFile;
 @RequiredArgsConstructor
 public class MessageProcessor {
     private static final int MIN_FIELDS_FILLED = 3;
+    private static final double MIN_VALID_AMOUNT = 0.01;
 
     private final ApplicationEventPublisher publisher;
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
     private final GroupRepository groupRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @Async
     @Transactional
@@ -65,11 +69,19 @@ public class MessageProcessor {
         deleteLocalFile(fileUrl);
     }
 
-    private boolean shouldSave(BillAssistantResponse response) {
-        // at least MIN_FIELDS_FILLED any fields should be filled
-        if (response.getAmount() == null || response.getAmount() < 0.01d) {
+    private boolean shouldSave(Group group, BillAssistantResponse response) {
+        // at least 0.01 amount should be present if setting is ON
+        final var user = group.getOwner();
+        final var skippingZeros = userSettingsRepository.findOneByUser(user)
+                .map(UserSettings::getSkipZeros)
+                .filter(skipSetting -> skipSetting && (response.getAmount() == null || response.getAmount() < MIN_VALID_AMOUNT))
+                .orElse(false);
+
+        if (skippingZeros) {
             return false;
         }
+
+        // at least MIN_FIELDS_FILLED any fields should be filled
         return Arrays.stream(response.getClass().getDeclaredFields())
                 .peek(f -> f.setAccessible(true))
                 .filter(f -> {
@@ -92,7 +104,7 @@ public class MessageProcessor {
     }
 
     private void save(Group group, BillAssistantResponse response) {
-        if (shouldSave(response)) {
+        if (shouldSave(group, response)) {
             final var bill = billService.addBill(group, response);
             log.info("Bill created: {}", bill);
             publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));

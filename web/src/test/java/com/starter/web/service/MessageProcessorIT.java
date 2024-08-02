@@ -105,8 +105,8 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
         }
 
         @Test
-        @DisplayName("Rejects zero amount bills")
-        void RejectsZeroAmountBills() {
+        @DisplayName("Rejects zero amount bills by default")
+        void rejectsZeroAmountBillsByDefault() {
             final var message = "Breakfast - $0";
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
@@ -115,12 +115,39 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
             }).getUser();
+            userCreator.givenUserSettingsExists(us -> us.setUser(user));
             var group = billCreator.givenGroupExists(g -> g.setOwner(user));
             // when
             messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
             // then
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, group.getChatId(), NOT_RECOGNIZED_MESSAGE);
+        }
+
+        @Test
+        @DisplayName("Accepts zero amount bills according to settings")
+        void acceptsZeroAmountBills() {
+            final var message = "Breakfast - $0";
+            doReturn(new MessageClassificationResponse(true))
+                    .when(openAiAssistant).classifyMessage(message);
+            doReturn(response("USD", 0d))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+            // given
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            userCreator.givenUserSettingsExists(us -> {
+                us.setUser(user);
+                us.setSkipZeros(false);
+            });
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramTextMessageEvent(this, Pair.of(group.getId(), message)));
+            // then
+            await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
+            var bill = billRepository.findAllByGroup(group).get(0);
+            assertThat(bill.getGroup().getId()).isEqualTo(group.getId());
+            assertThat(bill.getAmount()).isEqualTo(0);
+            assertThat(bill.getCurrency()).isEqualTo("USD");
         }
 
         @Test
