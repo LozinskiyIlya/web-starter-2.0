@@ -33,12 +33,13 @@ import static com.starter.web.service.openai.StaticPromptRenderer.*;
 @Service
 @RequiredArgsConstructor
 public class OpenAiAssistant {
-    private static final String ASSISTANT_MODEL = "gpt-4o";
+    public static final String ASSISTANT_MODEL = "gpt-4o";
+    public static final String VISION_MODEL = "gpt-4o-mini";
+    public static final int MAX_TOKENS = 1024;
     private static final String ASSISTANT_ID = "asst_Y7NTF6GZ906pAsqh9t9Aac6G";
     private static final List<String> STOP = List.of("0.0");
     private static final double TEMPERATURE = 0.25;
     private static final int CHOICES = 1;
-    private static final int MAX_TOKENS = 1024;
 
     private final OpenAiService openAiService;
     private final OpenAiFileManager openAiFileManager;

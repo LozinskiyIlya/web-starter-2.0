@@ -146,8 +146,8 @@ public class OpenAiAssistantIT {
     @DisplayName("For JPG files")
     class RunJPGFilePipeline extends RunFilePipeline {
         {
-            fileUrl = () -> "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Invoice1.jpg";
-            expectedAmount = () -> 154500d;
+            fileUrl = () -> "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Check.jpg";
+            expectedAmount = () -> 1004850d;
             expectedCurrency = () -> "IDR";
         }
     }

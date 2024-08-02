@@ -27,18 +27,18 @@ public class OpenAiFileManager {
         return uploaded;
     }
 
+    public void deleteRemoteFile(String fileId) {
+        final var deleteResult = openAiService.deleteFile(fileId);
+        log.info("File delete result: {}", deleteResult);
+    }
+
     private Pair<String, Boolean> preprocessFile(String filePath) {
         final var fileFormat = filePath.substring(filePath.lastIndexOf('.') + 1);
         return switch (fileFormat) {
             case "pdf" -> new Pair<>(filePath, false);
-            case "jpg", "jpeg", "png" -> new Pair<>(imgToTextTransformer.transformAndGetPath(filePath, fileFormat), true);
+            case "jpg", "jpeg", "png" -> new Pair<>(imgToTextTransformer.visionTransformAndGetPath(filePath), true);
             default -> throw new IllegalArgumentException("Unsupported file format: " + fileFormat);
         };
-    }
-
-    public void deleteRemoteFile(String fileId) {
-        final var deleteResult = openAiService.deleteFile(fileId);
-        log.info("File delete result: {}", deleteResult);
     }
 
     private void postProcessFile(Pair<String, Boolean> processedFilePath) {
