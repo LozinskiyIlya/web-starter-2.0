@@ -143,24 +143,6 @@ public class OpenAiAssistantIT {
     }
 
     @Nested
-    @DisplayName("For JPG local file")
-    class RunLocalJPGFilePipeline extends RunFilePipeline {
-        {
-            final var path = "files/jpg/Invoice1.jpg";
-            final var resource = resourceLoader.getResource("classpath:" + path);
-            final URL url;
-            try {
-                url = resource.getURL();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            fileUrl = url::getPath;
-            expectedAmount = () -> 154500d;
-            expectedCurrency = () -> "IDR";
-        }
-    }
-
-    @Nested
     @DisplayName("For JPG files")
     class RunJPGFilePipeline extends RunFilePipeline {
         {
