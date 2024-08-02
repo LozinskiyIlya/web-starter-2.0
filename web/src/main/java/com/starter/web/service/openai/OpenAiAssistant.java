@@ -17,12 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.starter.web.service.openai.StaticPromptRenderer.*;
 
 /**
  * @author ilya
@@ -39,7 +39,6 @@ public class OpenAiAssistant {
     private static final double TEMPERATURE = 0.25;
     private static final int CHOICES = 1;
     private static final int MAX_TOKENS = 1024;
-    private static final int MAX_TEXT_LENGTH = 1024;
 
     private final OpenAiService openAiService;
     private final OpenAiFileManager openAiFileManager;
@@ -61,9 +60,7 @@ public class OpenAiAssistant {
     }
 
     public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
-        final var withedCaption = caption != null ? withMaxTextLength(caption) : "";
-        final var runInstructions = instruct(defaultCurrency);
-        final var filePrompt = String.format(FILE_PROMPT, runInstructions, withedCaption);
+        final var filePrompt = fullFilePrompt(caption, defaultCurrency);
         final var uploaded = openAiFileManager.uploadFile(filePath);
         try {
             final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
@@ -90,11 +87,11 @@ public class OpenAiAssistant {
     }
 
     public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage, @Nullable String defaultCurrency) {
-        final var withed = withMaxTextLength(forwardedMessage);
+        final var withed = trimUserMessage(forwardedMessage);
         final var listOfMessages = new LinkedList<MessageRequest>();
         listOfMessages.add(MessageRequest.builder()
                 .role("assistant")
-                .content(instruct(defaultCurrency))
+                .content(runInstructions(defaultCurrency))
                 .build());
         listOfMessages.add(MessageRequest.builder()
                 .role("user")
@@ -111,7 +108,7 @@ public class OpenAiAssistant {
     }
 
     public MessageClassificationResponse classifyMessage(String prompt) {
-        final var response = chatCompletion(PRE_PROCESS_PROMPT, withMaxTextLength(prompt));
+        final var response = chatCompletion(PRE_PROCESS_PROMPT, trimUserMessage(prompt));
         log.info("Text classification response: {}", response);
         return responseParser.parseClassification(response);
     }
@@ -136,34 +133,4 @@ public class OpenAiAssistant {
                 .map(MessageContent::getText)
                 .map(Text::getValue).orElse("");
     }
-
-    private String withMaxTextLength(String text) {
-        final var withed = text != null && text.length() > MAX_TEXT_LENGTH ? text.substring(0, MAX_TEXT_LENGTH) + "..." : text;
-        return withed.trim();
-    }
-
-    private static String instruct(String defaultCurrency) {
-        final var dateInstruction = "Current date: " + LocalDate.now();
-        final var currencyInstruction = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
-        return dateInstruction + "\n" + currencyInstruction;
-    }
-
-    private static final String INSIGHTS_INSTRUCTIONS = """
-            Analyse the following bills and give short 2 sentences suggestions 'insights'.
-            Analyse trends over time, categories, amounts, and other patterns.
-            Do not go into great details by mentioning exact bill entry anywhere, keep it simple and clear.
-            Do not include markup, your response should look like a short paragraph. The shorter the better.
-            """;
-
-    private static final String PRE_PROCESS_PROMPT = """
-            Is this a payment related message?
-            Respond with nothing more than valid JSON (WITHOUT ``` marks) of the format:
-            {
-                "payment_related": true | false
-            }
-            It is most likely true if there is an amount and the purpose mentioned in the message.
-            """;
-    private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
-    private static final String FILE_PROMPT = "%s\n%s\nAnalyse the file according to your instructions";
-    private static final String FORCE_FILE_USE_PROMPT = "Yes, you DO have the file. In case of error try again. DO NOT include any comments, respond only with the resulting JSON filled according to the file's content.";
 }
