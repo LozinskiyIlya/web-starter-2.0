@@ -17,7 +17,6 @@ import com.starter.domain.entity.UserInfo;
 import com.starter.domain.entity.UserSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -34,6 +33,8 @@ import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_B
 import static com.starter.telegram.listener.query.BillCallbackExecutor.SKIP_BILL_PREFIX;
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QUERY_SEPARATOR;
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.RECOGNIZE_BILL_PREFIX;
+import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.POST_BILL_PREFIX;
+import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.SET_CURRENCY_PREFIX;
 import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.TelegramStatsService.AVAILABLE_UNITS;
 import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
@@ -147,7 +148,14 @@ public class TelegramMessageRenderer {
                 .replace("#name#", StringUtils.hasText(firstName) ? firstName : "Anonymous")
                 .replace("#example#", renderExample())
                 .replace("#beta#", renderDocumentsBeta(betaFeaturesProperties));
-        return new SendMessage(chatId, textPart).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
+        return new SendMessage(chatId, textPart)
+                .replyMarkup(
+                        new InlineKeyboardMarkup(
+                                new InlineKeyboardButton("\uD83D\uDCB5 Set currency").callbackData(SET_CURRENCY_PREFIX),
+                                new InlineKeyboardButton("➕ Add first bill").callbackData(POST_BILL_PREFIX)
+                        )
+                )
+                .parseMode(ParseMode.HTML);
     }
 
     public BaseRequest<?, ?> renderStats(Long chatId,

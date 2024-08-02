@@ -3,6 +3,7 @@ package com.starter.telegram.listener;
 import com.starter.domain.entity.Bill;
 import com.starter.telegram.AbstractTelegramTest;
 import com.starter.telegram.listener.query.CallbackQueryUpdateListener;
+import com.starter.telegram.service.TelegramStateMachine;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,6 +18,9 @@ import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_AC
 import static com.starter.telegram.listener.query.AddmeCallbackExecutor.ADDME_REJECT_PREFIX;
 import static com.starter.telegram.listener.query.BillCallbackExecutor.CONFIRM_BILL_PREFIX;
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QUERY_SEPARATOR;
+import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.POST_BILL_PREFIX;
+import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.SET_CURRENCY_PREFIX;
+import static com.starter.telegram.service.TelegramStateMachine.State.SET_CURRENCY;
 import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
 import static java.time.ZoneOffset.UTC;
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +30,9 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
 
     @Autowired
     private CallbackQueryUpdateListener listener;
+
+    @Autowired
+    private TelegramStateMachine stateMachine;
 
 
     @Nested
@@ -144,6 +151,39 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
             assertSentMessageToChatIdContainsText(bot, chatId, "Nothing was tracked for the selected time range");
             assertSentMessageToChatIdContainsText(bot, chatId, currentMonth);
             assertSentMessageToChatIdContainsKeyboard(bot, chatId);
+        }
+    }
+
+    @Nested
+    @DisplayName("start command keyboard")
+    class StartCommandKeyboard {
+
+
+        @Test
+        @DisplayName("should set currency state when pressed")
+        void shouldSwitchState() {
+            // given
+            final var chatId = random.nextLong();
+            final var update = mockCallbackQueryUpdate(SET_CURRENCY_PREFIX, chatId);
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsText(bot, chatId, "Please send me a currency code");
+            assertTrue(stateMachine.inState(chatId, SET_CURRENCY));
+        }
+
+        @Test
+        @DisplayName("should render bill example")
+        void shouldRenderBillExample() {
+            // given
+            final var chatId = random.nextLong();
+            final var update = mockCallbackQueryUpdate(POST_BILL_PREFIX, chatId);
+            stateMachine.setState(chatId, SET_CURRENCY);
+            // when
+            listener.processUpdate(update, bot);
+            // then
+            assertSentMessageToChatIdContainsText(bot, chatId, "Send bill information in any format");
+            assertFalse(stateMachine.inState(chatId, SET_CURRENCY));
         }
     }
 }

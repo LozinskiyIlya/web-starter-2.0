@@ -36,16 +36,15 @@ public class OpenAiFileManager {
         };
     }
 
+    public void deleteRemoteFile(String fileId) {
+        final var deleteResult = openAiService.deleteFile(fileId);
+        log.info("File delete result: {}", deleteResult);
+    }
+
     private void postProcessFile(Pair<String, Boolean> processedFilePath) {
         final var needToDelete = processedFilePath.getSecond();
         if (needToDelete) {
             deleteLocalFile(processedFilePath.getFirst());
         }
-    }
-
-    public void deleteFile(String fileId) {
-        final var deleteResult = openAiService.deleteFile(fileId);
-        log.info("File delete result: {}", deleteResult);
-        // todo delete vector storage
     }
 }

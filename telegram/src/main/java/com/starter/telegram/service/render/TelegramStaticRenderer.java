@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.EditMessageText;
+import com.pengrad.telegrambot.request.SendAnimation;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Bill;
@@ -28,6 +29,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
+import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+
 
 @Slf4j
 public class TelegramStaticRenderer {
@@ -39,6 +42,11 @@ public class TelegramStaticRenderer {
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
     private static final String DOCUMENTS_BETA = "<i>Document recognition is in beta and will soon be a premium feature. You can use image and PDF recognition now, but please double-check the results for accuracy.</i>";
     private static final String CHAT_WITH_BILLS_BETA = "<i>Chat feature is in beta and will soon be available to premium users only. Please double-check the results for accuracy.</i>";
+    private static final String CURRENCY_EXPECTED_TEMPLATE = "Default currency will be used for all bills in this chat unless a different one is specified in text or file that you send to the bot. Current value: <b>#current#</b>\n\n";
+    private static final String CURRENCY_FORMAT_TEMPLATE = "Please send me a currency code in the three-letter format.\n\n<i>For example:</i> \n<b>USD</b> for United States Dollar \n<b>EUR</b> for Euro.";
+    private static final String CURRENCY_SET_TEMPLATE = "Default currency <b>#code#</b>(#symbol#) set successfully!\n\nYou can always <a href='#change_link#'>change</a> it through the Web App interface.";
+    private static final String CURRENCY_CHANGE_GIF_PATH = "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/CurrencyChange.mp4";
+
 
     public static String renderTags(Bill bill) {
         return bill.getTags().stream().map(tag -> "#" + tag.getName() + " ").reduce("", String::concat);
@@ -159,12 +167,36 @@ public class TelegramStaticRenderer {
         return NEW_BILL_EXAMPLES[(int) (Math.random() * NEW_BILL_EXAMPLES.length)];
     }
 
+    public static String randomPurpose() {
+        return PLACEHOLDERS[(int) (Math.random() * PLACEHOLDERS.length)];
+    }
+
     public static String renderDocumentsBeta(BetaFeaturesProperties betaFeaturesProperties) {
         return betaFeaturesProperties.isDocumentsRecognition() ? DOCUMENTS_BETA : "";
     }
 
     public static String renderChatWithBillsBeta(BetaFeaturesProperties betaFeaturesProperties) {
         return betaFeaturesProperties.isChatWithBills() ? CHAT_WITH_BILLS_BETA : "";
+    }
+
+    public static SendMessage renderCurrencyExpectedMessage(Long chatId, String currentCurrency) {
+        final var textPart = CURRENCY_EXPECTED_TEMPLATE.replace("#current#", currentCurrency) + CURRENCY_FORMAT_TEMPLATE;
+        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+    }
+
+    public static SendMessage renderCurrencyInvalidFormat(Long chatId) {
+        return new SendMessage(chatId, CURRENCY_FORMAT_TEMPLATE).parseMode(ParseMode.HTML);
+    }
+
+    public static SendAnimation renderCurrencySetMessage(Long chatId, String code, String symbol, UUID groupId) {
+        final var textPart = CURRENCY_SET_TEMPLATE
+                .replace("#code#", code)
+                .replace("#symbol#", symbol)
+                .replace("#change_link#", renderWebAppDirectUrl("group", groupId));
+        return new SendAnimation(chatId, CURRENCY_CHANGE_GIF_PATH)
+                .caption(textPart)
+                .replyMarkup(latestKeyboard())
+                .parseMode(ParseMode.HTML);
     }
 
     private static final String[] NEW_BILL_EXAMPLES = {
@@ -188,6 +220,29 @@ public class TelegramStaticRenderer {
             "40$ for water bill",
             "60$ for internet bill from Comcast",
             "55$ for phone bill from Verizon"
+    };
+
+    private static final String[] PLACEHOLDERS = {
+            "dinner at Portabello Bistro",
+            "for groceries at Whole Foods",
+            "for taxi fare to downtown",
+            "for monthly subscription for Netflix",
+            "coffee at Starbucks",
+            "for gas station refill",
+            "for lunch at Chipotle",
+            "for office supplies from Staples",
+            "for movie night at AMC Theatres",
+            "for dinner at Olive Garden",
+            "gym membership this month",
+            "stay at Hilton",
+            "flight booking to New York",
+            "concert tickets for Coldplay",
+            "for books from Amazon",
+            "for online course from Udemy",
+            "for electricity bill",
+            "for water bill",
+            "for internet bill from Comcast",
+            "for phone bill from Verizon"
     };
 
 }

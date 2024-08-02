@@ -36,6 +36,10 @@ public class CurrenciesService {
         return code;
     }
 
+    public boolean containsCode(String code) {
+        return currencies.containsKey(code);
+    }
+
     @Data
     private static class Currency {
         private String symbol;
