@@ -20,6 +20,8 @@ public class UserSettingsDto {
     @NotNull
     private Boolean weeklyReport;
     @NotNull
+    private Boolean skipZeros;
+    @NotNull
     private String dailyReminderAt;
     private String pinCode;
     private String lastUpdatedAt;
