@@ -43,6 +43,7 @@ public class OpenAiAssistant {
 
     private final OpenAiService openAiService;
     private final OpenAiFileManager openAiFileManager;
+    private final ImgToTextTransformer transformer;
     private final AssistantResponseParser responseParser;
 
     public String chatCompletion(String system, String prompt) {
@@ -61,6 +62,11 @@ public class OpenAiAssistant {
     }
 
     public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
+        final var extension = filePath.substring(filePath.lastIndexOf('.') + 1);
+        if (!extension.equals("pdf")) {
+            final var textOnImage = transformer.visionTransform(filePath);
+            return runTextPipeline(userId, textOnImage, defaultCurrency);
+        }
         final var filePrompt = fullFilePrompt(caption, defaultCurrency);
         final var uploaded = openAiFileManager.uploadFile(filePath);
         try {

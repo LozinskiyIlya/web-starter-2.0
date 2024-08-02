@@ -65,6 +65,14 @@ public class ImgToTextTransformer {
 
     @SneakyThrows(IOException.class)
     public String visionTransformAndGetPath(String imageUrl) {
+        final var textOnImage = visionTransform(imageUrl);
+        final var outputFilePath = Paths.get(downloadDirectory, System.currentTimeMillis() + ".txt");
+        Files.write(outputFilePath, textOnImage.getBytes());
+        // Return the path to the created file
+        return outputFilePath.toString();
+    }
+
+    public String visionTransform(String imageUrl) {
         final var response = openAiService.createChatCompletion(ChatCompletionRequest.builder()
                 .maxTokens(MAX_TOKENS)
                 .model(VISION_MODEL)
@@ -75,11 +83,7 @@ public class ImgToTextTransformer {
                                 getVisionContent(VISION_PROMPT, imageUrl)
                         )))
                 .build());
-        final var textOnImage = response.getChoices().get(0).getMessage().getContent();
-        final var outputFilePath = Paths.get(downloadDirectory, System.currentTimeMillis() + ".txt");
-        Files.write(outputFilePath, textOnImage.getBytes());
-        // Return the path to the created file
-        return outputFilePath.toString();
+        return response.getChoices().get(0).getMessage().getContent();
     }
 
     @Data

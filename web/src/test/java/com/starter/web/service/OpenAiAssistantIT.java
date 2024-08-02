@@ -116,11 +116,14 @@ public class OpenAiAssistantIT {
         @Test
         @DisplayName("For some file extension")
         void forSomeFileExtension() {
+            final var start = Instant.now();
             final var additionalMessage = "Sending you an invoice for the last tasks";
             final var response = openAiAssistant.runFilePipeline(UUID.randomUUID(), fileUrl.get(), additionalMessage, null);
             assertEquals(expectedAmount.get(), response.getAmount());
             assertEquals(expectedCurrency.get(), response.getCurrency());
             System.out.println(response);
+            final var end = Instant.now();
+            System.out.println("Execution time: " + Duration.between(start, end).toMillis() + "ms");
         }
     }
 
