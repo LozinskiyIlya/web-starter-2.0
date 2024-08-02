@@ -1,12 +1,16 @@
 package com.starter.telegram.listener;
 
+import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.GetChat;
+import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.SendResponse;
 import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Group;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.telegram.AbstractTelegramTest;
 import com.starter.telegram.service.TelegramStateMachine;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -148,6 +152,16 @@ class PrivateChatTextUpdateListenerTest extends AbstractTelegramTest {
     @Nested
     @DisplayName("On file message")
     class OnFileMessage {
+
+        @BeforeEach
+        void setupBotResponse() {
+            final var responseMock = Mockito.mock(SendResponse.class);
+            final var messageMock = Mockito.mock(Message.class);
+            Mockito.when(responseMock.message()).thenReturn(messageMock);
+            Mockito.when(messageMock.messageId()).thenReturn(random.nextInt());
+            Mockito.when(bot.execute(Mockito.any(SendMessage.class)))
+                    .thenReturn(responseMock);
+        }
 
         @Test
         @DisplayName("Send file received notice")

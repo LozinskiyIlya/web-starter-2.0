@@ -13,13 +13,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.util.Pair;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -47,7 +47,7 @@ public class TelegramController {
 
     @PostMapping("/bills/{billId}/send")
     public void confirmBill(@PathVariable UUID billId) {
-        billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, bill.getId())));
+        billRepository.findById(billId).ifPresent(bill -> publisher.publishEvent(new BillCreatedEvent(this, Pair.of(bill.getId(), -1))));
     }
 
     @PostMapping("/feedback")

@@ -4,6 +4,7 @@ package com.starter.telegram.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.SendResponse;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.events.BillCreatedEvent;
 import com.starter.common.events.NotPaymentRelatedEvent;
@@ -42,7 +43,10 @@ public class TelegramBillService {
     @Transactional
     @EventListener
     public void onBillCreated(BillCreatedEvent event) {
-        final var billId = event.getPayload();
+        final var billId = event.getPayload().getFirst();
+        final var processingMessageId = event.getPayload().getSecond();
+        final var processingMessage = new SelfMadeTelegramMessage();
+        processingMessage.setMessageId(processingMessageId);
         log.info("Sending bill to confirmation: {}", billId);
         // send to tg
         final var bill = billRepository.findById(billId).orElseThrow();
@@ -60,13 +64,16 @@ public class TelegramBillService {
         }
 
         final var spoilerBills = userSettings.map(UserSettings::getSpoilerBills).orElse(true);
-        final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill, spoilerBills);
+        final var billMessage = renderer.renderBill(ownerInfo.getTelegramChatId(), bill, spoilerBills, processingMessage);
         final var message = bot.execute(billMessage);
+        final var billMessageId = processingMessageId == -1 ?
+                ((SendResponse) message).message().messageId() :
+                processingMessageId;
         // change status, message id and save
-        bill.setMessageId(message.message().messageId());
+        bill.setMessageId(billMessageId);
         bill.setStatus(BillStatus.SENT);
         billRepository.save(bill);
-        log.info("Bill sent, message id: {}", message.message().messageId());
+        log.info("Bill sent, message id: {}", billMessageId);
     }
 
     @Async

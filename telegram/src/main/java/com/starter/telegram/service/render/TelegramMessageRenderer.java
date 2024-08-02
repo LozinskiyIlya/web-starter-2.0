@@ -67,14 +67,14 @@ public class TelegramMessageRenderer {
 
     private final BetaFeaturesProperties betaFeaturesProperties;
 
-    public SendMessage renderBill(Long chatId, Bill bill, boolean spoiler) {
+    public BaseRequest<?, ?> renderBill(Long chatId, Bill bill, boolean spoiler, MaybeInaccessibleMessage message) {
         final var caption = renderCaption(bill, spoiler);
-        final var keyboard = new InlineKeyboardMarkup(
+        final var keyboard = new InlineKeyboardButton[]{
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 renderWebAppButton("✏\uFE0F Edit", "bill", bill.getId().toString()),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
-        );
-        return new SendMessage(chatId, caption).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+        };
+        return tryUpdateMessage(chatId, message, caption, keyboard);
     }
 
     public SendMessage renderBillPreview(Long chatId, Bill bill, boolean spoiler) {

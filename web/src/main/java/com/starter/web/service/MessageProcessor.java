@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +46,7 @@ public class MessageProcessor {
         try {
             if (openAiAssistant.classifyMessage(message).isPaymentRelated()) {
                 final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
-                save(group, response);
+                save(group, response, -1);
                 return;
             }
             notRecognized(group);
@@ -63,9 +64,10 @@ public class MessageProcessor {
         final var groupId = payload.groupId();
         final var caption = payload.caption();
         final var fileUrl = payload.fileUrl();
+        final var messageId = payload.messageId();
         final var group = groupRepository.findById(groupId).orElseThrow();
         final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
-        save(group, response);
+        save(group, response, messageId);
         deleteLocalFile(fileUrl);
     }
 
@@ -103,11 +105,11 @@ public class MessageProcessor {
                 }).count() >= MIN_FIELDS_FILLED;
     }
 
-    private void save(Group group, BillAssistantResponse response) {
+    private void save(Group group, BillAssistantResponse response, int messageId) {
         if (shouldSave(group, response)) {
             final var bill = billService.addBill(group, response);
             log.info("Bill created: {}", bill);
-            publisher.publishEvent(new BillCreatedEvent(this, bill.getId()));
+            publisher.publishEvent(new BillCreatedEvent(this, Pair.of(bill.getId(), messageId)));
         } else {
             notRecognized(group);
         }
