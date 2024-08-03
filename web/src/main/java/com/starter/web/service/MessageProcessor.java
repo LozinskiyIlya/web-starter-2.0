@@ -2,6 +2,7 @@ package com.starter.web.service;
 
 
 import com.starter.common.events.*;
+import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserSettings;
 import com.starter.domain.repository.GroupRepository;
@@ -41,14 +42,14 @@ public class MessageProcessor {
     public void processMessage(TelegramTextMessageEvent event) {
         final var payload = event.getPayload();
         final var groupId = payload.getFirst();
-        final var message = payload.getSecond();
+        final var content = payload.getSecond();
         final var group = groupRepository.findById(groupId).orElseThrow();
         try {
-            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
-            save(group, response, -1);
+            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), content, group.getDefaultCurrency());
+            save(group, response, Bill.DEFAULT_MESSAGE_ID);
         } catch (Exception e) {
             log.error("Error while processing message", e);
-            publisher.publishEvent(new ProcessingErrorEvent(this, group.getChatId()));
+            publisher.publishEvent(new ProcessingErrorEvent(this, Pair.of(group.getChatId(), Bill.DEFAULT_MESSAGE_ID)));
         }
     }
 
@@ -62,9 +63,15 @@ public class MessageProcessor {
         final var fileUrl = payload.fileUrl();
         final var messageId = payload.messageId();
         final var group = groupRepository.findById(groupId).orElseThrow();
-        final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
-        save(group, response, messageId);
-        deleteLocalFile(fileUrl);
+        try {
+            final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
+            save(group, response, messageId);
+        } catch (Exception e) {
+            log.error("Error while processing message", e);
+            publisher.publishEvent(new ProcessingErrorEvent(this, Pair.of(group.getChatId(), messageId)));
+        } finally {
+            deleteLocalFile(fileUrl);
+        }
     }
 
     private boolean shouldSave(Group group, BillAssistantResponse response) {
@@ -107,12 +114,8 @@ public class MessageProcessor {
             log.info("Bill created: {}", bill);
             publisher.publishEvent(new BillCreatedEvent(this, Pair.of(bill.getId(), messageId)));
         } else {
-            notRecognized(group);
+            log.info("Message is not payment related, skipping processing");
+            publisher.publishEvent(new NotPaymentRelatedEvent(this, Pair.of(group.getChatId(), messageId)));
         }
-    }
-
-    private void notRecognized(Group group) {
-        log.info("Message is not payment related, skipping processing");
-        publisher.publishEvent(new NotPaymentRelatedEvent(this, group.getChatId()));
     }
 }

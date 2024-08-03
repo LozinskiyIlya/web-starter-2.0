@@ -1,7 +1,9 @@
 package com.starter.common.events;
 
-public class NotPaymentRelatedEvent extends AbstractEvent<Long> {
-    public NotPaymentRelatedEvent(Object source, long chatId) {
-        super(source, chatId);
+import org.springframework.data.util.Pair;
+
+public class NotPaymentRelatedEvent extends AbstractEvent<Pair<Long, Integer>> {
+    public NotPaymentRelatedEvent(Object source, Pair<Long, Integer> payload) {
+        super(source, payload);
     }
 }

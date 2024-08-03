@@ -91,7 +91,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             final var message = "Hello";
             doReturn(new MessageClassificationResponse(false))
                     .when(openAiAssistant).classifyMessage(message);
-            doReturn(response("USD", 100.0))
+            doReturn(BillAssistantResponse.EMPTY())
                     .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
