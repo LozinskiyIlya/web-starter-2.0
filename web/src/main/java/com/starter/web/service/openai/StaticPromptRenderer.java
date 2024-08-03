@@ -1,7 +1,9 @@
 package com.starter.web.service.openai;
 
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 public class StaticPromptRenderer {
 
@@ -31,7 +33,7 @@ public class StaticPromptRenderer {
     }
 
     public static String runInstructions(String defaultCurrency) {
-        final var dateInstruction = "Current date: " + LocalDate.now();
+        final var dateInstruction = "Current date: " + Instant.now().atZone(ZoneId.of("UTC"));
         final var currencyInstruction = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
         return dateInstruction + "\n" + currencyInstruction;
     }
