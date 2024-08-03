@@ -35,7 +35,6 @@ import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QU
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.RECOGNIZE_BILL_PREFIX;
 import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.POST_BILL_PREFIX;
 import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.SET_CURRENCY_PREFIX;
-import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.TelegramStatsService.AVAILABLE_UNITS;
 import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
@@ -122,11 +121,9 @@ public class TelegramMessageRenderer {
         final var textPart = templateReader.read(DAILY_REMINDER_TEMPLATE)
                 .replace("#name#", userInfo.getFirstName())
                 .replace("#settings_url#", renderWebAppDirectUrl("settings"));
-        return new SendMessage(userInfo.getTelegramChatId(), textPart)
+        return withLatestKeyboard(userInfo.getTelegramChatId(), textPart)
                 .disableNotification(settings.getSilentMode())
-                .disableWebPagePreview(true)
-                .parseMode(ParseMode.HTML)
-                .replyMarkup(latestKeyboard());
+                .disableWebPagePreview(true);
     }
 
     public SendMessage renderNewBill(Long chatId) {

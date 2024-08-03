@@ -42,7 +42,7 @@ public class TelegramStaticRenderer {
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
     private static final String DOCUMENTS_BETA = "<i>Document recognition is in beta and will soon be a premium feature. You can use image and PDF recognition now, but please double-check the results for accuracy.</i>";
     private static final String CHAT_WITH_BILLS_BETA = "<i>Chat feature is in beta and will soon be available to premium users only. Please double-check the results for accuracy.</i>";
-    private static final String CURRENCY_EXPECTED_TEMPLATE = "Default currency will be used for all bills in this chat unless a different one is specified in text or file that you send to the bot. Current value: <b>#current#</b>\n\n";
+    private static final String CURRENCY_EXPECTED_TEMPLATE = "Default currency will be used for all bills in this chat unless a different one is specified in text or file that you send to the bot.\n<i>Current value:</i> <b>#current#</b>\n\n";
     private static final String CURRENCY_FORMAT_TEMPLATE = "Please send me a currency code in the three-letter format.\n\n<i>For example:</i> \n<b>USD</b> for United States Dollar \n<b>EUR</b> for Euro.";
     private static final String CURRENCY_SET_TEMPLATE = "Default currency <b>#code#</b>(#symbol#) set successfully!\n\nYou can always <a href='#change_link#'>change</a> it through the Web App interface.";
     private static final String CURRENCY_CHANGE_GIF_PATH = "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/CurrencyChange.mp4";
@@ -108,7 +108,7 @@ public class TelegramStaticRenderer {
 
     public static SendMessage renderRecognizeMyBill(Long chatId) {
         final var textPart = EXAMPLE_TEMPLATE.replace("#example#", renderExample());
-        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+        return withLatestKeyboard(chatId, textPart);
     }
 
     public static BaseRequest<?, ?> renderBillSkipped(Long chatId, Bill bill, MaybeInaccessibleMessage message) {
@@ -181,11 +181,11 @@ public class TelegramStaticRenderer {
 
     public static SendMessage renderCurrencyExpectedMessage(Long chatId, String currentCurrency) {
         final var textPart = CURRENCY_EXPECTED_TEMPLATE.replace("#current#", currentCurrency) + CURRENCY_FORMAT_TEMPLATE;
-        return new SendMessage(chatId, textPart).parseMode(ParseMode.HTML);
+        return withLatestKeyboard(chatId, textPart);
     }
 
     public static SendMessage renderCurrencyInvalidFormat(Long chatId) {
-        return new SendMessage(chatId, CURRENCY_FORMAT_TEMPLATE).parseMode(ParseMode.HTML);
+        return withLatestKeyboard(chatId, CURRENCY_FORMAT_TEMPLATE);
     }
 
     public static SendAnimation renderCurrencySetMessage(Long chatId, String code, String symbol, UUID groupId) {
@@ -197,6 +197,10 @@ public class TelegramStaticRenderer {
                 .caption(textPart)
                 .replyMarkup(latestKeyboard())
                 .parseMode(ParseMode.HTML);
+    }
+
+    public static SendMessage withLatestKeyboard(Long chatId, String text){
+        return new SendMessage(chatId, text).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
     }
 
     private static final String[] NEW_BILL_EXAMPLES = {

@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static com.starter.telegram.listener.query.DebugCallbackExecutor.*;
-import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
+import static com.starter.telegram.service.render.TelegramStaticRenderer.withLatestKeyboard;
 
 public abstract class AbstractCommandListener implements UpdateListener {
 
@@ -39,6 +39,6 @@ public abstract class AbstractCommandListener implements UpdateListener {
                     ));
             return;
         }
-        bot.execute(new SendMessage(update.message().chat().id(), "Unknown command: " + command).replyMarkup(latestKeyboard()));
+        bot.execute(withLatestKeyboard(update.message().chat().id(), "Unknown command: " + command));
     }
 }
