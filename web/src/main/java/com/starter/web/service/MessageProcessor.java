@@ -44,12 +44,8 @@ public class MessageProcessor {
         final var message = payload.getSecond();
         final var group = groupRepository.findById(groupId).orElseThrow();
         try {
-            if (openAiAssistant.classifyMessage(message).isPaymentRelated()) {
-                final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
-                save(group, response, -1);
-                return;
-            }
-            notRecognized(group);
+            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), message, group.getDefaultCurrency());
+            save(group, response, -1);
         } catch (Exception e) {
             log.error("Error while processing message", e);
             publisher.publishEvent(new ProcessingErrorEvent(this, group.getChatId()));

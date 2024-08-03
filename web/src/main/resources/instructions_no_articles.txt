@@ -17,3 +17,5 @@ Respond with nothing more than a valid JSON of the format:
     "date": "",
     "tags": []
 }
+
+If it's not payment-related return empty JSON
