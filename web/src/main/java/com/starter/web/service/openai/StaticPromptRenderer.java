@@ -2,7 +2,6 @@ package com.starter.web.service.openai;
 
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 
 public class StaticPromptRenderer {
