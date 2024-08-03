@@ -144,6 +144,7 @@ class UserSettingsControllerIT extends AbstractSpringIntegrationTest {
             assertEquals(persisted.getPinCode(), returned.getPinCode());
             assertEquals(persisted.getSpoilerBills(), returned.getSpoilerBills());
             assertEquals(persisted.getAutoConfirmBills(), returned.getAutoConfirmBills());
+            assertEquals(persisted.getSkipZeros(), returned.getSkipZeros());
         }
 
         @SneakyThrows

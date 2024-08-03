@@ -17,6 +17,7 @@
     "dailyReminder": true,
     "weeklyReport": true,
     "silentMode": false,
+    "skipZeros": true,
     "timezone": "UTC",
     "pinCode": "******",
     "lastUpdatedAt": "%LAST_UPDATED_AT%",

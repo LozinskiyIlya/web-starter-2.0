@@ -8,6 +8,6 @@ public class TelegramFileMessageEvent extends AbstractEvent<TelegramFileMessageE
         super(source, payload);
     }
 
-    public record TelegramFileMessagePayload(UUID groupId, String fileUrl, String caption) {
+    public record TelegramFileMessagePayload(UUID groupId, String fileUrl, String caption, int messageId) {
     }
 }

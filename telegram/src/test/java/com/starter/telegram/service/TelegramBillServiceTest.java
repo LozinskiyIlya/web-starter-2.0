@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 
 import java.util.List;
 
@@ -50,7 +51,7 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
                     b.setGroup(billTestDataCreator.givenGroupExists(g ->
                             g.setOwner(ownerInfo.getUser()))));
             // when
-            service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
+            service.onBillCreated(new BillCreatedEvent(this, Pair.of(bill.getId(), -1)));
             // then
             verify(bot).execute(Mockito.any(SendMessage.class));
             assertSentMessageToChatIdContainsText(bot, ownerInfo.getTelegramChatId(), "<tg-spoiler>");
@@ -74,7 +75,7 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
                 s.setUser(ownerInfo.getUser());
             });
             // when
-            service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
+            service.onBillCreated(new BillCreatedEvent(this, Pair.of(bill.getId(), -1)));
             // then does not send new bill message, but sends only confirmation
             assertSentMessageNotContainsText(bot, "New bill");
             assertSentMessageContainsText(bot, "confirmed.");
@@ -96,11 +97,29 @@ class TelegramBillServiceTest extends AbstractTelegramTest {
                 s.setUser(ownerInfo.getUser());
             });
             // when
-            service.onBillCreated(new BillCreatedEvent(this, bill.getId()));
+            service.onBillCreated(new BillCreatedEvent(this, Pair.of(bill.getId(), -1)));
             // then
             verify(bot).execute(Mockito.any(SendMessage.class));
             assertMessageSentToChatId(bot, ownerInfo.getTelegramChatId());
             assertSentMessageNotContainsText(bot, "<tg-spoiler>");
+        }
+
+        @Test
+        @DisplayName("should edit message if processing message exists")
+        void shouldEditMessage() {
+            // given
+            final var processingMessageId = random.nextInt();
+            final var ownerInfo = userTestDataCreator.givenUserInfoExists();
+            final var bill = billTestDataCreator.givenBillExists(b ->
+                    b.setGroup(billTestDataCreator.givenGroupExists(g ->
+                            g.setOwner(ownerInfo.getUser()))));
+            // when
+            service.onBillCreated(new BillCreatedEvent(this, Pair.of(bill.getId(), processingMessageId)));
+            // then
+            verify(bot).execute(Mockito.any(EditMessageText.class));
+            // and then bill id is original processing messageId
+            final var updatedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            assertEquals(processingMessageId, updatedBill.getMessageId());
         }
     }
 

@@ -35,7 +35,6 @@ import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.QU
 import static com.starter.telegram.listener.query.CallbackQueryUpdateListener.RECOGNIZE_BILL_PREFIX;
 import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.POST_BILL_PREFIX;
 import static com.starter.telegram.listener.query.StartCommandCallbackExecutor.SET_CURRENCY_PREFIX;
-import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 import static com.starter.telegram.service.TelegramStatsService.AVAILABLE_UNITS;
 import static com.starter.telegram.service.TelegramStatsService.STATS_CALLBACK_QUERY_PREFIX;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.*;
@@ -67,14 +66,14 @@ public class TelegramMessageRenderer {
 
     private final BetaFeaturesProperties betaFeaturesProperties;
 
-    public SendMessage renderBill(Long chatId, Bill bill, boolean spoiler) {
+    public BaseRequest<?, ?> renderBill(Long chatId, Bill bill, boolean spoiler, MaybeInaccessibleMessage message) {
         final var caption = renderCaption(bill, spoiler);
-        final var keyboard = new InlineKeyboardMarkup(
+        final var keyboard = new InlineKeyboardButton[]{
                 new InlineKeyboardButton("\uD83D\uDDD1 Skip").callbackData(SKIP_BILL_PREFIX + bill.getId()),
                 renderWebAppButton("✏\uFE0F Edit", "bill", bill.getId().toString()),
                 new InlineKeyboardButton("✅ Confirm").callbackData(CONFIRM_BILL_PREFIX + bill.getId())
-        );
-        return new SendMessage(chatId, caption).replyMarkup(keyboard).parseMode(ParseMode.HTML);
+        };
+        return tryUpdateMessage(chatId, message, caption, keyboard);
     }
 
     public SendMessage renderBillPreview(Long chatId, Bill bill, boolean spoiler) {
@@ -122,11 +121,9 @@ public class TelegramMessageRenderer {
         final var textPart = templateReader.read(DAILY_REMINDER_TEMPLATE)
                 .replace("#name#", userInfo.getFirstName())
                 .replace("#settings_url#", renderWebAppDirectUrl("settings"));
-        return new SendMessage(userInfo.getTelegramChatId(), textPart)
+        return withLatestKeyboard(userInfo.getTelegramChatId(), textPart)
                 .disableNotification(settings.getSilentMode())
-                .disableWebPagePreview(true)
-                .parseMode(ParseMode.HTML)
-                .replyMarkup(latestKeyboard());
+                .disableWebPagePreview(true);
     }
 
     public SendMessage renderNewBill(Long chatId) {

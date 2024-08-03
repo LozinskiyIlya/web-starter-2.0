@@ -1,7 +1,9 @@
 package com.starter.common.events;
 
-public class ProcessingErrorEvent extends AbstractEvent<Long> {
-    public ProcessingErrorEvent(Object source, long chatId) {
-        super(source, chatId);
+import org.springframework.data.util.Pair;
+
+public class ProcessingErrorEvent extends AbstractEvent<Pair<Long, Integer>> {
+    public ProcessingErrorEvent(Object source, Pair<Long, Integer> payload) {
+        super(source, payload);
     }
 }

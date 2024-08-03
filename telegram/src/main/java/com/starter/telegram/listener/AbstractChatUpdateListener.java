@@ -49,9 +49,11 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
     private void doBillWork(TelegramBot bot, Update update, Group group, String text) {
         final var fileUrl = extractFileFromUpdate(update, bot);
         if (fileUrl != null) {
-            publisher.publishEvent(new TelegramFileMessageEvent(this, new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, text)));
             final var fileReceivedNotice = telegramMessageRenderer.renderFileReceivedNotice(update.message().from().id());
-            bot.execute(fileReceivedNotice);
+            final var response = bot.execute(fileReceivedNotice);
+            publisher.publishEvent(
+                    new TelegramFileMessageEvent(this,
+                            new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, text, response.message().messageId())));
             return;
         }
         if (text != null) {

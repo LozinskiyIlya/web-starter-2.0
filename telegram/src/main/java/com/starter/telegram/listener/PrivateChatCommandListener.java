@@ -45,9 +45,9 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
     public static final String TUTORIAL_COMMAND = "/tutorial";
     public static final String PIN_COMMAND = "/pin";
     public static final String HELP_COMMAND = "/help";
-    public static final String CHAT_WITH_BILLS = "/chat";
-
-    public static final Set<String> COMMANDS = Set.of(START_COMMAND, TUTORIAL_COMMAND, PIN_COMMAND, HELP_COMMAND, CHAT_WITH_BILLS);
+    public static final String CHAT_WITH_BILLS_COMMAND = "/chat";
+    public static final String EMPTY_COMMAND = "/empty";
+    public static final Set<String> COMMANDS = Set.of(START_COMMAND, TUTORIAL_COMMAND, PIN_COMMAND, HELP_COMMAND, CHAT_WITH_BILLS_COMMAND, EMPTY_COMMAND);
 
     @Override
     public void processUpdate(Update update, TelegramBot bot) {
@@ -57,7 +57,7 @@ public class PrivateChatCommandListener extends AbstractCommandListener {
             case HELP_COMMAND -> onHelpCommand(update, bot);
             case TUTORIAL_COMMAND -> onTutorialCommand(update, bot);
             case PIN_COMMAND -> onPinCommand(update, bot, commandParts.getSecond());
-            case CHAT_WITH_BILLS -> onChatCommand(update, bot, commandParts.getSecond());
+            case CHAT_WITH_BILLS_COMMAND -> onChatCommand(update, bot, commandParts.getSecond());
             default -> onUnknownCommand(update, bot, commandParts.getFirst());
         }
         log.info("Received command: {} parameter: {}", commandParts.getFirst(), commandParts.getSecond());

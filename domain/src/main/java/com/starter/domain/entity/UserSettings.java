@@ -59,5 +59,8 @@ public class UserSettings extends AbstractEntity {
     @NotNull
     private Boolean pinCodeEnabled = false;
 
+    @NotNull
+    private Boolean skipZeros = true;
+
     private String pinCode;
 }

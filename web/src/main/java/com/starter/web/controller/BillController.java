@@ -143,8 +143,7 @@ public class BillController {
         bill.setStatus(Bill.BillStatus.SKIPPED);
         billRepository.save(bill);
         billMessageExecutor.submit(() -> {
-            final var tgMessage = new SelfMadeTelegramMessage();
-            tgMessage.setMessageId(bill.getMessageId());
+            final var tgMessage = new SelfMadeTelegramMessage(bill.getMessageId());
             final var message = renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
             telegramBot.execute(message);
         });
