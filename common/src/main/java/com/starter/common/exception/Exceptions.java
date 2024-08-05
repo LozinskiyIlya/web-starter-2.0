@@ -64,8 +64,8 @@ public class Exceptions {
         }
     }
 
-    public static class ParsingTextException extends RuntimeException {
-        public ParsingTextException(String message) {
+    public static class RecognitionException extends RuntimeException {
+        public RecognitionException(String message) {
             super(message);
         }
     }

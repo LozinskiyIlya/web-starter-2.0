@@ -104,7 +104,7 @@ public class BillController {
 
     @PostMapping("/text")
     @Operation(summary = "Add bill", description = "Add bill by parsing a text")
-    public UUID addBill(@RequestBody @Valid ParsingTextRequest request) {
+    public UUID addBill(@RequestBody @Valid BillController.RecognitionRequest request) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var userChatId = currentUser.getUserInfo().getTelegramChatId();
         final var group = request.getGroupId() == null ?
@@ -117,14 +117,39 @@ public class BillController {
         try {
             response = openAiAssistant.runTextPipeline(currentUser.getId(), request.getDetails(), group.getDefaultCurrency());
         } catch (Exception exception) {
-            throw new Exceptions.ParsingTextException(PROCESSING_ERROR_MESSAGE);
+            throw new Exceptions.RecognitionException(PROCESSING_ERROR_MESSAGE);
         }
         if (messageProcessor.shouldSave(group, response)) {
             final var created = billService.addBill(group, response);
             created.setStatus(Bill.BillStatus.SENT);
             return billRepository.save(created).getId();
         }
-        throw new Exceptions.ParsingTextException(NOT_RECOGNIZED_MESSAGE);
+        throw new Exceptions.RecognitionException(NOT_RECOGNIZED_MESSAGE);
+    }
+
+    @PostMapping("/image")
+    @Operation(summary = "Add bill", description = "Add bill with image recognition")
+    public UUID addBillFromImage(@RequestBody @Valid BillController.RecognitionRequest request) {
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        final var userChatId = currentUser.getUserInfo().getTelegramChatId();
+        final var group = request.getGroupId() == null ?
+                groupRepository.findByChatId(userChatId).orElseThrow() :
+                groupRepository.findById(request.getGroupId()).orElseThrow();
+        if (!group.getOwner().getId().equals(currentUser.getId())) {
+            throw new Exceptions.WrongUserException("You can't add bills to this group");
+        }
+        BillAssistantResponse response;
+        try {
+            response = openAiAssistant.runFilePipeline(currentUser.getId(), request.getDetails(), "", group.getDefaultCurrency());
+        } catch (Exception exception) {
+            throw new Exceptions.RecognitionException(PROCESSING_ERROR_MESSAGE);
+        }
+        if (messageProcessor.shouldSave(group, response)) {
+            final var created = billService.addBill(group, response);
+            created.setStatus(Bill.BillStatus.SENT);
+            return billRepository.save(created).getId();
+        }
+        throw new Exceptions.RecognitionException(NOT_RECOGNIZED_MESSAGE);
     }
 
     @PostMapping("/{billId}")
@@ -200,7 +225,7 @@ public class BillController {
     }
 
     @Data
-    public static class ParsingTextRequest {
+    public static class RecognitionRequest {
         private UUID groupId;
         @NotBlank(message = "Bill details must be present")
         private String details;

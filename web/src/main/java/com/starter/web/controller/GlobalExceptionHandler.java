@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
         return Collections.singletonMap("error", e.getMessage());
     }
 
-    @ExceptionHandler({ParsingTextException.class})
+    @ExceptionHandler({RecognitionException.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
     public Map<String, String> handleServerError(Exception e) {
