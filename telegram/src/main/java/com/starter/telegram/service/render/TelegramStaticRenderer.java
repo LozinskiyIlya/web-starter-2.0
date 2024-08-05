@@ -36,7 +36,7 @@ import static com.starter.telegram.service.TelegramBotService.latestKeyboard;
 public class TelegramStaticRenderer {
 
     public static final URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
-    private static final String EXAMPLE_TEMPLATE = "Send bill information in any format.\nExample: #example#";
+    private static final String EXAMPLE_TEMPLATE = "Send bill details in any format.\nExample: #example#";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
     private static final String GROUP_TITLE_TEMPLATE = "\uD83D\uDC65 #num# groups:\n";
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";

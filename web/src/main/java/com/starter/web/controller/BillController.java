@@ -11,13 +11,17 @@ import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.GroupRepository;
-import com.starter.telegram.service.render.TelegramMessageRenderer;
 import com.starter.web.dto.BillDto;
+import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.mapper.BillMapper;
+import com.starter.web.service.MessageProcessor;
+import com.starter.web.service.bill.BillService;
+import com.starter.web.service.openai.OpenAiAssistant;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,7 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.starter.telegram.service.TelegramBillService.SelfMadeTelegramMessage;
+import static com.starter.telegram.service.TelegramBillService.*;
 import static com.starter.telegram.service.render.TelegramStaticRenderer.renderBillSkipped;
 
 @Slf4j
@@ -46,9 +50,11 @@ public class BillController {
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
     private final BillMapper billMapper;
-    private final TelegramMessageRenderer messageRenderer;
     private final TelegramBot telegramBot;
     private final ApplicationEventPublisher publisher;
+    private final MessageProcessor messageProcessor;
+    private final OpenAiAssistant openAiAssistant;
+    private final BillService billService;
     private final ExecutorService billMessageExecutor = Executors.newFixedThreadPool(4);
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -94,6 +100,31 @@ public class BillController {
         bill = billRepository.saveAndFlush(bill);
         publisher.publishEvent(new BillConfirmedEvent(this, bill.getId()));
         return BillCreationResponse.builder().id(bill.getId()).build();
+    }
+
+    @PostMapping("/text")
+    @Operation(summary = "Add bill", description = "Add bill by parsing a text")
+    public UUID addBill(@RequestBody @Valid ParsingTextRequest request) {
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        final var userChatId = currentUser.getUserInfo().getTelegramChatId();
+        final var group = request.getGroupId() == null ?
+                groupRepository.findByChatId(userChatId).orElseThrow() :
+                groupRepository.findById(request.getGroupId()).orElseThrow();
+        if (!group.getOwner().getId().equals(currentUser.getId())) {
+            throw new Exceptions.WrongUserException("You can't add bills to this group");
+        }
+        BillAssistantResponse response;
+        try {
+            response = openAiAssistant.runTextPipeline(currentUser.getId(), request.getDetails(), group.getDefaultCurrency());
+        } catch (Exception exception) {
+            throw new Exceptions.ParsingTextException(PROCESSING_ERROR_MESSAGE);
+        }
+        if (messageProcessor.shouldSave(group, response)) {
+            final var created = billService.addBill(group, response);
+            created.setStatus(Bill.BillStatus.SENT);
+            return billRepository.save(created).getId();
+        }
+        throw new Exceptions.ParsingTextException(NOT_RECOGNIZED_MESSAGE);
     }
 
     @PostMapping("/{billId}")
@@ -166,5 +197,12 @@ public class BillController {
     @Builder
     public static class BillCreationResponse {
         private UUID id;
+    }
+
+    @Data
+    public static class ParsingTextRequest {
+        private UUID groupId;
+        @NotBlank(message = "Bill details must be present")
+        private String details;
     }
 }

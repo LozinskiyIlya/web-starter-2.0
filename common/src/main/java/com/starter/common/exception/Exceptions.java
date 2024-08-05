@@ -63,4 +63,10 @@ public class Exceptions {
             super(message);
         }
     }
+
+    public static class ParsingTextException extends RuntimeException {
+        public ParsingTextException(String message) {
+            super(message);
+        }
+    }
 }
