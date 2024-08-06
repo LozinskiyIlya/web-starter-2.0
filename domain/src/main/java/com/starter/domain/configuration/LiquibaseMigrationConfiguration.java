@@ -39,6 +39,7 @@ public class LiquibaseMigrationConfiguration {
             liquibase.setDatabaseChangeLogTable(this.properties.getDatabaseChangeLogTable());
             liquibase.setDatabaseChangeLogLockTable(this.properties.getDatabaseChangeLogLockTable());
             liquibase.setDropFirst(this.properties.isDropFirst());
+            // NEVER use properties.isEnabled true -> it leads to liquibase run before spring JPA initialization
             liquibase.setShouldRun(true);
             liquibase.setLabelFilter(this.properties.getLabelFilter());
             liquibase.setChangeLogParameters(this.properties.getParameters());
