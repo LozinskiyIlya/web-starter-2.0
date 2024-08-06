@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.InlineQueryResultArticle;
 import com.pengrad.telegrambot.request.AnswerInlineQuery;
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.Bill_;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.UserInfoRepository;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 
@@ -56,7 +58,7 @@ public class InlineQueryUpdateListener implements UpdateListener {
 
     private PageRequest createPageRequest(int offset) {
         int pageNumber = offset / INLINE_RESULT_PAGE_SIZE;
-        return PageRequest.of(pageNumber, INLINE_RESULT_PAGE_SIZE);
+        return PageRequest.of(pageNumber, INLINE_RESULT_PAGE_SIZE, Sort.Direction.DESC, Bill_.MENTIONED_DATE);
     }
 
     private String calculateNextOffset(Page<Bill> page, int offset) {
