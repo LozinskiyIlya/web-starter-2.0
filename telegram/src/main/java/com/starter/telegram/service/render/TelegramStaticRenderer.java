@@ -12,10 +12,12 @@ import com.pengrad.telegrambot.request.SendAnimation;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.BetaFeaturesProperties;
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.BillTag;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.text.DecimalFormat;
@@ -38,6 +40,7 @@ public class TelegramStaticRenderer {
     public static final URI WEB_APP_DIRECT_URL = URI.create("https://t.me/ai_counting_bot/webapp");
     private static final String EXAMPLE_TEMPLATE = "Send bill details in any format.\nExample: #example#";
     private static final String BILL_SKIP_TEMPLATE = "Bill #id# skipped. <a href='#archive_url#'>Manage archive</a>";
+    private static final String THUMBNAIL_URL_TEMPLATE = "https://placehold.jp/60/#bg#/ffffff/300x300.png?text=#text#";
     private static final String GROUP_TITLE_TEMPLATE = "\uD83D\uDC65 #num# groups:\n";
     private static final String GROUP_ENTRY_TEMPLATE = "◾\uFE0F <b>#title#</b>\n      #bills# bills • #members# members";
     private static final String DOCUMENTS_BETA = "<i>Document recognition is in beta and will soon be a premium feature. You can use image and PDF recognition now, but please double-check the results for accuracy.</i>";
@@ -201,6 +204,23 @@ public class TelegramStaticRenderer {
 
     public static SendMessage withLatestKeyboard(Long chatId, String text) {
         return new SendMessage(chatId, text).replyMarkup(latestKeyboard()).parseMode(ParseMode.HTML);
+    }
+
+    public static String renderThumbnailUrl(Bill bill, String currencySymbol) {
+        final var tags = bill.getTags();
+        final var bg = tags
+                .stream()
+                .findFirst()
+                .map(BillTag::getHexColor)
+                .orElse("#cccccc")
+                .replace("#", "");
+        final var tagsList = tags.stream()
+                .map(BillTag::getName)
+                .collect(Collectors.joining("%0A"));
+        final var text = StringUtils.hasText(tagsList) ? tagsList : currencySymbol.toUpperCase();
+        return THUMBNAIL_URL_TEMPLATE
+                .replace("#bg#", bg)
+                .replace("#text#", text);
     }
 
     private static final String[] NEW_BILL_EXAMPLES = {

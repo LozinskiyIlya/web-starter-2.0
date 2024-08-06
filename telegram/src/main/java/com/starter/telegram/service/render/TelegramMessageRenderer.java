@@ -1,11 +1,11 @@
 package com.starter.telegram.service.render;
 
 
+import com.pengrad.telegrambot.model.LinkPreviewOptions;
 import com.pengrad.telegrambot.model.WebAppInfo;
 import com.pengrad.telegrambot.model.message.MaybeInaccessibleMessage;
-import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
-import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.model.request.*;
+import com.pengrad.telegrambot.request.AnswerInlineQuery;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.starter.common.config.BetaFeaturesProperties;
@@ -275,12 +275,23 @@ public class TelegramMessageRenderer {
         return keyboard;
     }
 
-    private InlineKeyboardButton renderWebAppButton(String text, String path, String pathVariable) {
-        return new InlineKeyboardButton(text).webApp(renderWebApp(path, pathVariable));
+    public InlineQueryResultArticle renderBillInline(Bill bill) {
+        final var renderedBill = renderCaption(bill, false);
+        final var messageContent = new InputTextMessageContent(renderedBill)
+                .parseMode(ParseMode.HTML)
+                .linkPreviewOptions(new LinkPreviewOptions().isDisabled(true));
+        final var symbol = currenciesService.getSymbol(bill.getCurrency());
+        final var title = renderAmount(bill.getAmount(), symbol);
+        return new InlineQueryResultArticle(bill.getId().toString(), title, messageContent)
+                .description(bill.getPurpose())
+                .thumbnailUrl(renderThumbnailUrl(bill, symbol))
+                .replyMarkup(new InlineKeyboardMarkup(
+                        new InlineKeyboardButton("More details")
+                                .url(renderWebAppDirectUrl("preview", bill.getId()))));
     }
 
-    private WebAppInfo renderWebApp(String path, String pathVariable) {
-        return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
+    public InlineQueryResultsButton inlineQueryButton() {
+        return new InlineQueryResultsButton("All Bills", renderWebApp("groups", ""));
     }
 
     private String renderCaption(Bill bill, boolean spoiler) {
@@ -299,5 +310,14 @@ public class TelegramMessageRenderer {
                     .replaceAll("</tg-spoiler>", "");
         }
         return caption;
+    }
+
+    private WebAppInfo renderWebApp(String path, String pathVariable) {
+        return new WebAppInfo(serverProperties.getFrontendHost().resolve(path) + "/" + pathVariable);
+    }
+
+
+    private InlineKeyboardButton renderWebAppButton(String text, String path, String pathVariable) {
+        return new InlineKeyboardButton(text).webApp(renderWebApp(path, pathVariable));
     }
 }

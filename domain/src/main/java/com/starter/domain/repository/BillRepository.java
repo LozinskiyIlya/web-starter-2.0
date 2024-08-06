@@ -33,6 +33,18 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
     @Query("select b from Bill b where b.group = :group and b.status <> 'SKIPPED' order by b.mentionedDate desc")
     List<Bill> findFirstNotSkippedByGroupOrderByMentionedDateDesc(@Param("group") Group group, Pageable pageable);
 
+    @Query("SELECT b " +
+            "FROM Bill b " +
+            "FULL OUTER JOIN b.tags t " +
+            "WHERE b.status <> 'SKIPPED' " +
+            "AND b.group in (:groups) " +
+            "AND (LOWER(b.purpose) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Bill> findNotSkippedByGroupAndTagAndPurpose(
+            @Param("groups") List<Group> groups,
+            @Param("search") String search,
+            Pageable pageable);
+
     @Query("SELECT t.name as name, t.hexColor as hexColor, SUM(b.amount) as amount " +
             "FROM Bill b " +
             "JOIN b.tags t " +
