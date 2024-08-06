@@ -75,7 +75,6 @@ public class ImgToTextTransformer {
     }
 
     public String visionTransform(String imageUrl, String caption) {
-        // todo: add user's caption param to merge with default VISION_PROMPT
         final var fullPrompt = StringUtils.hasText(caption) ?
                 VISION_USER_PROMPT.formatted(caption) + VISION_PROMPT :
                 VISION_PROMPT;
