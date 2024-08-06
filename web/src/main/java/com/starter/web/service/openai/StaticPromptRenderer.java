@@ -22,7 +22,8 @@ public class StaticPromptRenderer {
             """;
     public static final String FILE_PROMPT = "%s\n%s\nAnalyse the file according to your instructions";
     public static final String FORCE_FILE_USE_PROMPT = "Yes, you DO have the file. In case of error try again. DO NOT include any comments, respond only with the resulting JSON filled according to the file's content.";
-    public static final String VISION_PROMPT = "Extract Amount, currency, purpose/place, category, and date if present, no additional comments please.";
+    public static final String VISION_USER_PROMPT = "User has sent the file along with the caption: %s\n";
+    public static final String VISION_PROMPT = "Extract Amount, currency, purpose/place, category, and datetime if present, no additional comments please.";
     private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
     private static final int MAX_USER_TEXT_LENGTH = 1024;
 

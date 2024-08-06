@@ -1,6 +1,7 @@
 package com.starter.web.dto;
 
 
+import com.starter.domain.entity.Bill;
 import com.starter.domain.repository.BillRepository.TagAmount;
 import lombok.Data;
 
@@ -31,6 +32,7 @@ public class GroupDto {
         private Double amount;
         private String currency;
         private String date;
+        private Bill.BillStatus status;
     }
 
     @Data

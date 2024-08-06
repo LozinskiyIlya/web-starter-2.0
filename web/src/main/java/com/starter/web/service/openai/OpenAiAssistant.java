@@ -64,7 +64,7 @@ public class OpenAiAssistant {
     public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
         final var extension = filePath.substring(filePath.lastIndexOf('.') + 1);
         if (!extension.equals("pdf")) {
-            final var textOnImage = transformer.visionTransform(filePath);
+            final var textOnImage = transformer.visionTransform(filePath, caption);
             return runTextPipeline(userId, textOnImage, defaultCurrency);
         }
         final var filePrompt = fullFilePrompt(caption, defaultCurrency);

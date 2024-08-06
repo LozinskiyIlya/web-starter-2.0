@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import java.util.List;
 import static com.starter.web.service.openai.OpenAiAssistant.MAX_TOKENS;
 import static com.starter.web.service.openai.OpenAiAssistant.VISION_MODEL;
 import static com.starter.web.service.openai.StaticPromptRenderer.VISION_PROMPT;
+import static com.starter.web.service.openai.StaticPromptRenderer.VISION_USER_PROMPT;
 
 @Slf4j
 @Service
@@ -65,14 +67,17 @@ public class ImgToTextTransformer {
 
     @SneakyThrows(IOException.class)
     public String visionTransformAndGetPath(String imageUrl) {
-        final var textOnImage = visionTransform(imageUrl);
+        final var textOnImage = visionTransform(imageUrl, "");
         final var outputFilePath = Paths.get(downloadDirectory, System.currentTimeMillis() + ".txt");
         Files.write(outputFilePath, textOnImage.getBytes());
         // Return the path to the created file
         return outputFilePath.toString();
     }
 
-    public String visionTransform(String imageUrl) {
+    public String visionTransform(String imageUrl, String caption) {
+        final var fullPrompt = StringUtils.hasText(caption) ?
+                VISION_USER_PROMPT.formatted(caption) + VISION_PROMPT :
+                VISION_PROMPT;
         final var response = openAiService.createChatCompletion(ChatCompletionRequest.builder()
                 .maxTokens(MAX_TOKENS)
                 .model(VISION_MODEL)
@@ -80,7 +85,7 @@ public class ImgToTextTransformer {
                 .messages(List.of(
                         new ChatMessage(
                                 VISION_MESSAGE_ROLE,
-                                getVisionContent(VISION_PROMPT, imageUrl)
+                                getVisionContent(fullPrompt, imageUrl)
                         )))
                 .build());
         return response.getChoices().get(0).getMessage().getContent();

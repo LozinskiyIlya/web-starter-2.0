@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Component
@@ -51,9 +52,10 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
         if (fileUrl != null) {
             final var fileReceivedNotice = telegramMessageRenderer.renderFileReceivedNotice(update.message().from().id());
             final var response = bot.execute(fileReceivedNotice);
+            final var caption = StringUtils.hasText(text) ? text : update.message().caption();
             publisher.publishEvent(
                     new TelegramFileMessageEvent(this,
-                            new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, text, response.message().messageId())));
+                            new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, caption, response.message().messageId())));
             return;
         }
         if (text != null) {

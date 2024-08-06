@@ -39,7 +39,7 @@ public class MessageProcessor {
     @Async
     @Transactional
     @EventListener
-    public void processMessage(TelegramTextMessageEvent event) {
+    void processMessage(TelegramTextMessageEvent event) {
         final var payload = event.getPayload();
         final var groupId = payload.getFirst();
         final var content = payload.getSecond();
@@ -56,7 +56,7 @@ public class MessageProcessor {
     @Async
     @Transactional
     @EventListener
-    public void processMessage(TelegramFileMessageEvent event) {
+    void processMessage(TelegramFileMessageEvent event) {
         final var payload = event.getPayload();
         final var groupId = payload.groupId();
         final var caption = payload.caption();
@@ -74,7 +74,7 @@ public class MessageProcessor {
         }
     }
 
-    private boolean shouldSave(Group group, BillAssistantResponse response) {
+    public boolean shouldSave(Group group, BillAssistantResponse response) {
         // at least 0.01 amount should be present if setting is ON
         final var user = group.getOwner();
         final var skippingZeros = userSettingsRepository.findOneByUser(user)

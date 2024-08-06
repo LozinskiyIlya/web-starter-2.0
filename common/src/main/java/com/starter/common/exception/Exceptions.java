@@ -63,4 +63,10 @@ public class Exceptions {
             super(message);
         }
     }
+
+    public static class RecognitionException extends RuntimeException {
+        public RecognitionException(String message) {
+            super(message);
+        }
+    }
 }
