@@ -39,7 +39,7 @@ public class LiquibaseMigrationConfiguration {
             liquibase.setDatabaseChangeLogTable(this.properties.getDatabaseChangeLogTable());
             liquibase.setDatabaseChangeLogLockTable(this.properties.getDatabaseChangeLogLockTable());
             liquibase.setDropFirst(this.properties.isDropFirst());
-            liquibase.setShouldRun(this.properties.isEnabled());
+            liquibase.setShouldRun(true);
             liquibase.setLabelFilter(this.properties.getLabelFilter());
             liquibase.setChangeLogParameters(this.properties.getParameters());
             liquibase.setRollbackFile(this.properties.getRollbackFile());

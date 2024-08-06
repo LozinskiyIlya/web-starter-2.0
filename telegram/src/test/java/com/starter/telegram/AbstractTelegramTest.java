@@ -181,7 +181,7 @@ public abstract class AbstractTelegramTest {
         final var foundTexts = new LinkedList<>();
         final var containsTimes = getCapturedRequestParams(bot)
                 .filter(params -> params.containsKey("chat_id"))
-                .filter(params -> params.get("chat_id").equals(chatId))
+                .filter(params -> chatId.equals(params.get("chat_id")))
                 .map(params -> params.get(key))
                 .filter(Objects::nonNull)
                 .peek(foundTexts::add)
@@ -202,7 +202,7 @@ public abstract class AbstractTelegramTest {
 
     protected static void assertSentMessageToChatIdContainsKeyboard(TelegramBot bot, Long chatId) {
         final var containsTimes = getCapturedRequestParams(bot)
-                .filter(params -> params.get("chat_id").equals(chatId))
+                .filter(params -> chatId.equals(params.get("chat_id")))
                 .map(params -> params.get("reply_markup"))
                 .filter(Objects::nonNull)
                 .count();
@@ -211,7 +211,7 @@ public abstract class AbstractTelegramTest {
 
     protected static void assertSendMessageToChatIdIsInSilentMode(TelegramBot bot, Long chatId) {
         final var silent = getCapturedRequestParams(bot)
-                .filter(params -> params.get("chat_id").equals(chatId))
+                .filter(params -> chatId.equals(params.get("chat_id")))
                 .map(params -> params.get("disable_notification"))
                 .allMatch(Boolean.class::cast);
         assertTrue(silent, "Message attribute disable_notification was not found or is not true");
