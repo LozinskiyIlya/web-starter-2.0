@@ -182,7 +182,7 @@ class CallbackQueryUpdateListenerTest extends AbstractTelegramTest {
             // when
             listener.processUpdate(update, bot);
             // then
-            assertSentMessageToChatIdContainsText(bot, chatId, "Send bill information in any format");
+            assertSentMessageToChatIdContainsText(bot, chatId, "Send bill details in any format");
             assertFalse(stateMachine.inState(chatId, SET_CURRENCY));
         }
     }
