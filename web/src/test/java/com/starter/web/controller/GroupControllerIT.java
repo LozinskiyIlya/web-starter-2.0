@@ -22,6 +22,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -345,6 +346,29 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             final var updated = billCreator.groupRepository().findById(group.getId()).orElseThrow();
             assertThat(updated.getInsights()).isEqualTo(forceUpdateInsights);
             assertThat(updated.getInsightsUpdatedAt()).isAfter(YESTERDAY_INSTANT);
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and controls one minute timeout")
+        void controlsOneMinuteTimeout() {
+            // given
+            final var group = this.group.get();
+            // last update was only 30 seconds ago
+            group.setInsights("some value");
+            group.setInsightsUpdatedAt(Instant.now().minus(Duration.ofSeconds(30)));
+            billCreator.groupRepository().save(group);
+            doReturn("never called")
+                    .when(openAiAssistant).getInsights(Mockito.anyString());
+            // when
+            final var auth = token.get();
+            mockMvc.perform(getRequest("/" + group.getId() + "/insights")
+                            .header(auth.getFirst(), auth.getSecond())
+                            .param("forceUpdate", "true"))
+                    .andExpect(status().isTooManyRequests())
+                    .andReturn().getResponse().getContentAsString();
+            // then
+            Mockito.verify(openAiAssistant, Mockito.never()).getInsights(Mockito.anyString());
         }
     }
 

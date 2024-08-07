@@ -69,4 +69,11 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleServerError(Exception e) {
         return Collections.singletonMap("error", e.getMessage());
     }
+
+    @ExceptionHandler({RateLimitException.class})
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    @ResponseBody
+    public Map<String, String> handleRateLimitError(Exception e) {
+        return Collections.singletonMap("error", e.getMessage());
+    }
 }
