@@ -13,6 +13,7 @@ import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.BillDto;
 import com.starter.web.fragments.BillAssistantResponse;
+import com.starter.web.fragments.RecognitionRequest;
 import com.starter.web.mapper.BillMapper;
 import com.starter.web.service.MessageProcessor;
 import com.starter.web.service.bill.BillService;
@@ -21,8 +22,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
@@ -85,7 +85,7 @@ public class BillController {
 
     @PostMapping("")
     @Operation(summary = "Add bill", description = "Add bill to the group specified in dto")
-    public BillCreationResponse updateBill(@RequestBody @Valid BillDto billDto) {
+    public UUID updateBill(@RequestBody @Valid BillDto billDto) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var group = groupRepository.findById(billDto.getGroup().getId())
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
@@ -99,12 +99,12 @@ public class BillController {
         bill.setMessageId(Bill.DEFAULT_MESSAGE_ID);
         bill = billRepository.saveAndFlush(bill);
         publisher.publishEvent(new BillConfirmedEvent(this, bill.getId()));
-        return BillCreationResponse.builder().id(bill.getId()).build();
+        return bill.getId();
     }
 
     @PostMapping("/text")
     @Operation(summary = "Add bill", description = "Add bill by parsing a text")
-    public UUID addBill(@RequestBody @Valid BillController.RecognitionRequest request) {
+    public UUID addBill(@RequestBody @Valid RecognitionRequest request) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var userChatId = currentUser.getUserInfo().getTelegramChatId();
         final var group = request.getGroupId() == null ?
@@ -129,7 +129,7 @@ public class BillController {
 
     @PostMapping("/image")
     @Operation(summary = "Add bill", description = "Add bill with image recognition")
-    public UUID addBillFromImage(@RequestBody @Valid BillController.RecognitionRequest request) {
+    public UUID addBillFromImage(@RequestBody @Valid RecognitionRequest request) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var userChatId = currentUser.getUserInfo().getTelegramChatId();
         final var group = request.getGroupId() == null ?
@@ -216,18 +216,5 @@ public class BillController {
                 .toList();
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class BillCreationResponse {
-        private UUID id;
-    }
 
-    @Data
-    public static class RecognitionRequest {
-        private UUID groupId;
-        @NotBlank(message = "Bill details must be present")
-        private String details;
-    }
 }

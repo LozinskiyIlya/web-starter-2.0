@@ -227,7 +227,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .content(postContent))
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
-            final var createdBillId = mapper.readValue(response, BillController.BillCreationResponse.class).getId();
+            final var createdBillId = mapper.readValue(response, UUID.class);
             // then
             final var createdBill = billTestDataCreator.billRepository().findById(createdBillId).orElseThrow();
             assertThat(createdBill.getTags()).hasSize(1);
