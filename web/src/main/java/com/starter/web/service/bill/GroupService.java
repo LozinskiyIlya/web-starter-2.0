@@ -39,7 +39,6 @@ public class GroupService {
     private final OpenAiAssistant assistant;
     private final ObjectMapper objectMapper;
 
-
     public Page<GroupDto> getGroups(Pageable pageable) {
         return currentUserService.getUser()
                 .map(u -> groupRepository.findGroupsByOwnerOrderByLatestBill(u, pageable))
@@ -90,7 +89,6 @@ public class GroupService {
                     throw new Exceptions.WrongUserException();
                 });
     }
-
 
     @Transactional
     public InsightsDto getInsights(UUID groupId, boolean forceUpdate) {
