@@ -1,13 +1,11 @@
 package com.starter.web.controller;
 
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
-import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.GroupRepository;
@@ -20,7 +18,6 @@ import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,13 +27,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.starter.telegram.service.TelegramBillService.*;
-import static com.starter.telegram.service.render.TelegramStaticRenderer.renderBillSkipped;
+import static com.starter.telegram.service.TelegramBillService.NOT_RECOGNIZED_MESSAGE;
+import static com.starter.telegram.service.TelegramBillService.PROCESSING_ERROR_MESSAGE;
 
 @Slf4j
 @RestController
@@ -50,24 +44,10 @@ public class BillController {
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
     private final BillMapper billMapper;
-    private final TelegramBot telegramBot;
     private final ApplicationEventPublisher publisher;
     private final MessageProcessor messageProcessor;
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
-    private final ExecutorService billMessageExecutor = Executors.newFixedThreadPool(4);
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    @PreDestroy
-    public void destroy() {
-        billMessageExecutor.shutdown();
-        try {
-            billMessageExecutor.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {
-            log.error("Failed to stop executor", ex);
-            Thread.currentThread().interrupt();
-        }
-    }
 
     @GetMapping("/{billId}/preview")
     public BillDto getBillPreview(@PathVariable UUID billId) {
@@ -150,7 +130,7 @@ public class BillController {
         if (!bill.getGroup().getOwner().getId().equals(currentUser.getId())) {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
-        skipBill(bill, currentUser.getUserInfo());
+        billService.skipBill(bill, currentUser);
     }
 
     @DeleteMapping("")
@@ -167,7 +147,7 @@ public class BillController {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
         // skip all bills
-        bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
+        bills.forEach(bill -> billService.skipBill(bill, currentUser));
     }
 
     @GetMapping("/tags")
@@ -180,17 +160,4 @@ public class BillController {
                 .map(billMapper::toTagDto)
                 .toList();
     }
-
-
-    private void skipBill(Bill bill, UserInfo currentUserInfo) {
-        bill.setStatus(Bill.BillStatus.SKIPPED);
-        billRepository.save(bill);
-        billMessageExecutor.submit(() -> {
-            final var tgMessage = new SelfMadeTelegramMessage(bill.getMessageId());
-            final var message = renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
-            telegramBot.execute(message);
-        });
-    }
-
-
 }

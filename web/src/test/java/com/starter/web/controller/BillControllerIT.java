@@ -345,6 +345,37 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(createdBill.getCurrency()).isEqualTo("USD");
             assertThat(createdBill.getAmount()).isEqualTo(100.0);
         }
+
+        @SneakyThrows
+        @Transactional
+        @Test
+        @DisplayName("select Personal group if groupId not present")
+        void selectPersonal() {
+            // given
+            final var chatId = new EasyRandom().nextLong();
+            final var user = userCreator.givenUserInfoExists(ui -> ui.setTelegramChatId(chatId)).getUser();
+            final var personal = billCreator.givenGroupExists(g -> {
+                g.setOwner(user);
+                g.setChatId(chatId);
+            });
+            final var dto = new RecognitionRequest();
+            dto.setType(RecognitionRequest.RecognitionType.TEXT);
+            dto.setDetails("some bill details");
+            doReturn(assistantResponse("USD", 100.0))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any());
+            // when
+            final var token = userAuthHeader(user);
+            final var response = mockMvc.perform(postRequest("/parse")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final var createdBillId = mapper.readValue(response, UUID.class);
+            // then
+            final var createdBill = billCreator.billRepository().findById(createdBillId).orElseThrow();
+            assertThat(createdBill.getGroup().getId()).isEqualTo(personal.getId());
+        }
     }
 
     @Nested
