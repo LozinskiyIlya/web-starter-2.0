@@ -13,7 +13,6 @@ import com.starter.web.fragments.RecognitionRequest;
 import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
-import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -267,7 +266,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         void returns403IfNotOwner() {
             final var group = billCreator.givenGroupExists(b -> {
             });
-            final var dto = new EasyRandom().nextObject(RecognitionRequest.class);
+            final var dto = random.nextObject(RecognitionRequest.class);
             dto.setGroupId(group.getId());
             final var token = testUserAuthHeader(); // not group owner
             mockMvc.perform(postRequest("/parse")
@@ -282,7 +281,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("returns 404 if group not found")
         void returns404() {
             final var token = testUserAuthHeader();
-            final var dto = new EasyRandom().nextObject(RecognitionRequest.class);
+            final var dto = random.nextObject(RecognitionRequest.class);
             mockMvc.perform(postRequest("/parse")
                             .header(token.getFirst(), token.getSecond())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -352,7 +351,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("select Personal group if groupId not present")
         void selectPersonal() {
             // given
-            final var chatId = new EasyRandom().nextLong();
+            final var chatId = random.nextLong();
             final var user = userCreator.givenUserInfoExists(ui -> ui.setTelegramChatId(chatId)).getUser();
             final var personal = billCreator.givenGroupExists(g -> {
                 g.setOwner(user);

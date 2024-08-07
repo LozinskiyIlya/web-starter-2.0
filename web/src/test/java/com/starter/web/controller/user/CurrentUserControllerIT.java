@@ -3,7 +3,6 @@ package com.starter.web.controller.user;
 import com.starter.domain.repository.ApiActionRepository;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
-import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
         var pass = "current user password";
         var session = new MockHttpSession();
         session.setAttribute("pinEntered", true);
-        var chatId = new EasyRandom().nextObject(Long.class);
+        var chatId = random.nextObject(Long.class);
         final var user = userCreator.givenUserInfoExists(ui -> {
             ui.setUser(userCreator.givenUserExists(u -> {
                 u.setLogin(login);
