@@ -16,6 +16,7 @@ import com.starter.domain.entity.User;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
+import com.starter.web.fragments.BillAssistantResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -203,6 +204,14 @@ public abstract class AbstractSpringIntegrationTest {
             }
         }
         return true;
+    }
+
+    protected BillAssistantResponse assistantResponse(String currency, Double amount) {
+        final var response = BillAssistantResponse.EMPTY();
+        response.setCurrency(currency);
+        response.setAmount(amount);
+        response.setTags(new String[]{"Work"});
+        return response;
     }
 
 

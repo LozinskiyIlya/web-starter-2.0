@@ -68,5 +68,9 @@ public class Exceptions {
         public RecognitionException(String message) {
             super(message);
         }
+
+        public RecognitionException(Throwable cause, String message) {
+            super(message, cause);
+        }
     }
 }
