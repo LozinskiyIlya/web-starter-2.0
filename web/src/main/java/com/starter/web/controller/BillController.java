@@ -106,12 +106,7 @@ public class BillController {
     @Operation(summary = "Parse details", description = "Add bill by parsing a text or an image")
     public UUID parseBill(@RequestBody @Valid RecognitionRequest request) {
         final var currentUser = currentUserService.getUser().orElseThrow();
-        final var group = request.getGroupId() == null ?
-                groupRepository.findByChatId(currentUser.getUserInfo().getTelegramChatId()).orElseThrow(Exceptions.ResourceNotFoundException::new) :
-                groupRepository.findById(request.getGroupId()).orElseThrow(Exceptions.ResourceNotFoundException::new);
-        if (!group.getOwner().getId().equals(currentUser.getId())) {
-            throw new Exceptions.WrongUserException("You can't add bills to this group");
-        }
+        final var group = billService.selectGroupForAddingBill(request.getGroupId(), currentUser);
         BillAssistantResponse response;
         try {
             if (request.getType() == RecognitionRequest.RecognitionType.TEXT) {
@@ -175,16 +170,6 @@ public class BillController {
         bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
     }
 
-    private void skipBill(Bill bill, UserInfo currentUserInfo) {
-        bill.setStatus(Bill.BillStatus.SKIPPED);
-        billRepository.save(bill);
-        billMessageExecutor.submit(() -> {
-            final var tgMessage = new SelfMadeTelegramMessage(bill.getMessageId());
-            final var message = renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
-            telegramBot.execute(message);
-        });
-    }
-
     @GetMapping("/tags")
     public List<BillDto.BillTagDto> getTags() {
         final var userTags = currentUserService.getUser()
@@ -194,6 +179,17 @@ public class BillController {
         return Stream.concat(userTags.stream(), defaultTags.stream())
                 .map(billMapper::toTagDto)
                 .toList();
+    }
+
+
+    private void skipBill(Bill bill, UserInfo currentUserInfo) {
+        bill.setStatus(Bill.BillStatus.SKIPPED);
+        billRepository.save(bill);
+        billMessageExecutor.submit(() -> {
+            final var tgMessage = new SelfMadeTelegramMessage(bill.getMessageId());
+            final var message = renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
+            telegramBot.execute(message);
+        });
     }
 
 

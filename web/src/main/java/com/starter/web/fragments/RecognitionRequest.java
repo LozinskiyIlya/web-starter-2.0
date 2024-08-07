@@ -8,8 +8,6 @@ import java.util.UUID;
 
 @Data
 public class RecognitionRequest {
-
-    @NotNull(message = "Group id must be present")
     private UUID groupId;
     @NotBlank(message = "Bill details must be present")
     private String details;
