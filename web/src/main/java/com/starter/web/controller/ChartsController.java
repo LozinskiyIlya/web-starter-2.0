@@ -69,6 +69,16 @@ public class ChartsController {
         return chartData;
     }
 
+    @GetMapping("/totals")
+    public List<TotalDto> getTotals(
+            @RequestParam(value = "from", required = false) Instant from,
+            @RequestParam(value = "to", required = false) Instant to) {
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        final var groups = groupRepository.findAllByOwner(currentUser);
+        final var bills = billRepository.findAllNotSkippedByGroupInAndMentionedDateBetween(groups, from, to, Pageable.unpaged()).toList();
+        return chartsService.getTotals(bills);
+    }
+
 
     @Data
     public static class ChartData {
