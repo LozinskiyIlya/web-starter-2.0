@@ -22,8 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -38,7 +40,6 @@ public class GroupService {
     private final BillMapper billMapper;
     private final OpenAiAssistant assistant;
     private final ObjectMapper objectMapper;
-
 
     public Page<GroupDto> getGroups(Pageable pageable) {
         return currentUserService.getUser()
@@ -91,12 +92,20 @@ public class GroupService {
                 });
     }
 
-
     @Transactional
     public InsightsDto getInsights(UUID groupId, boolean forceUpdate) {
         final var group = groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
+
+        Optional.ofNullable(group.getInsightsUpdatedAt())
+                .filter(lastUpdate -> forceUpdate)
+                .map(lastUpdate -> Duration.between(lastUpdate, Instant.now()).toSeconds())
+                .filter(seconds -> seconds < 60)
+                .ifPresent(seconds -> {
+                    throw new Exceptions.RateLimitException("Insights can be updated only once per minute to ensure optimal performance. Please wait %d seconds before trying again".formatted(60 - seconds));
+                });
+
         if (StringUtils.hasText(group.getInsights()) && !forceUpdate) {
             return new InsightsDto(group.getInsights(), group.getInsightsUpdatedAt().toString());
         }

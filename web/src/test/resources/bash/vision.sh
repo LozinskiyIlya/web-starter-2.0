@@ -9,7 +9,7 @@ curl $ENDPOINT\
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d '{
-    "model": "gpt-4o-mini",
+    "model": "gpt-4o",
     "messages": [
       {
         "role": "user",

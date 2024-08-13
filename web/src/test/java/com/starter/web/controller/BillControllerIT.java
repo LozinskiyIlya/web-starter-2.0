@@ -5,15 +5,20 @@ import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
+import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
 import com.starter.web.configuration.openai.AssistantProperties;
 import com.starter.web.dto.BillDto;
+import com.starter.web.fragments.RecognitionRequest;
+import com.starter.web.service.openai.OpenAiAssistant;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 
 import java.util.Arrays;
@@ -22,16 +27,22 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class BillControllerIT extends AbstractSpringIntegrationTest {
 
+    @Autowired
+    private BillTestDataCreator billCreator;
 
     @Autowired
-    private BillTestDataCreator billTestDataCreator;
+    private UserTestDataCreator userCreator;
 
     @Autowired
     private AssistantProperties assistantProperties;
+
+    @SpyBean
+    private OpenAiAssistant openAiAssistant;
 
     @Nested
     @DisplayName("Get Bill")
@@ -41,7 +52,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 403 without token")
         void returns403() {
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
             mockMvc.perform(getRequest("/" + bill.getId()))
                     .andExpect(status().isForbidden());
@@ -62,9 +73,9 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("bill mapped properly")
         void billMappedProperly() {
             // given
-            final var group = billTestDataCreator.givenGroupExists(g -> {
+            final var group = billCreator.givenGroupExists(g -> {
             });
-            final var bill = billTestDataCreator.givenBillExists(b -> b.setGroup(group));
+            final var bill = billCreator.givenBillExists(b -> b.setGroup(group));
             final var token = testUserAuthHeader();
 
             // when
@@ -98,7 +109,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 403 without token")
         void returns403() {
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
             mockMvc.perform(postRequest("/" + bill.getId()))
                     .andExpect(status().isForbidden());
@@ -108,7 +119,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 403 if not bill owner")
         void returns403IfNotOwner() {
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
             final var token = testUserAuthHeader(); // not bill owner
             mockMvc.perform(postRequest("/" + bill.getId())
@@ -136,11 +147,11 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("bill updated properly")
         void billUpdatedProperly() {
             // given
-            final var defaultTag = ((BillTagRepository) billTestDataCreator.billTagRepository())
+            final var defaultTag = ((BillTagRepository) billCreator.billTagRepository())
                     .findByNameAndTagType("Work", BillTag.TagType.DEFAULT)
                     .orElseThrow();
-            final var bill = billTestDataCreator.givenBillExists(b -> b.setTags(Set.of(defaultTag)));
-            final var newTag = billTestDataCreator.givenBillTagExists(t -> t.setUser(bill.getGroup().getOwner()));
+            final var bill = billCreator.givenBillExists(b -> b.setTags(Set.of(defaultTag)));
+            final var newTag = billCreator.givenBillTagExists(t -> t.setUser(bill.getGroup().getOwner()));
             final var newPurpose = "New purpose" + UUID.randomUUID();
             final var postContent = readResource("requests/bill/bill_update.json")
                     .replaceAll("#BILL_ID#", bill.getId().toString())
@@ -156,7 +167,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .content(postContent))
                     .andExpect(status().isOk());
             // then
-            final var updatedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            final var updatedBill = billCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertThat(updatedBill.getTags()).hasSize(2);
             assertThat(updatedBill.getTags()).contains(newTag, defaultTag);
             assertThat(updatedBill.getPurpose()).isEqualTo(newPurpose);
@@ -181,7 +192,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 403 if not group owner")
         void returns403IfNotOwner() {
-            final var group = billTestDataCreator.givenGroupExists(b -> {
+            final var group = billCreator.givenGroupExists(b -> {
             });
             final var token = testUserAuthHeader(); // not group owner
             mockMvc.perform(postRequest("")
@@ -209,9 +220,9 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("bill added properly")
         void billAddedProperly() {
             // given
-            final var group = billTestDataCreator.givenGroupExists(b -> {
+            final var group = billCreator.givenGroupExists(b -> {
             });
-            final var workTag = ((BillTagRepository) billTestDataCreator.billTagRepository())
+            final var workTag = ((BillTagRepository) billCreator.billTagRepository())
                     .findByNameAndTagType("Work", BillTag.TagType.DEFAULT)
                     .orElseThrow();
             final var newPurpose = "New purpose" + UUID.randomUUID();
@@ -227,13 +238,142 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .content(postContent))
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
-            final var createdBillId = mapper.readValue(response, BillController.BillCreationResponse.class).getId();
+            final var createdBillId = mapper.readValue(response, UUID.class);
             // then
-            final var createdBill = billTestDataCreator.billRepository().findById(createdBillId).orElseThrow();
+            final var createdBill = billCreator.billRepository().findById(createdBillId).orElseThrow();
             assertThat(createdBill.getTags()).hasSize(1);
             assertThat(createdBill.getTags()).contains(workTag);
             assertThat(createdBill.getPurpose()).isEqualTo(newPurpose);
             assertThat(createdBill.getGroup().getId()).isEqualTo(group.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Parse Bill")
+    class ParseBill {
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 without token")
+        void returns403() {
+            mockMvc.perform(postRequest("/parse"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 403 if not group owner")
+        void returns403IfNotOwner() {
+            final var group = billCreator.givenGroupExists(b -> {
+            });
+            final var dto = random.nextObject(RecognitionRequest.class);
+            dto.setGroupId(group.getId());
+            final var token = testUserAuthHeader(); // not group owner
+            mockMvc.perform(postRequest("/parse")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("returns 404 if group not found")
+        void returns404() {
+            final var token = testUserAuthHeader();
+            final var dto = random.nextObject(RecognitionRequest.class);
+            mockMvc.perform(postRequest("/parse")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @SneakyThrows
+        @Transactional
+        @Test
+        @DisplayName("bill parsed properly from text")
+        void textParsedProperly() {
+            // given
+            final var group = billCreator.givenGroupExists();
+            final var dto = new RecognitionRequest();
+            dto.setType(RecognitionRequest.RecognitionType.TEXT);
+            dto.setGroupId(group.getId());
+            dto.setDetails("some bill details");
+            doReturn(assistantResponse("USD", 100.0))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any());
+            // when
+            final var token = userAuthHeader(group.getOwner());
+            final var response = mockMvc.perform(postRequest("/parse")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final var createdBillId = mapper.readValue(response, UUID.class);
+            // then
+            final var createdBill = billCreator.billRepository().findById(createdBillId).orElseThrow();
+            assertThat(createdBill.getCurrency()).isEqualTo("USD");
+            assertThat(createdBill.getAmount()).isEqualTo(100.0);
+        }
+
+        @SneakyThrows
+        @Transactional
+        @Test
+        @DisplayName("bill parsed properly from image")
+        void imageParsedProperly() {
+            // given
+            final var group = billCreator.givenGroupExists();
+            final var dto = new RecognitionRequest();
+            dto.setType(RecognitionRequest.RecognitionType.IMAGE);
+            dto.setGroupId(group.getId());
+            dto.setDetails("some bill details");
+            doReturn(assistantResponse("USD", 100.0))
+                    .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any(), Mockito.any());
+            // when
+            final var token = userAuthHeader(group.getOwner());
+            final var response = mockMvc.perform(postRequest("/parse")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final var createdBillId = mapper.readValue(response, UUID.class);
+            // then
+            final var createdBill = billCreator.billRepository().findById(createdBillId).orElseThrow();
+            assertThat(createdBill.getCurrency()).isEqualTo("USD");
+            assertThat(createdBill.getAmount()).isEqualTo(100.0);
+        }
+
+        @SneakyThrows
+        @Transactional
+        @Test
+        @DisplayName("select Personal group if groupId not present")
+        void selectPersonal() {
+            // given
+            final var chatId = random.nextLong();
+            final var user = userCreator.givenUserInfoExists(ui -> ui.setTelegramChatId(chatId)).getUser();
+            final var personal = billCreator.givenGroupExists(g -> {
+                g.setOwner(user);
+                g.setChatId(chatId);
+            });
+            final var dto = new RecognitionRequest();
+            dto.setType(RecognitionRequest.RecognitionType.TEXT);
+            dto.setDetails("some bill details");
+            doReturn(assistantResponse("USD", 100.0))
+                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any());
+            // when
+            final var token = userAuthHeader(user);
+            final var response = mockMvc.perform(postRequest("/parse")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final var createdBillId = mapper.readValue(response, UUID.class);
+            // then
+            final var createdBill = billCreator.billRepository().findById(createdBillId).orElseThrow();
+            assertThat(createdBill.getGroup().getId()).isEqualTo(personal.getId());
         }
     }
 
@@ -245,7 +385,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 403 without token")
         void returns403() {
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
             mockMvc.perform(deleteRequest("/" + bill.getId()))
                     .andExpect(status().isForbidden());
@@ -257,7 +397,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 403 if not bill owner")
         void returns403IfNotOwner() {
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
             final var token = testUserAuthHeader(); // not bill owner
             mockMvc.perform(deleteRequest("/" + bill.getId())
@@ -280,7 +420,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("bill skipped")
         void billSkipped() {
             // given
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
             // when
             final var token = userAuthHeader(bill.getGroup().getOwner());
@@ -288,7 +428,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .header(token.getFirst(), token.getSecond()))
                     .andExpect(status().isOk());
             // then
-            final var skippedBill = billTestDataCreator.billRepository().findById(bill.getId()).orElseThrow();
+            final var skippedBill = billCreator.billRepository().findById(bill.getId()).orElseThrow();
             assertThat(skippedBill.getStatus()).isEqualTo(Bill.BillStatus.SKIPPED);
         }
 
@@ -297,9 +437,9 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("all bills skipped")
         void allBillSkipped() {
             // given
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
             });
-            final var anotherBill = billTestDataCreator.givenBillExists(b -> {
+            final var anotherBill = billCreator.givenBillExists(b -> {
             });
             final var ids = List.of(bill.getId(), anotherBill.getId());
             // when
@@ -310,7 +450,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .content(mapper.writeValueAsString(ids)))
                     .andExpect(status().isOk());
             // then
-            billTestDataCreator.billRepository().findAllById(ids)
+            billCreator.billRepository().findAllById(ids)
                     .forEach(b -> assertThat(b.getStatus()).isEqualTo(Bill.BillStatus.SKIPPED));
         }
     }
@@ -332,7 +472,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @DisplayName("tags mapped properly")
         void tagsMappedProperly() {
             // given
-            final var userTag = billTestDataCreator.givenBillTagExists(t -> {
+            final var userTag = billCreator.givenBillTagExists(t -> {
             });
             final var token = userAuthHeader(userTag.getUser());
             // when

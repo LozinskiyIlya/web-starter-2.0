@@ -16,8 +16,11 @@ import com.starter.domain.entity.User;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.RoleRepository;
 import com.starter.domain.repository.UserRepository;
+import com.starter.web.fragments.BillAssistantResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
+import org.jeasy.random.EasyRandom;
+import org.jeasy.random.EasyRandomParameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,6 +55,7 @@ public abstract class AbstractSpringIntegrationTest {
     protected final String TEST_USER = "test_user";
     protected final String TEST_ADMIN = "test_admin";
     protected final String TEST_INTERNAL_ADMIN = "test_internal_admin";
+    protected final EasyRandom random = new EasyRandom(new EasyRandomParameters().seed(System.nanoTime()));
 
     @Autowired
     protected MockMvc mockMvc;
@@ -203,6 +207,14 @@ public abstract class AbstractSpringIntegrationTest {
             }
         }
         return true;
+    }
+
+    protected BillAssistantResponse assistantResponse(String currency, Double amount) {
+        final var response = BillAssistantResponse.EMPTY();
+        response.setCurrency(currency);
+        response.setAmount(amount);
+        response.setTags(new String[]{"Work"});
+        return response;
     }
 
 

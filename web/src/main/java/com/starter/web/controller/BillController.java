@@ -1,28 +1,25 @@
 package com.starter.web.controller;
 
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.starter.common.events.BillConfirmedEvent;
 import com.starter.common.exception.Exceptions;
 import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
-import com.starter.domain.entity.UserInfo;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.web.dto.BillDto;
 import com.starter.web.fragments.BillAssistantResponse;
+import com.starter.web.fragments.RecognitionRequest;
 import com.starter.web.mapper.BillMapper;
 import com.starter.web.service.MessageProcessor;
 import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
@@ -30,13 +27,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.starter.telegram.service.TelegramBillService.*;
-import static com.starter.telegram.service.render.TelegramStaticRenderer.renderBillSkipped;
+import static com.starter.telegram.service.TelegramBillService.NOT_RECOGNIZED_MESSAGE;
+import static com.starter.telegram.service.TelegramBillService.PROCESSING_ERROR_MESSAGE;
 
 @Slf4j
 @RestController
@@ -50,24 +44,10 @@ public class BillController {
     private final BillRepository billRepository;
     private final BillTagRepository billTagRepository;
     private final BillMapper billMapper;
-    private final TelegramBot telegramBot;
     private final ApplicationEventPublisher publisher;
     private final MessageProcessor messageProcessor;
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
-    private final ExecutorService billMessageExecutor = Executors.newFixedThreadPool(4);
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    @PreDestroy
-    public void destroy() {
-        billMessageExecutor.shutdown();
-        try {
-            billMessageExecutor.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {
-            log.error("Failed to stop executor", ex);
-            Thread.currentThread().interrupt();
-        }
-    }
 
     @GetMapping("/{billId}/preview")
     public BillDto getBillPreview(@PathVariable UUID billId) {
@@ -85,7 +65,7 @@ public class BillController {
 
     @PostMapping("")
     @Operation(summary = "Add bill", description = "Add bill to the group specified in dto")
-    public BillCreationResponse updateBill(@RequestBody @Valid BillDto billDto) {
+    public UUID updateBill(@RequestBody @Valid BillDto billDto) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var group = groupRepository.findById(billDto.getGroup().getId())
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
@@ -99,50 +79,25 @@ public class BillController {
         bill.setMessageId(Bill.DEFAULT_MESSAGE_ID);
         bill = billRepository.saveAndFlush(bill);
         publisher.publishEvent(new BillConfirmedEvent(this, bill.getId()));
-        return BillCreationResponse.builder().id(bill.getId()).build();
+        return bill.getId();
     }
 
-    @PostMapping("/text")
-    @Operation(summary = "Add bill", description = "Add bill by parsing a text")
-    public UUID addBill(@RequestBody @Valid BillController.RecognitionRequest request) {
+    @PostMapping("/parse")
+    @Operation(summary = "Parse details", description = "Add bill by parsing a text or an image")
+    public UUID parseBill(@RequestBody @Valid RecognitionRequest request) {
         final var currentUser = currentUserService.getUser().orElseThrow();
-        final var userChatId = currentUser.getUserInfo().getTelegramChatId();
-        final var group = request.getGroupId() == null ?
-                groupRepository.findByChatId(userChatId).orElseThrow() :
-                groupRepository.findById(request.getGroupId()).orElseThrow();
-        if (!group.getOwner().getId().equals(currentUser.getId())) {
-            throw new Exceptions.WrongUserException("You can't add bills to this group");
-        }
+        final var group = billService.selectGroupForAddingBill(request.getGroupId(), currentUser);
         BillAssistantResponse response;
         try {
-            response = openAiAssistant.runTextPipeline(currentUser.getId(), request.getDetails(), group.getDefaultCurrency());
+            if (request.getType() == RecognitionRequest.RecognitionType.TEXT) {
+                response = openAiAssistant.runTextPipeline(currentUser.getId(), request.getDetails(), group.getDefaultCurrency());
+            } else if (request.getType() == RecognitionRequest.RecognitionType.IMAGE) {
+                response = openAiAssistant.runFilePipeline(currentUser.getId(), request.getDetails(), "", group.getDefaultCurrency());
+            } else {
+                throw new Exceptions.RecognitionException("Invalid recognition type");
+            }
         } catch (Exception exception) {
-            throw new Exceptions.RecognitionException(PROCESSING_ERROR_MESSAGE);
-        }
-        if (messageProcessor.shouldSave(group, response)) {
-            final var created = billService.addBill(group, response);
-            created.setStatus(Bill.BillStatus.SENT);
-            return billRepository.save(created).getId();
-        }
-        throw new Exceptions.RecognitionException(NOT_RECOGNIZED_MESSAGE);
-    }
-
-    @PostMapping("/image")
-    @Operation(summary = "Add bill", description = "Add bill with image recognition")
-    public UUID addBillFromImage(@RequestBody @Valid BillController.RecognitionRequest request) {
-        final var currentUser = currentUserService.getUser().orElseThrow();
-        final var userChatId = currentUser.getUserInfo().getTelegramChatId();
-        final var group = request.getGroupId() == null ?
-                groupRepository.findByChatId(userChatId).orElseThrow() :
-                groupRepository.findById(request.getGroupId()).orElseThrow();
-        if (!group.getOwner().getId().equals(currentUser.getId())) {
-            throw new Exceptions.WrongUserException("You can't add bills to this group");
-        }
-        BillAssistantResponse response;
-        try {
-            response = openAiAssistant.runFilePipeline(currentUser.getId(), request.getDetails(), "", group.getDefaultCurrency());
-        } catch (Exception exception) {
-            throw new Exceptions.RecognitionException(PROCESSING_ERROR_MESSAGE);
+            throw new Exceptions.RecognitionException(exception, PROCESSING_ERROR_MESSAGE);
         }
         if (messageProcessor.shouldSave(group, response)) {
             final var created = billService.addBill(group, response);
@@ -175,7 +130,7 @@ public class BillController {
         if (!bill.getGroup().getOwner().getId().equals(currentUser.getId())) {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
-        skipBill(bill, currentUser.getUserInfo());
+        billService.skipBill(bill, currentUser);
     }
 
     @DeleteMapping("")
@@ -192,17 +147,7 @@ public class BillController {
             throw new Exceptions.WrongUserException("You can't skip this bill");
         }
         // skip all bills
-        bills.forEach(bill -> skipBill(bill, currentUser.getUserInfo()));
-    }
-
-    private void skipBill(Bill bill, UserInfo currentUserInfo) {
-        bill.setStatus(Bill.BillStatus.SKIPPED);
-        billRepository.save(bill);
-        billMessageExecutor.submit(() -> {
-            final var tgMessage = new SelfMadeTelegramMessage(bill.getMessageId());
-            final var message = renderBillSkipped(currentUserInfo.getTelegramChatId(), bill, tgMessage);
-            telegramBot.execute(message);
-        });
+        bills.forEach(bill -> billService.skipBill(bill, currentUser));
     }
 
     @GetMapping("/tags")
@@ -214,20 +159,5 @@ public class BillController {
         return Stream.concat(userTags.stream(), defaultTags.stream())
                 .map(billMapper::toTagDto)
                 .toList();
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class BillCreationResponse {
-        private UUID id;
-    }
-
-    @Data
-    public static class RecognitionRequest {
-        private UUID groupId;
-        @NotBlank(message = "Bill details must be present")
-        private String details;
     }
 }

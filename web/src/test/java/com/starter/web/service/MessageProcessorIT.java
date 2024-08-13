@@ -64,7 +64,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             final var tgMessageId = 1;
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
-            doReturn(response("USD", 100.0))
+            doReturn(assistantResponse("USD", 100.0))
                     .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
             final var responseMocked = Mockito.mock(SendResponse.class);
             final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
@@ -110,7 +110,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             final var message = "Breakfast - $0";
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
-            doReturn(response("USD", 0.001))
+            doReturn(assistantResponse("USD", 0.001))
                     .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
@@ -130,7 +130,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             final var message = "Breakfast - $0";
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
-            doReturn(response("USD", 0d))
+            doReturn(assistantResponse("USD", 0d))
                     .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
@@ -168,14 +168,6 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, group.getChatId(), PROCESSING_ERROR_MESSAGE);
         }
-    }
-
-    private BillAssistantResponse response(String currency, Double amount) {
-        final var response = BillAssistantResponse.EMPTY();
-        response.setCurrency(currency);
-        response.setAmount(amount);
-        response.setTags(new String[]{"Work"});
-        return response;
     }
 
     protected static void assertSentMessageToChatIdContainsText(TelegramBot bot, Long chatId, String shouldContain) {

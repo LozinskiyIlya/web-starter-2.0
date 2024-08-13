@@ -4,6 +4,7 @@ package com.starter.telegram.listener.query;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.AnswerCallbackQuery;
 import com.starter.telegram.listener.UpdateListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ public class CallbackQueryUpdateListener implements UpdateListener {
                 .map(executors::get)
                 .ifPresentOrElse(callbackExecutor -> callbackExecutor.execute(bot, callbackQuery, chatId),
                         () -> processLocally(bot, callbackQuery, chatId));
+        bot.execute(new AnswerCallbackQuery(callbackQuery.id()));
     }
 
     private void processLocally(TelegramBot bot, CallbackQuery query, Long chatId) {

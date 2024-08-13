@@ -68,5 +68,19 @@ public class Exceptions {
         public RecognitionException(String message) {
             super(message);
         }
+
+        public RecognitionException(Throwable cause, String message) {
+            super(message, cause);
+        }
+    }
+
+    public static class RateLimitException extends RuntimeException {
+        public RateLimitException(String message) {
+            super(message);
+        }
+
+        public RateLimitException(Throwable cause, String message) {
+            super(message, cause);
+        }
     }
 }

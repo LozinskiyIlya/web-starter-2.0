@@ -8,16 +8,21 @@ import com.starter.domain.repository.testdata.UserTestDataCreator;
 import com.starter.web.AbstractSpringIntegrationTest;
 import com.starter.web.dto.BillDto;
 import com.starter.web.dto.GroupDto;
+import com.starter.web.service.bill.GroupService.InsightsDto;
+import com.starter.web.service.openai.OpenAiAssistant;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -27,16 +32,21 @@ import static com.starter.domain.repository.testdata.TimeTestData.TODAY_INSTANT;
 import static com.starter.domain.repository.testdata.TimeTestData.YESTERDAY_INSTANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class GroupControllerIT extends AbstractSpringIntegrationTest {
 
 
     @Autowired
-    private BillTestDataCreator billTestDataCreator;
+    private BillTestDataCreator billCreator;
 
     @Autowired
     private UserTestDataCreator userTestDataCreator;
+
+    @SpyBean
+    private OpenAiAssistant openAiAssistant;
 
     @RequiredArgsConstructor
     abstract class GetGroup {
@@ -101,7 +111,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
                             .content("{\"currency\":\"" + currency + "\"}"))
                     .andExpect(expectedStatusPost.get()).andReturn().getResponse().getStatus();
             if (status == 200) {
-                final var changed = billTestDataCreator.groupRepository().findById(id).orElseThrow();
+                final var changed = billCreator.groupRepository().findById(id).orElseThrow();
                 assertEquals(currency, changed.getDefaultCurrency());
             }
         }
@@ -125,7 +135,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     @DisplayName("As non-existing user 403")
     public class AsNonExistingUser extends GetGroup {
         {
-            group = billTestDataCreator::givenGroupExists;
+            group = billCreator::givenGroupExists;
             token = GroupControllerIT.this::userAuthHeaderUnchecked;
             expectedStatusGet = status()::isForbidden;
             expectedStatusPost = expectedStatusGet;
@@ -137,7 +147,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
     @DisplayName("As some user 403")
     public class AsSomeUser extends GetGroup {
         {
-            group = billTestDataCreator::givenGroupExists;
+            group = billCreator::givenGroupExists;
             token = GroupControllerIT.this::testUserAuthHeader;
             expectedStatusGet = status()::isForbidden;
             expectedStatusPost = expectedStatusGet;
@@ -153,7 +163,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
             }).getUser();
             final var member = userTestDataCreator.givenUserInfoExists(ui -> {
             }).getUser();
-            group = () -> billTestDataCreator.givenGroupExists(g -> {
+            group = () -> billCreator.givenGroupExists(g -> {
                 g.setOwner(owner);
                 g.setMembers(List.of(owner, member));
             });
@@ -170,7 +180,7 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         {
             final var owner = userTestDataCreator.givenUserInfoExists(ui -> {
             }).getUser();
-            group = () -> billTestDataCreator.givenGroupExists(g -> {
+            group = () -> billCreator.givenGroupExists(g -> {
                 g.setOwner(owner);
                 g.setMembers(List.of(owner));
             });
@@ -186,11 +196,11 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         void groupMappedProperly() {
             // given
             final var group = this.group.get();
-            final var bill = billTestDataCreator.givenBillExists(b -> {
+            final var bill = billCreator.givenBillExists(b -> {
                 b.setGroup(group);
                 b.setMentionedDate(YESTERDAY_INSTANT);
             });
-            billTestDataCreator.givenBillExists(skippedBill -> {
+            billCreator.givenBillExists(skippedBill -> {
                 skippedBill.setGroup(group);
                 skippedBill.setStatus(Bill.BillStatus.SKIPPED);
                 skippedBill.setMentionedDate(TODAY_INSTANT);
@@ -229,12 +239,12 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
         void groupsSortedByLastBill() {
             // given
             final var group = this.group.get();
-            final var anotherGroup = billTestDataCreator.givenGroupExists(g -> g.setOwner(group.getOwner()));
-            billTestDataCreator.givenBillExists(b -> {
+            final var anotherGroup = billCreator.givenGroupExists(g -> g.setOwner(group.getOwner()));
+            billCreator.givenBillExists(b -> {
                 b.setGroup(anotherGroup);
                 b.setMentionedDate(TODAY_INSTANT);
             });
-            billTestDataCreator.givenBillExists(b -> {
+            billCreator.givenBillExists(b -> {
                 b.setGroup(group);
                 b.setMentionedDate(YESTERDAY_INSTANT);
             });
@@ -255,6 +265,110 @@ class GroupControllerIT extends AbstractSpringIntegrationTest {
                     .map(Instant::parse)
                     .map(Instant::toEpochMilli).toList();
             isSortedDescending(dates);
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and insights work")
+        void insightsWork() {
+            // given
+            final var group = this.group.get();
+            final var insightsReturned = "some insights";
+            doReturn(insightsReturned)
+                    .when(openAiAssistant).getInsights(Mockito.anyString());
+            // when
+            final var auth = token.get();
+            final var response = mockMvc.perform(getRequest("/" + group.getId() + "/insights")
+                            .header(auth.getFirst(), auth.getSecond()))
+                    .andExpect(expectedStatusGet.get())
+                    .andReturn().getResponse().getContentAsString();
+            // then
+            final var dto = mapper.readValue(response, InsightsDto.class);
+            assertThat(dto.text()).isEqualTo(insightsReturned);
+            // and saves to the group
+            final var updated = billCreator.groupRepository().findById(group.getId()).orElseThrow();
+            assertThat(updated.getInsights()).isEqualTo(insightsReturned);
+            assertNotNull(updated.getInsightsUpdatedAt());
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and returns cached insights")
+        void returnsCachedInsights() {
+            // given
+            final var cachedInsights = "cached insights";
+            final var group = this.group.get();
+            group.setInsights(cachedInsights);
+            group.setInsightsUpdatedAt(Instant.now());
+            billCreator.groupRepository().save(group);
+            doReturn("never called")
+                    .when(openAiAssistant).getInsights(Mockito.anyString());
+            // when
+            final var auth = token.get();
+            final var response = mockMvc.perform(getRequest("/" + group.getId() + "/insights")
+                            .header(auth.getFirst(), auth.getSecond()))
+                    .andExpect(expectedStatusGet.get())
+                    .andReturn().getResponse().getContentAsString();
+            // then
+            final var dto = mapper.readValue(response, InsightsDto.class);
+            assertThat(dto.text()).isEqualTo(cachedInsights);
+            // and never calls assistant
+            Mockito.verify(openAiAssistant, Mockito.never()).getInsights(Mockito.anyString());
+            // and group is not updated
+            final var notUpdated = billCreator.groupRepository().findById(group.getId()).orElseThrow();
+            assertThat(notUpdated.getInsights()).isEqualTo(cachedInsights);
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and forcefully updates insights")
+        void forceUpdateInsights() {
+            // given
+            final var cachedInsights = "cached insights";
+            final var forceUpdateInsights = "forcefully updated insights";
+            final var group = this.group.get();
+            group.setInsights(cachedInsights);
+            group.setInsightsUpdatedAt(YESTERDAY_INSTANT);
+            billCreator.groupRepository().save(group);
+            doReturn(forceUpdateInsights)
+                    .when(openAiAssistant).getInsights(Mockito.anyString());
+            // when
+            final var auth = token.get();
+            final var response = mockMvc.perform(getRequest("/" + group.getId() + "/insights")
+                            .header(auth.getFirst(), auth.getSecond())
+                            .param("forceUpdate", "true"))
+                    .andExpect(expectedStatusGet.get())
+                    .andReturn().getResponse().getContentAsString();
+            // then
+            final var dto = mapper.readValue(response, InsightsDto.class);
+            assertThat(dto.text()).isEqualTo(forceUpdateInsights);
+            // and group is updated
+            final var updated = billCreator.groupRepository().findById(group.getId()).orElseThrow();
+            assertThat(updated.getInsights()).isEqualTo(forceUpdateInsights);
+            assertThat(updated.getInsightsUpdatedAt()).isAfter(YESTERDAY_INSTANT);
+        }
+
+        @SneakyThrows
+        @Test
+        @DisplayName("and controls one minute timeout")
+        void controlsOneMinuteTimeout() {
+            // given
+            final var group = this.group.get();
+            // last update was only 30 seconds ago
+            group.setInsights("some value");
+            group.setInsightsUpdatedAt(Instant.now().minus(Duration.ofSeconds(30)));
+            billCreator.groupRepository().save(group);
+            doReturn("never called")
+                    .when(openAiAssistant).getInsights(Mockito.anyString());
+            // when
+            final var auth = token.get();
+            mockMvc.perform(getRequest("/" + group.getId() + "/insights")
+                            .header(auth.getFirst(), auth.getSecond())
+                            .param("forceUpdate", "true"))
+                    .andExpect(status().isTooManyRequests())
+                    .andReturn().getResponse().getContentAsString();
+            // then
+            Mockito.verify(openAiAssistant, Mockito.never()).getInsights(Mockito.anyString());
         }
     }
 

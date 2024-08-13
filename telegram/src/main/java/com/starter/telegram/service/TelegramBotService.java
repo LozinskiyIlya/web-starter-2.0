@@ -79,7 +79,9 @@ public class TelegramBotService {
             updates.stream().map(UpdateWrapper::new).forEach(update ->
                     updatesExecutor.submit(() -> {
                         try {
-                            if (update.message() != null && update.message().from().isBot()) {
+                            if (update.message() != null &&
+                                    (update.message().from().isBot() ||
+                                            update.message().viaBot() != null)) {
                                 log.warn("Ignoring bot message: {}", update.message().text());
                                 return;
                             }
@@ -97,6 +99,9 @@ public class TelegramBotService {
     private UpdateListener selectListener(Update update) {
         if (update.callbackQuery() != null) {
             return listeners.get(CallbackQueryUpdateListener.class);
+        }
+        if (update.inlineQuery() != null) {
+            return listeners.get(InlineQueryUpdateListener.class);
         }
         final var message = update.message();
         if (message == null) {
