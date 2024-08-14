@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -62,6 +63,11 @@ public class BillController {
         return billRepository.findById(billId)
                 .map(billMapper::toDto)
                 .orElseThrow(Exceptions.ResourceNotFoundException::new);
+    }
+
+    @GetMapping("/{billId}/attachment")
+    public URI getBillAttachment(@PathVariable UUID billId) {
+        return billRepository.findAttachmentById(billId);
     }
 
     @PostMapping("")

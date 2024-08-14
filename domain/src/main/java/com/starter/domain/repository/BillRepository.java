@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -65,6 +66,9 @@ public interface BillRepository extends Repository<Bill>, PagingAndSortingReposi
             "GROUP BY b.currency " +
             "ORDER BY COUNT(b.currency) DESC")
     List<String> findMostUsedCurrenciesByGroupIn(@Param("groups") List<Group> groups, Pageable pageable);
+
+    @Query("select b.attachment from Bill b where b.id = :id")
+    URI findAttachmentById(@Param("id") UUID id);
 
     default Bill findFirstNotSkippedByGroupOrderByMentionedDateDesc(Group group) {
         Pageable pageable = PageRequest.of(0, 1);
