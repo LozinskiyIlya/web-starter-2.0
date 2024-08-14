@@ -3,7 +3,9 @@ package com.starter.web.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.response.SendResponse;
+import com.starter.common.events.TelegramFileMessageEvent;
 import com.starter.common.events.TelegramTextMessageEvent;
+import com.starter.common.utils.CustomFileUtils;
 import com.starter.domain.repository.BillRepository;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
@@ -30,6 +32,7 @@ import static com.starter.telegram.service.TelegramBillService.PROCESSING_ERROR_
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 
@@ -46,6 +49,9 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
 
     @Autowired
     private MessageProcessor messageProcessor;
+
+    @Autowired
+    private String downloadDirectory;
 
     @SpyBean
     private OpenAiAssistant openAiAssistant;
@@ -167,6 +173,66 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             // then
             await().pollDelay(2, TimeUnit.SECONDS).until(() -> true);
             assertSentMessageToChatIdContainsText(bot, group.getChatId(), PROCESSING_ERROR_MESSAGE);
+        }
+    }
+
+    @Nested
+    @DisplayName("File messages")
+    class FileMessages {
+
+        @Test
+        @DisplayName("save attachment local file")
+        void saveAttachmentLocalFile() {
+            // given
+            final var caption = "some caption";
+            final var fileUrl = "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Invoice3.pdf";
+            final var localFileUrl = CustomFileUtils.saveRemoteFileAndReturnPath(fileUrl, "Invoice3.pdf", downloadDirectory);
+            final var tgMessageId = 1;
+            doReturn(assistantResponse("USD", 100.0))
+                    .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.anyString(), Mockito.eq(caption), Mockito.any());
+            final var responseMocked = Mockito.mock(SendResponse.class);
+            final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
+            when(messageMocked.messageId()).thenReturn(tgMessageId);
+            when(responseMocked.message()).thenReturn(messageMocked);
+            doReturn(responseMocked).when(bot).execute(Mockito.any());
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramFileMessageEvent(this,
+                    new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), localFileUrl, caption, tgMessageId)));
+            // then - bill is created asynchronously
+            await().atMost(10, TimeUnit.SECONDS)
+                    .until(() -> billRepository.findAllByGroup(group).stream().filter(b -> b.getAttachment() != null).count() > 0);
+            var bill = billRepository.findAllByGroup(group).get(0);
+            assertTrue(bill.getAttachment().toString().contains(bill.getId().toString()));
+        }
+
+        @Test
+        @DisplayName("save attachment remote file")
+        void saveAttachmentRemoteFile() {
+            // given
+            final var caption = "some caption";
+            final var fileUrl = "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Invoice3.pdf";
+            final var tgMessageId = 1;
+            doReturn(assistantResponse("USD", 100.0))
+                    .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.anyString(), Mockito.eq(caption), Mockito.any());
+            final var responseMocked = Mockito.mock(SendResponse.class);
+            final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
+            when(messageMocked.messageId()).thenReturn(tgMessageId);
+            when(responseMocked.message()).thenReturn(messageMocked);
+            doReturn(responseMocked).when(bot).execute(Mockito.any());
+            var user = userCreator.givenUserInfoExists(ui -> {
+            }).getUser();
+            var group = billCreator.givenGroupExists(g -> g.setOwner(user));
+            // when
+            messageProcessor.processMessage(new TelegramFileMessageEvent(this,
+                    new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, caption, tgMessageId)));
+            // then - bill is created asynchronously
+            await().atMost(10, TimeUnit.SECONDS)
+                    .until(() -> billRepository.findAllByGroup(group).stream().filter(b -> b.getAttachment() != null).count() == 1);
+            var bill = billRepository.findAllByGroup(group).get(0);
+            assertTrue(bill.getAttachment().toString().contains(bill.getId().toString()));
         }
     }
 

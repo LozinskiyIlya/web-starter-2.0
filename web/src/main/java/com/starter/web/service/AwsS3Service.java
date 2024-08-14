@@ -79,6 +79,10 @@ public class AwsS3Service {
                 final var multipart = CustomFileUtils.base64ToMultipartFile(attachment, fileName);
                 return uploadAttachment(bill, multipart);
             }
+            if (type.equals(AttachmentType.FILE_URL)) {
+                final var multipart = CustomFileUtils.filePathToMultipartFile(fileName);
+                return uploadAttachment(bill, multipart);
+            }
         } catch (Exception e) {
             log.error("Failed to upload attachment", e);
         }

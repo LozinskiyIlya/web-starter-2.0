@@ -25,8 +25,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -318,7 +321,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         }
 
         @SneakyThrows
-        @Transactional
         @Test
         @DisplayName("bill parsed properly from image")
         void imageParsedProperly() {
@@ -327,7 +329,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             final var dto = new RecognitionRequest();
             dto.setType(RecognitionRequest.RecognitionType.IMAGE);
             dto.setGroupId(group.getId());
-            dto.setDetails("some bill details");
+            dto.setDetails("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAB0lEQVR42mP8/wcAAwAB/IDx4XwAAAAASUVORK5CYII=");
+            dto.setFileName("image.png");
             doReturn(assistantResponse("USD", 100.0))
                     .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any(), Mockito.any());
             // when
@@ -340,9 +343,13 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                     .andReturn().getResponse().getContentAsString();
             final var createdBillId = mapper.readValue(response, UUID.class);
             // then
+            // attachment uploading is async
+            await().atMost(10, TimeUnit.SECONDS)
+                    .until(() -> billCreator.billRepository().findById(createdBillId).filter(b -> b.getAttachment() != null).isPresent());
             final var createdBill = billCreator.billRepository().findById(createdBillId).orElseThrow();
             assertThat(createdBill.getCurrency()).isEqualTo("USD");
             assertThat(createdBill.getAmount()).isEqualTo(100.0);
+            assertTrue(createdBill.getAttachment().toString().contains(createdBill.getId().toString()));
         }
 
         @SneakyThrows

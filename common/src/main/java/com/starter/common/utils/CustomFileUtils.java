@@ -11,12 +11,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 @Slf4j
 public class CustomFileUtils {
 
-    public static String downloadFileFromUrl(String fileUrl, String outputFileName, String outputDirectory) {
+    public static String saveRemoteFileAndReturnPath(String fileUrl, String outputFileName, String outputDirectory) {
         RestTemplate restTemplate = new RestTemplate();
         File output;
         if (StringUtils.hasText(outputDirectory)) {
@@ -62,6 +64,31 @@ public class CustomFileUtils {
             return new ByteArrayMultipartFile(decodedBytes, fileName, contentType == null ? "application/octet-stream" : contentType);
         } catch (Exception e) {
             log.error("Failed to convert base64 to MultipartFile", e);
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static MultipartFile filePathToMultipartFile(String filePath) {
+        try {
+            byte[] bytes;
+            if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+                RestTemplate restTemplate = new RestTemplate();
+                Resource resource = restTemplate.getForObject(filePath, Resource.class);
+
+                if (resource != null) {
+                    try (InputStream inputStream = resource.getInputStream()) {
+                        bytes = inputStream.readAllBytes();
+                    }
+                } else {
+                    throw new IllegalArgumentException("Resource not found: " + filePath);
+                }
+            } else {
+                bytes = Files.readAllBytes(Paths.get(filePath));
+            }
+            final var contentType = URLConnection.guessContentTypeFromName(filePath);
+            return new ByteArrayMultipartFile(bytes, filePath, contentType);
+        } catch (Exception e) {
+            log.error("Failed to convert file path to MultipartFile", e);
             throw new IllegalArgumentException(e);
         }
     }

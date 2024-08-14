@@ -76,7 +76,7 @@ public abstract class AbstractChatUpdateListener implements UpdateListener {
                 String downloadUrl = bot.getFullFilePath(file);
                 // Use this URL to download the file
                 log.info("Download URL: {}", downloadUrl);
-                return CustomFileUtils.downloadFileFromUrl(downloadUrl, document.fileName(), downloadDirectory);
+                return CustomFileUtils.saveRemoteFileAndReturnPath(downloadUrl, document.fileName(), downloadDirectory);
             }
         }
         return extractPhotoFromUpdate(update, bot);
