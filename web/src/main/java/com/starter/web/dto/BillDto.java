@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.net.URI;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ public class BillDto {
     private Bill.BillStatus status;
     private Set<BillTagDto> tags;
     private GroupLightDto group;
+    private URI attachment;
 
     @Data
     public static class BillTagDto {

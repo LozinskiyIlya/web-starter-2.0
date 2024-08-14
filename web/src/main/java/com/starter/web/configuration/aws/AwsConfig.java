@@ -28,7 +28,7 @@ public class AwsConfig {
                 .withCredentials(new AWSStaticCredentialsProvider(
                         awsCredentials
                 ))
-                .withRegion("us-east-1")
+                .withRegion("eu-central-1")
                 .build();
     }
 
