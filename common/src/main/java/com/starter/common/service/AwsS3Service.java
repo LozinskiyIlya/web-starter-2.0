@@ -20,7 +20,7 @@ import static java.util.UUID.randomUUID;
  * Persist files to file storage
  */
 @Service
-public class ImageService {
+public class AwsS3Service {
     private static final String APP_FOLDER = "ai-counting";
     private static final String AVATAR_PREFIX = "avatar-";
     private static final String ATTACHMENT_PREFIX = "attach-";
@@ -28,7 +28,7 @@ public class ImageService {
     private final S3Properties properties;
     private final CdnProperties cdnProperties;
 
-    public ImageService(@Qualifier("starter") AmazonS3 client,
+    public AwsS3Service(@Qualifier("starter") AmazonS3 client,
                         S3Properties properties,
                         CdnProperties cdnProperties) {
         this.client = client;

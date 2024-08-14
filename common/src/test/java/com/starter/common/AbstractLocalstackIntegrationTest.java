@@ -5,6 +5,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.starter.common.config.CdnProperties;
 import com.starter.common.config.S3Properties;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 /**
  * Base class to initialize aws testcontainers
@@ -45,6 +44,15 @@ abstract class AbstractLocalstackIntegrationTest {
     ));
 
     private final Set<LocalStackContainer.Service> initializedAwsServices = new HashSet<>();
+
+    @Autowired
+    protected AmazonS3 s3;
+
+    @Autowired
+    protected S3Properties s3Properties;
+
+    @Autowired
+    protected CdnProperties cdnProperties;
 
     @BeforeAll
     static void startLocalstackContainer() {
@@ -64,11 +72,6 @@ abstract class AbstractLocalstackIntegrationTest {
         registry.add("cloud.aws.credentials.secret-key", credentials::getAWSSecretKey);
     }
 
-    @Autowired
-    private AmazonS3 s3;
-
-    @Autowired
-    private S3Properties s3Properties;
 
     @BeforeEach
     void createBucketIfNotExists() {
@@ -92,7 +95,7 @@ abstract class AbstractLocalstackIntegrationTest {
         public AmazonS3 s3() {
             return AmazonS3ClientBuilder.standard()
                     .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                            LOCALSTACK.getEndpointOverride(SQS).toString(),
+                            LOCALSTACK.getEndpointOverride(S3).toString(),
                             LOCALSTACK.getRegion()))
                     .withCredentials(CREDENTIALS_PROVIDER)
                     .build();
