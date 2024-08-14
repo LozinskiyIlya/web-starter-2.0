@@ -5,10 +5,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.net.URLConnection;
 
 
 @Slf4j
@@ -48,6 +50,19 @@ public class CustomFileUtils {
             }
         } catch (Exception e) {
             log.error("Failed to delete local the file: " + filePath, e);
+        }
+    }
+
+    public static MultipartFile base64ToMultipartFile(String base64, String fileName) {
+        try {
+            final var contentType = URLConnection.guessContentTypeFromName(fileName);
+            final var parts = base64.split(",");
+            final var base64Data = parts[1];
+            byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Data);
+            return new ByteArrayMultipartFile(decodedBytes, fileName, contentType == null ? "application/octet-stream" : contentType);
+        } catch (Exception e) {
+            log.error("Failed to convert base64 to MultipartFile", e);
+            throw new IllegalArgumentException(e);
         }
     }
 }

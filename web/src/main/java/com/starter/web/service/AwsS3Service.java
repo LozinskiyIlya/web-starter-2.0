@@ -3,11 +3,13 @@ package com.starter.web.service;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.starter.common.utils.CustomFileUtils;
 import com.starter.web.configuration.aws.CdnProperties;
 import com.starter.web.configuration.aws.S3Properties;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.User;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,7 @@ import static java.util.UUID.randomUUID;
 /**
  * Persist files to file storage
  */
+@Slf4j
 @Service
 public class AwsS3Service {
     private static final String APP_FOLDER = "ai-counting";
@@ -70,6 +73,18 @@ public class AwsS3Service {
         return cdnProperties.getHost().resolve("/").resolve(key);
     }
 
+    public URI uploadAttachment(Bill bill, String attachment, String fileName, AttachmentType type) {
+        try {
+            if (type.equals(AttachmentType.BASE_64)) {
+                final var multipart = CustomFileUtils.base64ToMultipartFile(attachment, fileName);
+                return uploadAttachment(bill, multipart);
+            }
+        } catch (Exception e) {
+            log.error("Failed to upload attachment", e);
+        }
+        return null;
+    }
+
     private String s3AvatarFolderKey(User user) {
         return String.format("%s/users/%s/avatar/", APP_FOLDER, user.getId());
     }
@@ -88,5 +103,10 @@ public class AwsS3Service {
         var split = filename.split("/");
         var appendix = split[split.length - 1];
         return s3AvatarFolderKey(user) + appendix;
+    }
+
+    public enum AttachmentType {
+        FILE_URL,
+        BASE_64
     }
 }

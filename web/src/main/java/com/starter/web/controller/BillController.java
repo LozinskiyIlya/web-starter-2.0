@@ -13,6 +13,7 @@ import com.starter.web.dto.BillDto;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.fragments.RecognitionRequest;
 import com.starter.web.mapper.BillMapper;
+import com.starter.web.service.AwsS3Service.AttachmentType;
 import com.starter.web.service.MessageProcessor;
 import com.starter.web.service.bill.BillService;
 import com.starter.web.service.openai.OpenAiAssistant;
@@ -88,11 +89,13 @@ public class BillController {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var group = billService.selectGroupForAddingBill(request.getGroupId(), currentUser);
         BillAssistantResponse response;
+        String base64 = null;
         try {
             if (request.getType() == RecognitionRequest.RecognitionType.TEXT) {
                 response = openAiAssistant.runTextPipeline(currentUser.getId(), request.getDetails(), group.getDefaultCurrency());
             } else if (request.getType() == RecognitionRequest.RecognitionType.IMAGE) {
-                response = openAiAssistant.runFilePipeline(currentUser.getId(), request.getDetails(), "", group.getDefaultCurrency());
+                base64 = request.getDetails();
+                response = openAiAssistant.runFilePipeline(currentUser.getId(), base64, "", group.getDefaultCurrency());
             } else {
                 throw new Exceptions.RecognitionException("Invalid recognition type");
             }
@@ -102,6 +105,7 @@ public class BillController {
         if (messageProcessor.shouldSave(group, response)) {
             final var created = billService.addBill(group, response);
             created.setStatus(Bill.BillStatus.SENT);
+            billService.addAttachment(created, base64, request.getFileName(), AttachmentType.BASE_64);
             return billRepository.save(created).getId();
         }
         throw new Exceptions.RecognitionException(NOT_RECOGNIZED_MESSAGE);

@@ -74,7 +74,7 @@ public class ImgToTextTransformer {
         return outputFilePath.toString();
     }
 
-    public String visionTransform(String imageUrl, String caption) {
+    public String visionTransform(String imageUrlOrBase64String, String caption) {
         final var fullPrompt = StringUtils.hasText(caption) ?
                 VISION_USER_PROMPT.formatted(caption) + VISION_PROMPT :
                 VISION_PROMPT;
@@ -85,7 +85,7 @@ public class ImgToTextTransformer {
                 .messages(List.of(
                         new ChatMessage(
                                 VISION_MESSAGE_ROLE,
-                                getVisionContent(fullPrompt, imageUrl)
+                                getVisionContent(fullPrompt, imageUrlOrBase64String)
                         )))
                 .build());
         return response.getChoices().get(0).getMessage().getContent();

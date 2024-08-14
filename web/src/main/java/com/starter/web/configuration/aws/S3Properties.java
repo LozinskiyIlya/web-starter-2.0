@@ -16,4 +16,7 @@ public class S3Properties {
 
     @NotBlank
     private String attachmentBucketName;
+
+    private String accessKey;
+    private String secretKey;
 }
