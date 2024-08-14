@@ -27,7 +27,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,7 +35,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = AbstractTelegramTest.AbstractUpdateListenerTestConfig.class)
-public abstract class AbstractTelegramTest {
+public abstract class AbstractTelegramTest  {
 
     @Autowired
     protected BillTestDataCreator billTestDataCreator;
