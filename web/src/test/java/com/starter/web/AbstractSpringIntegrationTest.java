@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(AbstractSpringIntegrationTest.AbstractSpringIntegrationTestConfig.class)
-public abstract class AbstractSpringIntegrationTest {
+public abstract class AbstractSpringIntegrationTest extends AbstractLocalstackIntegrationTest{
 
     protected final String TEST_USER = "test_user";
     protected final String TEST_ADMIN = "test_admin";

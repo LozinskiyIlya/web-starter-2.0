@@ -1,10 +1,10 @@
-package com.starter.common.service;
+package com.starter.web.service;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.starter.common.config.CdnProperties;
-import com.starter.common.config.S3Properties;
+import com.starter.web.configuration.aws.CdnProperties;
+import com.starter.web.configuration.aws.S3Properties;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.User;
 import lombok.SneakyThrows;

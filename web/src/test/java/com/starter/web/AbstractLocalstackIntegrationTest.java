@@ -1,12 +1,12 @@
-package com.starter.common;
+package com.starter.web;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.starter.common.config.CdnProperties;
-import com.starter.common.config.S3Properties;
+import com.starter.web.configuration.aws.CdnProperties;
+import com.starter.web.configuration.aws.S3Properties;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.BeforeAll;

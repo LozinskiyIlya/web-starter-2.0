@@ -1,8 +1,8 @@
-package com.starter.common.service;
+package com.starter.web.service;
 
-import com.starter.common.AbstractCommonSpringIntegrationTest;
 import com.starter.domain.repository.testdata.BillTestDataCreator;
 import com.starter.domain.repository.testdata.UserTestDataCreator;
+import com.starter.web.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AwsS3ServiceIT extends AbstractCommonSpringIntegrationTest {
+public class AwsS3ServiceIT extends AbstractSpringIntegrationTest {
 
     @Autowired
     private UserTestDataCreator userCreator;
@@ -29,7 +29,7 @@ public class AwsS3ServiceIT extends AbstractCommonSpringIntegrationTest {
     void uploadsAvatar() throws IOException {
         //given
         final var user = userCreator.givenUserExists();
-        final var image = new ClassPathResource("files/jerry.jpg");
+        final var image = new ClassPathResource("files/jpg/jerry.jpg");
         final var mockMultipart = new MockMultipartFile("file", "qwe/rty/cool_image.jpeg", "image/jpeg", image.getInputStream());
         //when
         final var uri = awsS3Service.uploadAvatar(user, mockMultipart);
@@ -45,7 +45,7 @@ public class AwsS3ServiceIT extends AbstractCommonSpringIntegrationTest {
     void uploadsAttachment() throws IOException {
         //given
         final var bill = billCreator.givenBillExists();
-        final var image = new ClassPathResource("files/Invoice3.pdf");
+        final var image = new ClassPathResource("files/pdf/Invoice3.pdf");
         final var mockMultipart = new MockMultipartFile("file", "qwe/rty/cool_invoice.pdf", "application/pdf", image.getInputStream());
         //when
         final var uri = awsS3Service.uploadAttachment(bill, mockMultipart);

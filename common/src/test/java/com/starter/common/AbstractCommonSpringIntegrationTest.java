@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Import;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(AbstractCommonSpringIntegrationTest.CommonSpringIntegrationTestConfig.class)
-public class AbstractCommonSpringIntegrationTest extends AbstractLocalstackIntegrationTest {
+public class AbstractCommonSpringIntegrationTest{
 
     @TestConfiguration
     public static class CommonSpringIntegrationTestConfig {

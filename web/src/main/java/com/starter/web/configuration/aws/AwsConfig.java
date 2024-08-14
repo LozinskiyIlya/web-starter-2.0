@@ -1,4 +1,4 @@
-package com.starter.common.config;
+package com.starter.web.configuration.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
