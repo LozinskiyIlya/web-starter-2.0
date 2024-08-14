@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootTest
 @Import(AbstractCommonSpringIntegrationTest.CommonSpringIntegrationTestConfig.class)
-public class AbstractCommonSpringIntegrationTest {
+public class AbstractCommonSpringIntegrationTest extends AbstractLocalstackIntegrationTest {
 
     @TestConfiguration
     public static class CommonSpringIntegrationTestConfig {

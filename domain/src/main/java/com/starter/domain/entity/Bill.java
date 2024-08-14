@@ -8,6 +8,7 @@ import org.hibernate.annotations.Loader;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -61,6 +62,7 @@ public class Bill extends AbstractEntity {
     private Instant mentionedDate;
     private String buyer;
     private String seller;
+    private URI attachment;
 
     public enum BillStatus {
         NEW, SENT, CONFIRMED, SKIPPED
