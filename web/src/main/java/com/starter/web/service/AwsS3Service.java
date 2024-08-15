@@ -12,6 +12,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
@@ -63,11 +64,11 @@ public class AwsS3Service {
             throw new IllegalArgumentException();
         }
         final var extension = originalName.substring(originalName.lastIndexOf('.'));
-        final var name = originalName.substring(originalName.lastIndexOf('/'));
-        var key = s3AttachmentFileKey(bill, ATTACHMENT_PREFIX + randomUUID() + name + extension);
+        var key = s3AttachmentFileKey(bill, ATTACHMENT_PREFIX + randomUUID() + extension);
         var metadata = new ObjectMetadata();
         metadata.setContentType(file.getContentType());
         metadata.setContentLength(file.getSize());
+        metadata.setContentDisposition(s3ContentDisposition(bill, extension));
         try (var stream = file.getInputStream()) {
             client.putObject(new PutObjectRequest(properties.getAttachmentBucketName(), key, stream, metadata));
         }
@@ -108,6 +109,15 @@ public class AwsS3Service {
         var split = filename.split("/");
         var appendix = split[split.length - 1];
         return s3AvatarFolderKey(user) + appendix;
+    }
+
+    private String s3ContentDisposition(Bill bill, String extension) {
+        var downloadAs = bill.getId().toString().substring(0, 8);
+        if (StringUtils.hasText(bill.getPurpose())) {
+            downloadAs = bill.getPurpose().length() > 24 ? bill.getPurpose().substring(0, 24) : bill.getPurpose();
+        }
+        downloadAs = downloadAs.replaceAll("[\\s-]", "_");
+        return String.format("attachment; filename=%s%s", downloadAs, extension);
     }
 
     public enum AttachmentType {
