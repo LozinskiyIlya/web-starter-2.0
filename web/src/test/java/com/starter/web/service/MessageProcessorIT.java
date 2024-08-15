@@ -202,7 +202,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             messageProcessor.processMessage(new TelegramFileMessageEvent(this,
                     new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), localFileUrl, caption, tgMessageId)));
             // then - bill is created asynchronously
-            await().atMost(10, TimeUnit.SECONDS)
+            await().atMost(5, TimeUnit.SECONDS)
                     .until(() -> billRepository.findAllByGroup(group).stream().filter(b -> b.getAttachment() != null).count() > 0);
             var bill = billRepository.findAllByGroup(group).get(0);
             assertTrue(bill.getAttachment().toString().contains(bill.getId().toString()));
@@ -229,7 +229,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             messageProcessor.processMessage(new TelegramFileMessageEvent(this,
                     new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), fileUrl, caption, tgMessageId)));
             // then - bill is created asynchronously
-            await().atMost(10, TimeUnit.SECONDS)
+            await().atMost(5, TimeUnit.SECONDS)
                     .until(() -> billRepository.findAllByGroup(group).stream().filter(b -> b.getAttachment() != null).count() == 1);
             var bill = billRepository.findAllByGroup(group).get(0);
             assertTrue(bill.getAttachment().toString().contains(bill.getId().toString()));

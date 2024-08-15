@@ -62,8 +62,9 @@ public class AwsS3Service {
         if (originalName == null) {
             throw new IllegalArgumentException();
         }
-        String extension = originalName.substring(originalName.lastIndexOf('.'));
-        var key = s3AttachmentFileKey(bill, ATTACHMENT_PREFIX + randomUUID() + extension);
+        final var extension = originalName.substring(originalName.lastIndexOf('.'));
+        final var name = originalName.substring(originalName.lastIndexOf('/'));
+        var key = s3AttachmentFileKey(bill, ATTACHMENT_PREFIX + randomUUID() + name + extension);
         var metadata = new ObjectMetadata();
         metadata.setContentType(file.getContentType());
         metadata.setContentLength(file.getSize());
