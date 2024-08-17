@@ -80,7 +80,7 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
 
     @Test
     @DisplayName("Return 403 when user is missing")
-    void whenUserIsMissingReturn500() throws Exception {
+    void whenUserIsMissingReturn403() throws Exception {
         var header = userAuthHeaderUnchecked(UUID.randomUUID().toString());
         mockMvc.perform(getRequest("")
                         .header(header.getFirst(), header.getSecond()))
