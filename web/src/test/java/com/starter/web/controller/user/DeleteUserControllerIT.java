@@ -46,7 +46,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
 
     @Override
     protected String controllerPath() {
-        return "/api/users/delete";
+        return "/api/user/delete";
     }
 
     private static String bodyWithPassword(String password) {
@@ -289,6 +289,28 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
     }
 
     @Nested
+    @DisplayName("As user with internal admin role")
+    class AsUserWithInternalAdminRole extends AsUserWithSomeRole {
+
+        public AsUserWithInternalAdminRole() {
+            super(() -> givenUserWithInternalAdminRoleExists(u -> u.setPassword(passwordEncoder.encode("password"))));
+        }
+
+        @Test
+        @SneakyThrows
+        @DisplayName("Can call for other user with own password")
+        void canSelfCallAsAdmin() {
+            var admin = givenUserWithInternalAdminRoleExists(u -> u.setPassword(passwordEncoder.encode("password")));
+            var otherUser = givenUserExists(u -> u.setPassword(passwordEncoder.encode("other password")));
+            var header = userAuthHeader(admin);
+            mockMvc.perform(deleteRequest("/" + otherUser.getId()).header(header.getFirst(), header.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(bodyWithPassword("password")))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Nested
     @DisplayName("On user deletion")
     @TestComponent
     class OnUserDeletion implements UserInfoTestData, UserSettingsTestData {
@@ -355,7 +377,7 @@ class DeleteUserControllerIT extends AbstractSpringIntegrationTest implements Us
             var deleteAction = actions.get(0);
             assertEquals(user.getId(), deleteAction.getUserId());
             assertEquals(user.getLogin(), deleteAction.getUserQualifier());
-            assertTrue(deleteAction.getPath().contains("/api/users/delete/"));
+            assertTrue(deleteAction.getPath().contains("/api/user/delete/"));
             assertEquals("DELETE", deleteAction.getMetadata().getHttpMethod());
         }
 
