@@ -44,9 +44,7 @@ class UserInfoRepositoryIT extends AbstractRepositoryTest<UserInfo> implements R
     UserInfo createEntity() {
         var user = givenUserExists(u -> u.setRole(givenRoleExists((r) -> {
         })));
-        return givenUserInfoExists(u -> {
-            u.setUser(user);
-        });
+        return givenUserInfoExists(u -> u.setUser(user));
     }
 
     @Test
@@ -54,9 +52,7 @@ class UserInfoRepositoryIT extends AbstractRepositoryTest<UserInfo> implements R
     void userInfoIsMappedToUser(){
         final var user = template.execute(t -> givenUserExists(u -> u.setRole(givenRoleExists((r) -> {
                     }))));
-        final var userInfo = template.execute(t -> givenUserInfoExists(ui -> {
-            ui.setUser(user);
-        }));
+        final var userInfo = template.execute(t -> givenUserInfoExists(ui -> ui.setUser(user)));
         template.executeWithoutResult(t -> {
             final var fetched = userRepository.findById(user.getId()).orElseThrow();
             assertNotNull(fetched.getUserInfo());
