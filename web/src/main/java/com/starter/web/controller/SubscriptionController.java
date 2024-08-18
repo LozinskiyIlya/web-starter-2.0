@@ -28,14 +28,7 @@ public class SubscriptionController {
     public SubscriptionDto getSubscription() {
         final var current = currentUserService.getUser().orElseThrow();
         return subscriptionRepository.findOneByUser(current)
-                .map(subscription -> {
-                    SubscriptionDto dto = new SubscriptionDto();
-                    dto.setCreatedAt(subscription.getCreatedAt());
-                    dto.setEndsAt(subscription.getEndsAt());
-                    dto.setCurrency(subscription.getCurrency());
-                    dto.setPrice(subscription.getPrice());
-                    return dto;
-                })
-                .orElse(null);
+                .map(SubscriptionDto::fromSubscription)
+                .orElseGet(SubscriptionDto::EMPTY);
     }
 }

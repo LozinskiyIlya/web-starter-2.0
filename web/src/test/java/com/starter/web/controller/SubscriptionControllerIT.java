@@ -8,11 +8,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class SubscriptionControllerIT extends AbstractSpringIntegrationTest {
@@ -29,6 +29,7 @@ class SubscriptionControllerIT extends AbstractSpringIntegrationTest {
         final var subscription = userCreator.givenSubscriptionExists(s -> {
             s.setPrice(random.nextDouble());
             s.setCurrency(random.nextObject(String.class));
+            s.setEndsAt(LocalDateTime.now().plusMonths(1).toInstant(ZoneOffset.UTC));
         });
         final var header = userAuthHeader(subscription.getUser());
         final var response = mockMvc.perform(getRequest("")
@@ -40,17 +41,37 @@ class SubscriptionControllerIT extends AbstractSpringIntegrationTest {
         assertEquals(subscription.getPrice(), dto.getPrice());
         assertNotNull(dto.getCreatedAt());
         assertNotNull(dto.getEndsAt());
+        assertTrue(dto.isActive());
     }
 
     @Test
-    @DisplayName("Returns null if not premium")
-    void returnNullIfNotPremium() throws Exception {
-        final var user = userCreator.givenUserExists();
-        final var header = userAuthHeader(user);
-        mockMvc.perform(getRequest("")
+    @DisplayName("Returns active:false if expired")
+    void returnNotActiveIfExpired() throws Exception {
+        final var subscription = userCreator.givenSubscriptionExists(s -> {
+            s.setPrice(random.nextDouble());
+            s.setCurrency(random.nextObject(String.class));
+            s.setEndsAt(LocalDateTime.now().minusDays(1).toInstant(ZoneOffset.UTC));
+        });
+        final var header = userAuthHeader(subscription.getUser());
+        final var response = mockMvc.perform(getRequest("")
                         .header(header.getFirst(), header.getSecond()))
                 .andExpect(status().isOk())
-                .andExpect(content().string(""));
+                .andReturn().getResponse().getContentAsString();
+        final var dto = mapper.readValue(response, SubscriptionDto.class);
+        assertFalse(dto.isActive());
+    }
+
+    @Test
+    @DisplayName("Returns active:false if no subscriptions")
+    void returnNotActiveIfNoSubscriptions() throws Exception {
+        final var user = userCreator.givenUserExists();
+        final var header = userAuthHeader(user);
+        final var response = mockMvc.perform(getRequest("")
+                        .header(header.getFirst(), header.getSecond()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        final var dto = mapper.readValue(response, SubscriptionDto.class);
+        assertFalse(dto.isActive());
     }
 
 
