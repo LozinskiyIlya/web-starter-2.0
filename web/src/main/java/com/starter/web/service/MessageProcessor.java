@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import static com.starter.common.utils.CustomFileUtils.deleteLocalFile;
 
@@ -45,7 +46,7 @@ public class MessageProcessor {
         final var content = payload.getSecond();
         final var group = groupRepository.findById(groupId).orElseThrow();
         try {
-            final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), content, group.getDefaultCurrency());
+            final var response = openAiAssistant.runTextPipeline(content, group.getDefaultCurrency(), Set.of());
             save(group, response, Bill.DEFAULT_MESSAGE_ID, null);
         } catch (Exception e) {
             log.error("Error while processing message", e);
@@ -64,7 +65,7 @@ public class MessageProcessor {
         final var messageId = payload.messageId();
         final var group = groupRepository.findById(groupId).orElseThrow();
         try {
-            final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
+            final var response = openAiAssistant.runFilePipeline(fileUrl, caption, group.getDefaultCurrency(), Set.of());
             save(group, response, messageId, fileUrl);
         } catch (Exception e) {
             log.error("Error while processing message", e);

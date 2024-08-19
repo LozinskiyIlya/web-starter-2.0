@@ -17,10 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.starter.web.service.openai.StaticPromptRenderer.*;
 
@@ -61,18 +58,21 @@ public class OpenAiAssistant {
         return openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
     }
 
-    public BillAssistantResponse runFilePipeline(UUID userId, String filePathOrBase64String, @Nullable String caption, @Nullable String defaultCurrency) {
+    public BillAssistantResponse runFilePipeline(
+            String filePathOrBase64String,
+            @Nullable String caption,
+            @Nullable String defaultCurrency,
+            Set<String> customTags) {
         final var extension = filePathOrBase64String.substring(filePathOrBase64String.lastIndexOf('.') + 1);
         if (!extension.equals("pdf")) {
             final var textOnImage = transformer.visionTransform(filePathOrBase64String, caption);
-            return runTextPipeline(userId, textOnImage, defaultCurrency);
+            return runTextPipeline(textOnImage, defaultCurrency, customTags);
         }
-        final var filePrompt = fullFilePrompt(caption, defaultCurrency);
+        final var filePrompt = fullFilePrompt(caption, defaultCurrency, customTags);
         final var uploaded = openAiFileManager.uploadFile(filePathOrBase64String);
         try {
             final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                     .assistantId(ASSISTANT_ID)
-                    .metadata(Map.of("user_id", userId.toString()))
                     .thread(ThreadRequest.builder()
                             .messages(List.of(MessageRequest.builder()
                                             .role("assistant")
@@ -93,12 +93,15 @@ public class OpenAiAssistant {
         }
     }
 
-    public BillAssistantResponse runTextPipeline(UUID userId, String forwardedMessage, @Nullable String defaultCurrency) {
+    public BillAssistantResponse runTextPipeline(
+            String forwardedMessage,
+            @Nullable String defaultCurrency,
+            Set<String> customTags) {
         final var withed = trimUserMessage(forwardedMessage);
         final var listOfMessages = new LinkedList<MessageRequest>();
         listOfMessages.add(MessageRequest.builder()
                 .role("assistant")
-                .content(runInstructions(defaultCurrency))
+                .content(runInstructions(defaultCurrency, customTags))
                 .build());
         listOfMessages.add(MessageRequest.builder()
                 .role("user")

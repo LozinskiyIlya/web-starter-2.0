@@ -101,10 +101,10 @@ public class BillController {
         String base64 = null;
         try {
             if (request.getType() == RecognitionRequest.RecognitionType.TEXT) {
-                response = openAiAssistant.runTextPipeline(currentUser.getId(), request.getDetails(), group.getDefaultCurrency());
+                response = openAiAssistant.runTextPipeline(request.getDetails(), group.getDefaultCurrency(), Set.of());
             } else if (request.getType() == RecognitionRequest.RecognitionType.IMAGE) {
                 base64 = request.getDetails();
-                response = openAiAssistant.runFilePipeline(currentUser.getId(), base64, "", group.getDefaultCurrency());
+                response = openAiAssistant.runFilePipeline(base64, "", group.getDefaultCurrency(), Set.of());
             } else {
                 throw new Exceptions.RecognitionException("Invalid recognition type");
             }

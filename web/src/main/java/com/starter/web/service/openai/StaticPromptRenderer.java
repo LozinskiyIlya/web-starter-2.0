@@ -3,6 +3,7 @@ package com.starter.web.service.openai;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Set;
 
 public class StaticPromptRenderer {
 
@@ -25,6 +26,7 @@ public class StaticPromptRenderer {
     public static final String VISION_USER_PROMPT = "User has sent the file along with the CAPTION: %s\n";
     public static final String VISION_PROMPT = "Extract Amount, currency, purpose/place, category, and datetime if present, no additional comments please. To do this, consider CAPTION at the first place, and only then file content.";
     private static final String DEFAULT_CURRENCY_PROMPT = "If currency is not parseable use %s";
+    private static final String CUSTOM_TAGS_PROMPT = "For TAGS also consider these user-defined tags: %s";
     private static final int MAX_USER_TEXT_LENGTH = 1024;
 
     public static String trimUserMessage(String text) {
@@ -32,15 +34,16 @@ public class StaticPromptRenderer {
         return withed.trim();
     }
 
-    public static String runInstructions(String defaultCurrency) {
+    public static String runInstructions(String defaultCurrency, Set<String> customTags) {
         final var dateInstruction = "Current date: " + Instant.now().atZone(ZoneId.of("UTC"));
         final var currencyInstruction = defaultCurrency != null ? String.format(DEFAULT_CURRENCY_PROMPT, defaultCurrency) : "";
-        return dateInstruction + "\n" + currencyInstruction;
+        final var tagsInstruction = customTags != null && !customTags.isEmpty() ? String.format(CUSTOM_TAGS_PROMPT, customTags) : "";
+        return dateInstruction + "\n" + currencyInstruction + "\n" + tagsInstruction;
     }
 
-    public static String fullFilePrompt(String caption, String defaultCurrency) {
+    public static String fullFilePrompt(String caption, String defaultCurrency, Set<String> customTags) {
         final var withedCaption = caption != null ? trimUserMessage(caption) : "";
-        final var runInstructions = runInstructions(defaultCurrency);
+        final var runInstructions = runInstructions(defaultCurrency, customTags);
         return String.format(FILE_PROMPT, runInstructions, withedCaption);
     }
 }
