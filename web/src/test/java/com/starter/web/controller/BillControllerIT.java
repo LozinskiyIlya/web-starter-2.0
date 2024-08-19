@@ -506,6 +506,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         @Test
         @DisplayName("returns 400 if name already exists")
         void returns400IfNameExists() throws Exception {
+            // given
             final var user = userCreator.givenSubscriptionExists(s -> {
             }).getUser();
             final var existingName = billCreator.givenBillTagExists(t -> {
@@ -518,6 +519,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             final var dto = random.nextObject(BillDto.BillTagDto.class);
             dto.setName(existingName);
             dto.setTagType(BillTag.TagType.USER_DEFINED);
+            // when then
             mockMvc.perform(postRequest("/tags")
                             .header(token.getFirst(), token.getSecond())
                             .contentType(MediaType.APPLICATION_JSON)
