@@ -14,6 +14,8 @@ import org.hibernate.annotations.Where;
 @Entity
 @Table(name = "bill_tags", indexes = {
         @Index(name = "bill_tags_user_id_fk_index", columnList = "user_id")
+}, uniqueConstraints =  {
+        @UniqueConstraint(name = "bill_tags_name_user_id_unique", columnNames = {"name", "user_id", "tag_type"})
 })
 @SQLDelete(sql = "UPDATE bill_tags SET state='DELETED' WHERE id=?")
 @Loader(namedQuery = "findNonDeletedBillTagsById")

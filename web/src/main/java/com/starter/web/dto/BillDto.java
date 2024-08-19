@@ -33,8 +33,11 @@ public class BillDto {
     @Data
     public static class BillTagDto {
         private UUID id;
+        @NotBlank(message = "Tag name is required")
         private String name;
+        @NotNull(message = "Tag color is required")
         private String hexColor;
+        @NotNull(message = "Tag type is required")
         private BillTag.TagType tagType;
     }
 }

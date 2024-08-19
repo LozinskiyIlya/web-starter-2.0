@@ -1,6 +1,7 @@
 package com.starter.web.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.starter.common.exception.Exceptions;
 import com.starter.domain.entity.Bill;
 import com.starter.domain.entity.BillTag;
 import com.starter.domain.repository.BillTagRepository;
@@ -11,7 +12,9 @@ import com.starter.web.configuration.openai.AssistantProperties;
 import com.starter.web.dto.BillDto;
 import com.starter.web.fragments.RecognitionRequest;
 import com.starter.web.service.openai.OpenAiAssistant;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,12 +23,15 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -494,6 +500,58 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(dto).anyMatch(t -> t.getName().equals(userTag.getName()));
             Arrays.stream(assistantProperties.getBillTags()).forEach(tag -> assertThat(dto).anyMatch(t -> t.getName().equals(tag)));
         }
+    }
+
+    @Nested
+    @DisplayName("Create Tag")
+    class CreateTag {
+
+        @Test
+        @DisplayName("returns 403 without token")
+        void returns403() throws Exception {
+            mockMvc.perform(postRequest("/tags"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("returns 400 if name already exists")
+        void returns400IfNameExists() throws Exception {
+            final var userTag = billCreator.givenBillTagExists(t ->
+                    t.setName(UUID.randomUUID().toString()));
+            final var token = userAuthHeader(userTag.getUser());
+            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            dto.setName(userTag.getName());
+            dto.setTagType(BillTag.TagType.USER_DEFINED);
+            mockMvc.perform(postRequest("/tags")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isBadRequest());
+        }
+
+
+        @Test
+        @DisplayName("tag created properly")
+        void tagCreatedProperly() throws Exception {
+            // given
+            final var user = userCreator.givenUserExists();
+            final var token = userAuthHeader(user);
+            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            // when
+            final var response = mockMvc.perform(postRequest("/tags")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final var createdTagId = mapper.readValue(response, UUID.class);
+            // then
+            final var createdTag = billCreator.billTagRepository().findById(createdTagId).orElseThrow();
+            assertThat(createdTag.getName()).isEqualTo(dto.getName());
+            assertThat(createdTag.getHexColor()).isEqualTo(dto.getHexColor());
+            assertThat(createdTag.getTagType()).isEqualTo(dto.getTagType());
+        }
+
     }
 
     private static final String MIN_FIELDS_DTO = "{\"group\": {\"id\" : \"%s\"}, \"purpose\": \"Purpose\", \"amount\": 100, \"currency\": \"USD\"}";

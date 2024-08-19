@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -169,5 +170,18 @@ public class BillController {
         return Stream.concat(userTags.stream(), defaultTags.stream())
                 .map(billMapper::toTagDto)
                 .toList();
+    }
+
+    @PostMapping("/tags")
+    @Operation(summary = "Create tag", description = "Create custom tag from DTO")
+    public UUID createTag(@RequestBody @Valid BillDto.BillTagDto dto) {
+        final var current = currentUserService.getUser().orElseThrow();
+        final var newTag = billMapper.toTagEntity(dto);
+        newTag.setUser(current);
+        try {
+            return billTagRepository.save(newTag).getId();
+        } catch (DataIntegrityViolationException e) {
+            throw new Exceptions.ValidationException("Tag with this name already exists");
+        }
     }
 }
