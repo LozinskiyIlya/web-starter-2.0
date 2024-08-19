@@ -46,7 +46,7 @@ public class MessageProcessor {
         final var group = groupRepository.findById(groupId).orElseThrow();
         try {
             final var response = openAiAssistant.runTextPipeline(group.getOwner().getId(), content, group.getDefaultCurrency());
-            save(group, response, Bill.DEFAULT_MESSAGE_ID);
+            save(group, response, Bill.DEFAULT_MESSAGE_ID, null);
         } catch (Exception e) {
             log.error("Error while processing message", e);
             publisher.publishEvent(new ProcessingErrorEvent(this, Pair.of(group.getChatId(), Bill.DEFAULT_MESSAGE_ID)));
@@ -65,7 +65,7 @@ public class MessageProcessor {
         final var group = groupRepository.findById(groupId).orElseThrow();
         try {
             final var response = openAiAssistant.runFilePipeline(group.getOwner().getId(), fileUrl, caption, group.getDefaultCurrency());
-            save(group, response, messageId);
+            save(group, response, messageId, fileUrl);
         } catch (Exception e) {
             log.error("Error while processing message", e);
             publisher.publishEvent(new ProcessingErrorEvent(this, Pair.of(group.getChatId(), messageId)));
@@ -108,9 +108,10 @@ public class MessageProcessor {
                 }).count() >= MIN_FIELDS_FILLED;
     }
 
-    private void save(Group group, BillAssistantResponse response, int messageId) {
+    private void save(Group group, BillAssistantResponse response, int messageId, String fileUrl) {
         if (shouldSave(group, response)) {
             final var bill = billService.addBill(group, response);
+            billService.addAttachment(bill, fileUrl, fileUrl, AwsS3Service.AttachmentType.FILE_URL);
             log.info("Bill created: {}", bill);
             publisher.publishEvent(new BillCreatedEvent(this, Pair.of(bill.getId(), messageId)));
         } else {

@@ -15,11 +15,13 @@ import com.starter.domain.repository.UserInfoRepository;
 import com.starter.telegram.service.TelegramBillService;
 import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.mapper.BillMapper;
+import com.starter.web.service.AwsS3Service;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -42,15 +44,19 @@ public class BillService {
     private final BillMapper billMapper;
     private final ObjectMapper objectMapper;
     private final TelegramBot telegramBot;
+    private final AwsS3Service fileStorage;
 
     private final ExecutorService billMessageExecutor = Executors.newFixedThreadPool(4);
+    private final ExecutorService billAttachmentExecutor = Executors.newSingleThreadExecutor();
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @PreDestroy
     public void destroy() {
         billMessageExecutor.shutdown();
+        billAttachmentExecutor.shutdown();
         try {
-            billMessageExecutor.awaitTermination(15, TimeUnit.SECONDS);
+            billMessageExecutor.awaitTermination(10, TimeUnit.SECONDS);
+            billAttachmentExecutor.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
             log.error("Failed to stop executor", ex);
             Thread.currentThread().interrupt();
@@ -94,4 +100,15 @@ public class BillService {
         return group;
     }
 
+
+    public void addAttachment(Bill bill, String attachment, String fileName, AwsS3Service.AttachmentType type) {
+        if (!StringUtils.hasText(attachment)) {
+            return;
+        }
+        billAttachmentExecutor.submit(() -> {
+            final var uri = fileStorage.uploadAttachment(bill, attachment, fileName, type);
+            bill.setAttachment(uri);
+            billRepository.save(bill);
+        });
+    }
 }

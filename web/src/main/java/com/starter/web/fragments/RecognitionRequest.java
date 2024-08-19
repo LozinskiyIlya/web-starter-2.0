@@ -13,6 +13,7 @@ public class RecognitionRequest {
     private String details;
     @NotNull(message = "Recognition type must be present")
     private RecognitionType type;
+    private String fileName;
 
     public enum RecognitionType {
         TEXT, IMAGE

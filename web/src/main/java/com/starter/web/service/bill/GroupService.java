@@ -48,7 +48,6 @@ public class GroupService {
                 .orElseThrow();
     }
 
-    @Transactional
     public List<GroupMemberDto> getGroupMembers(UUID groupId) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
@@ -60,7 +59,6 @@ public class GroupService {
                 .toList();
     }
 
-    @Transactional
     public Page<BillDto> getGroupBills(UUID groupId, Pageable pageable) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
@@ -70,7 +68,6 @@ public class GroupService {
 
     }
 
-    @Transactional
     public GroupDto getGroup(UUID groupId) {
         return groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)
@@ -92,7 +89,6 @@ public class GroupService {
                 });
     }
 
-    @Transactional
     public InsightsDto getInsights(UUID groupId, boolean forceUpdate) {
         final var group = groupRepository.findById(groupId)
                 .filter(this::hasAccessToViewGroup)

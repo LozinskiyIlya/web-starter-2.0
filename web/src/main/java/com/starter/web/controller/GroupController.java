@@ -50,7 +50,7 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}/bills")
-    public Page<BillDto> getGroupBills(@PathVariable UUID groupId, @PageableDefault Pageable pageable) {
+    public Page<BillDto> getGroupBills(@PathVariable UUID groupId, @PageableDefault(size = 20) Pageable pageable) {
         return groupService.getGroupBills(groupId, pageable);
     }
 

@@ -1,10 +1,7 @@
 package com.starter.domain.repository.testdata;
 
 
-import com.starter.domain.entity.Role;
-import com.starter.domain.entity.User;
-import com.starter.domain.entity.UserInfo;
-import com.starter.domain.entity.UserSettings;
+import com.starter.domain.entity.*;
 import com.starter.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,14 +10,13 @@ import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
-public class UserTestDataCreator implements UserTestData, UserInfoTestData, UserSettingsTestData {
+public class UserTestDataCreator implements UserTestData, UserInfoTestData, UserSettingsTestData, SubscriptionTestData {
 
     private final UserInfoRepository userInfoRepository;
     private final UserSettingsRepository userSettingsRepository;
-
     private final UserRepository userRepository;
-
     private final RoleRepository roleRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     public User givenUserExists() {
         return givenUserExists(u -> {
@@ -55,6 +51,15 @@ public class UserTestDataCreator implements UserTestData, UserInfoTestData, User
         return UserSettingsTestData.super.givenUserSettingsExists(fullyConfigure);
     }
 
+    public Subscription givenSubscriptionExists(Consumer<Subscription> configure) {
+        Consumer<Subscription> fullyConfigure = s -> {
+            s.setUser(givenUserExists(u -> {
+            }));
+            configure.accept(s);
+        };
+        return SubscriptionTestData.super.givenSubscriptionExists(fullyConfigure);
+    }
+
     @Override
     public Repository<UserInfo> userInfoRepository() {
         return userInfoRepository;
@@ -73,5 +78,10 @@ public class UserTestDataCreator implements UserTestData, UserInfoTestData, User
     @Override
     public Repository<UserSettings> userSettingsRepository() {
         return userSettingsRepository;
+    }
+
+    @Override
+    public Repository<Subscription> subscriptionRepository() {
+        return subscriptionRepository;
     }
 }

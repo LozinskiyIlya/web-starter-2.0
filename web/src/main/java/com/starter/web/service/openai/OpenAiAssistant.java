@@ -61,14 +61,14 @@ public class OpenAiAssistant {
         return openAiService.createChatCompletion(completionRequest).getChoices().get(0).getMessage().getContent();
     }
 
-    public BillAssistantResponse runFilePipeline(UUID userId, String filePath, @Nullable String caption, @Nullable String defaultCurrency) {
-        final var extension = filePath.substring(filePath.lastIndexOf('.') + 1);
+    public BillAssistantResponse runFilePipeline(UUID userId, String filePathOrBase64String, @Nullable String caption, @Nullable String defaultCurrency) {
+        final var extension = filePathOrBase64String.substring(filePathOrBase64String.lastIndexOf('.') + 1);
         if (!extension.equals("pdf")) {
-            final var textOnImage = transformer.visionTransform(filePath, caption);
+            final var textOnImage = transformer.visionTransform(filePathOrBase64String, caption);
             return runTextPipeline(userId, textOnImage, defaultCurrency);
         }
         final var filePrompt = fullFilePrompt(caption, defaultCurrency);
-        final var uploaded = openAiFileManager.uploadFile(filePath);
+        final var uploaded = openAiFileManager.uploadFile(filePathOrBase64String);
         try {
             final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
                     .assistantId(ASSISTANT_ID)

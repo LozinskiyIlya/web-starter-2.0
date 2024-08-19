@@ -32,4 +32,14 @@ public interface UserTestData {
         configure.accept(user);
         return userRepository().saveAndFlush(user);
     }
+
+    default User givenUserWithInternalAdminRoleExists(Consumer<User> configure) {
+        var user = new User();
+        user.setRole(roleRepository().findAll().stream().filter(it -> it.getName().contains("INTERNAL_ADMIN")).findFirst().orElseThrow());
+        user.setLogin(UUID.randomUUID().toString());
+        user.setPassword("password");
+        user.setFirstLogin(false);
+        configure.accept(user);
+        return userRepository().saveAndFlush(user);
+    }
 }

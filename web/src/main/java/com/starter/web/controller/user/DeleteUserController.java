@@ -16,13 +16,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 import static com.starter.domain.entity.Role.Roles.ADMIN;
+import static com.starter.domain.entity.Role.Roles.INTERNAL_ADMIN;
 import static com.starter.domain.entity.User.UserType.GOOGLE;
 
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users/delete")
+@RequestMapping("/api/user/delete")
 @Schema(title = "Удаление пользовательской информации")
 @LogApiAction
 public class DeleteUserController {
@@ -36,7 +37,8 @@ public class DeleteUserController {
     void purgeUser(@PathVariable("userId") UUID userId,
                    @RequestBody PurgeUserDTO body) {
         var currentUser = currentUserService.getUser().orElseThrow(WrongUserException::new);
-        if (ADMIN.getRoleName().equals(currentUser.getRole().getName())) {
+        if (ADMIN.getRoleName().equals(currentUser.getRole().getName()) ||
+                INTERNAL_ADMIN.getRoleName().equals(currentUser.getRole().getName())) {
             //admin does what he wants
             purgeUserService.purgeUser(userId);
             return;
