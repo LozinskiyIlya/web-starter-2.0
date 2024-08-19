@@ -1,8 +1,6 @@
 package com.starter.web.filter;
 
 import com.starter.common.service.CurrentUserService;
-import com.starter.domain.entity.Subscription;
-import com.starter.domain.repository.SubscriptionRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +33,6 @@ public class PremiumFilter extends OncePerRequestFilter {
 
     private RequestMappingHandlerMapping handlerMapping;
     private final CurrentUserService currentUserService;
-    private final SubscriptionRepository subscriptionRepository;
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
@@ -60,10 +57,7 @@ public class PremiumFilter extends OncePerRequestFilter {
             boolean isAnnotated = handlerMethod.getMethod().isAnnotationPresent(Premium.class) ||
                     handlerMethod.getBeanType().isAnnotationPresent(Premium.class);
             if (isAnnotated) {
-                final var current = currentUserService.getUser().orElseThrow();
-                final var isPremium = subscriptionRepository.findOneByUser(current)
-                        .map(Subscription::isActive)
-                        .orElse(false);
+                final var isPremium = currentUserService.isPremium();
                 if (!isPremium) {
                     final var annotation = getAnnotationInstance(handlerMethod);
                     servletResponse.sendError(HttpServletResponse.SC_FORBIDDEN, annotation.value());

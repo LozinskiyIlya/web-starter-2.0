@@ -502,7 +502,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
     @DisplayName("Create Tag")
     class CreateTag {
 
-        @Transactional
         @Test
         @DisplayName("returns 400 if name already exists")
         void returns400IfNameExists() throws Exception {
@@ -527,7 +526,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                     .andExpect(status().isBadRequest());
         }
 
-        @Transactional
         @Test
         @DisplayName("returns 403 if not premium")
         void returns403IfNotPremium() throws Exception {
@@ -543,7 +541,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                     .andExpect(status().isForbidden());
         }
 
-        @Transactional
         @Test
         @DisplayName("returns 403 if premium expired")
         void returns403IfPremiumEnded() throws Exception {
@@ -562,7 +559,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
         }
 
 
-        @Transactional
         @Test
         @DisplayName("tag created properly")
         void tagCreatedProperly() throws Exception {
@@ -586,6 +582,44 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(createdTag.getTagType()).isEqualTo(dto.getTagType());
         }
 
+    }
+
+
+    @Nested
+    @DisplayName("Delete tag")
+    class DeleteTag {
+
+        @Test
+        @DisplayName("returns 404 if tag not found")
+        void returns404IfNotFound() throws Exception {
+            final var token = testUserAuthHeader();
+            mockMvc.perform(deleteRequest("/tags/" + UUID.randomUUID())
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("returns 403 if trying to delete not own tag")
+        void returns403IfNotOwnTaf() throws Exception {
+            final var tag = billCreator.givenBillTagExists(t -> {
+            });
+            final var token = testUserAuthHeader();
+            mockMvc.perform(deleteRequest("/tags/" + tag.getId())
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("tag deleted properly")
+        void tagDeletedProperly() throws Exception {
+            final var tag = billCreator.givenBillTagExists(t -> {
+            });
+            final var token = userAuthHeader(tag.getUser());
+            mockMvc.perform(deleteRequest("/tags/" + tag.getId())
+                            .header(token.getFirst(), token.getSecond()))
+                    .andExpect(status().isOk());
+            assertThat(billCreator.billTagRepository().findById(tag.getId())).isEmpty();
+        }
     }
 
     private static final String MIN_FIELDS_DTO = "{\"group\": {\"id\" : \"%s\"}, \"purpose\": \"Purpose\", \"amount\": 100, \"currency\": \"USD\"}";
