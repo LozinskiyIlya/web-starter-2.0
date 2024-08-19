@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 import static com.starter.telegram.service.TelegramBillService.NOT_RECOGNIZED_MESSAGE;
 import static com.starter.telegram.service.TelegramBillService.PROCESSING_ERROR_MESSAGE;
+import static com.starter.web.filter.PremiumFilter.Premium;
 
 @Slf4j
 @RestController
@@ -172,14 +173,15 @@ public class BillController {
                 .toList();
     }
 
+    @Premium
     @PostMapping("/tags")
-    @Operation(summary = "Create tag", description = "Create custom tag from DTO")
+    @Operation(summary = "Create tag", description = "Create custom tag from DTO, available only for premium users")
     public UUID createTag(@RequestBody @Valid BillDto.BillTagDto dto) {
         final var current = currentUserService.getUser().orElseThrow();
         final var newTag = billMapper.toTagEntity(dto);
         newTag.setUser(current);
         try {
-            return billTagRepository.save(newTag).getId();
+            return billTagRepository.saveAndFlush(newTag).getId();
         } catch (DataIntegrityViolationException e) {
             throw new Exceptions.ValidationException("Tag with this name already exists");
         }

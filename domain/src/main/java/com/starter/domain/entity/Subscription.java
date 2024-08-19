@@ -42,4 +42,8 @@ public class Subscription extends AbstractEntity {
     @NotNull
     private Instant endsAt;
 
+    @Transient
+    public boolean isActive() {
+        return endsAt.isAfter(Instant.now());
+    }
 }

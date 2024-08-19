@@ -35,7 +35,7 @@ pipelines:
                       git pull &&
                       ./mvnw clean package -DskipTests -Dmaven.test.skip=true -P dev spring-boot:build-image &&
                       docker image prune -f &&
-                      docker-compose up -d --build web &&
+                      docker-compose up -d --build web chat-with-bills &&
                       (timeout 30s docker-compose logs -f web; echo "Stop following logs after timeout reached"; exit 0 )
                     ENV_VARS: >-
                       BITBUCKET_BRANCH=${BITBUCKET_BRANCH}

@@ -1,6 +1,7 @@
 package com.starter.web.configuration;
 
 import com.starter.web.filter.JwtFilter;
+import com.starter.web.filter.PremiumFilter;
 import com.starter.web.filter.SwaggerGuardingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,7 @@ import static com.starter.domain.entity.Role.Roles.*;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final PremiumFilter premiumFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -75,7 +77,8 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 // Add your filters
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(premiumFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, PremiumFilter.class)
                 .addFilterBefore(guardingFilter(), JwtFilter.class);
 
         return http.build();

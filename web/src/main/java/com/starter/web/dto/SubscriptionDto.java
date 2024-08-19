@@ -39,7 +39,7 @@ public class SubscriptionDto {
         dto.setCurrency(subscription.getCurrency());
         dto.setCreatedAt(subscription.getCreatedAt());
         dto.setEndsAt(subscription.getEndsAt());
-        dto.setActive(now().isBefore(subscription.getEndsAt()));
+        dto.setActive(subscription.isActive());
         return dto;
     }
 }
