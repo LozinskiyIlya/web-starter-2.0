@@ -20,6 +20,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -45,6 +47,9 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
 
     @Autowired
     private AssistantProperties assistantProperties;
+
+    @Autowired
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
     @SpyBean
     private OpenAiAssistant openAiAssistant;
@@ -619,6 +624,11 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             .header(token.getFirst(), token.getSecond()))
                     .andExpect(status().isOk());
             assertThat(billCreator.billTagRepository().findById(tag.getId())).isEmpty();
+            // and tombstone is set
+            final var params = new MapSqlParameterSource()
+                    .addValue("id", tag.getId());
+            var loginWithTombstone = jdbcTemplate.queryForObject("select name from bill_tags where id=:id", params, String.class);
+            assertTrue(loginWithTombstone.matches("^" + tag.getName() + "\\[deleted:\\d{4}-\\d{1,2}-\\d{1,2}T.+\\]$"));
         }
     }
 

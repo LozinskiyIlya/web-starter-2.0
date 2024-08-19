@@ -190,12 +190,7 @@ public class BillController {
     @DeleteMapping("/tags/{tagId}")
     @Operation(summary = "Delete tag", description = "Delete tag by id, only owner can do this")
     public void deleteTag(@PathVariable UUID tagId) {
-        final var tag = billTagRepository.findById(tagId)
-                .orElseThrow(Exceptions.ResourceNotFoundException::new);
         final var currentUser = currentUserService.getUser().orElseThrow();
-        if (!tag.getUser().getId().equals(currentUser.getId())) {
-            throw new Exceptions.WrongUserException("You can't delete this tag");
-        }
-        billTagRepository.delete(tag);
+        billService.deleteTag(tagId, currentUser);
     }
 }

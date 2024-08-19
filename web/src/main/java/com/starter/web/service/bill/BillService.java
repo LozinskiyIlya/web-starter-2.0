@@ -17,12 +17,14 @@ import com.starter.web.fragments.BillAssistantResponse;
 import com.starter.web.mapper.BillMapper;
 import com.starter.web.service.AwsS3Service;
 import jakarta.annotation.PreDestroy;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -110,5 +112,18 @@ public class BillService {
             bill.setAttachment(uri);
             billRepository.save(bill);
         });
+    }
+
+    @Transactional
+    public void deleteTag(UUID tagId, User current) {
+        final var tag = billTagRepository.findById(tagId)
+                .orElseThrow(Exceptions.ResourceNotFoundException::new);
+        if (!tag.getUser().getId().equals(current.getId())) {
+            throw new Exceptions.WrongUserException("You can't delete this tag");
+        }
+        var tombstone = Instant.now();
+        tag.setName(tag.getName() + "[deleted:" + tombstone + "]");
+        billTagRepository.saveAndFlush(tag);
+        billTagRepository.delete(tag);
     }
 }
