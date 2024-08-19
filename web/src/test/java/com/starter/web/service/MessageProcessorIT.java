@@ -71,7 +71,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(assistantResponse("USD", 100.0))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(message), Mockito.any(), Mockito.anySet());
             final var responseMocked = Mockito.mock(SendResponse.class);
             final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
             when(messageMocked.messageId()).thenReturn(tgMessageId);
@@ -98,7 +98,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(false))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(BillAssistantResponse.EMPTY())
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(message), Mockito.any(), Mockito.anySet());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
             }).getUser();
@@ -117,7 +117,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(assistantResponse("USD", 0.001))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(message), Mockito.any(), Mockito.anySet());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
             }).getUser();
@@ -137,7 +137,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doReturn(assistantResponse("USD", 0d))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(message), Mockito.any(), Mockito.anySet());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
             }).getUser();
@@ -163,7 +163,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             doReturn(new MessageClassificationResponse(true))
                     .when(openAiAssistant).classifyMessage(message);
             doThrow(new RuntimeException("Timeout"))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(message), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(message), Mockito.any(), Mockito.anySet());
             // given
             var user = userCreator.givenUserInfoExists(ui -> {
             }).getUser();
@@ -189,7 +189,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             final var localFileUrl = CustomFileUtils.saveRemoteFileAndReturnPath(fileUrl, "Invoice3.pdf", downloadDirectory);
             final var tgMessageId = 1;
             doReturn(assistantResponse("USD", 100.0))
-                    .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.anyString(), Mockito.eq(caption), Mockito.any());
+                    .when(openAiAssistant).runFilePipeline(Mockito.anyString(), Mockito.eq(caption), Mockito.any(), Mockito.anySet());
             final var responseMocked = Mockito.mock(SendResponse.class);
             final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
             when(messageMocked.messageId()).thenReturn(tgMessageId);
@@ -203,7 +203,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
                     new TelegramFileMessageEvent.TelegramFileMessagePayload(group.getId(), localFileUrl, caption, tgMessageId)));
             // then - bill is created asynchronously
             await().atMost(5, TimeUnit.SECONDS)
-                    .until(() -> billRepository.findAllByGroup(group).stream().filter(b -> b.getAttachment() != null).count() > 0);
+                    .until(() -> billRepository.findAllByGroup(group).stream().anyMatch(b -> b.getAttachment() != null));
             var bill = billRepository.findAllByGroup(group).get(0);
             assertTrue(bill.getAttachment().toString().contains(bill.getId().toString()));
         }
@@ -216,7 +216,7 @@ class MessageProcessorIT extends AbstractSpringIntegrationTest {
             final var fileUrl = "https://volee-avatars-dev-us.s3.amazonaws.com/ai-counting/Invoice3.pdf";
             final var tgMessageId = 1;
             doReturn(assistantResponse("USD", 100.0))
-                    .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.anyString(), Mockito.eq(caption), Mockito.any());
+                    .when(openAiAssistant).runFilePipeline(Mockito.anyString(), Mockito.eq(caption), Mockito.any(), Mockito.anySet());
             final var responseMocked = Mockito.mock(SendResponse.class);
             final var messageMocked = Mockito.mock(com.pengrad.telegrambot.model.Message.class);
             when(messageMocked.messageId()).thenReturn(tgMessageId);

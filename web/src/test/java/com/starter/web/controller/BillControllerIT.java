@@ -312,7 +312,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             dto.setGroupId(group.getId());
             dto.setDetails("some bill details");
             doReturn(assistantResponse("USD", 100.0))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(dto.getDetails()), Mockito.any(), Mockito.anySet());
             // when
             final var token = userAuthHeader(group.getOwner());
             final var response = mockMvc.perform(postRequest("/parse")
@@ -340,7 +340,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             dto.setDetails("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAB0lEQVR42mP8/wcAAwAB/IDx4XwAAAAASUVORK5CYII=");
             dto.setFileName("image.png");
             doReturn(assistantResponse("USD", 100.0))
-                    .when(openAiAssistant).runFilePipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any(), Mockito.any());
+                    .when(openAiAssistant).runFilePipeline(Mockito.eq(dto.getDetails()), Mockito.anyString(), Mockito.any(), Mockito.anySet());
             // when
             final var token = userAuthHeader(group.getOwner());
             final var response = mockMvc.perform(postRequest("/parse")
@@ -376,7 +376,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             dto.setType(RecognitionRequest.RecognitionType.TEXT);
             dto.setDetails("some bill details");
             doReturn(assistantResponse("USD", 100.0))
-                    .when(openAiAssistant).runTextPipeline(Mockito.any(), Mockito.eq(dto.getDetails()), Mockito.any());
+                    .when(openAiAssistant).runTextPipeline(Mockito.eq(dto.getDetails()), Mockito.any(), Mockito.anySet());
             // when
             final var token = userAuthHeader(user);
             final var response = mockMvc.perform(postRequest("/parse")

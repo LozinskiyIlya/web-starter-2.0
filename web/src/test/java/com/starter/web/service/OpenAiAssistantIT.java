@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -65,7 +66,7 @@ public class OpenAiAssistantIT {
                 Плюс эти банк комиссии сколько обычно? вроде 30 EUR ?\s
 
                 Тогда отправим 2026.5 EUR""";
-        final var response = openAiAssistant.runTextPipeline(message, null, Set.of());
+        final var response = openAiAssistant.runTextPipeline(message, java.util.Optional.empty(), Set.of());
         assertEquals(2026.5, response.getAmount());
         assertEquals("EUR", response.getCurrency());
         System.out.println(response);
@@ -79,7 +80,7 @@ public class OpenAiAssistantIT {
         final var message = """
                 Абонемент в спорт-зал 20к рублей за этот месяц
                 """;
-        final var response = openAiAssistant.runTextPipeline(message, null, Set.of("Gym", "Party"));
+        final var response = openAiAssistant.runTextPipeline(message, java.util.Optional.empty(), Set.of("Gym", "Party"));
         assertTrue(Arrays.asList(response.getTags()).contains("Gym"));
         System.out.println(response);
     }
@@ -90,7 +91,7 @@ public class OpenAiAssistantIT {
     void runsTextPipeWithDefaultCurrency() {
         final var message = "Байк 700К";
         final var defaultCurrency = "IDR";
-        final var response = openAiAssistant.runTextPipeline(message, defaultCurrency, Set.of());
+        final var response = openAiAssistant.runTextPipeline(message, Optional.of(defaultCurrency), Set.of());
         assertEquals(defaultCurrency, response.getCurrency());
         System.out.println(response);
     }
@@ -101,7 +102,7 @@ public class OpenAiAssistantIT {
     void defaultCurrencyOverride() {
         final var message = "Байк 700К RUB";
         final var defaultCurrency = "IDR";
-        final var response = openAiAssistant.runTextPipeline(message, defaultCurrency, Set.of());
+        final var response = openAiAssistant.runTextPipeline(message, Optional.of(defaultCurrency), Set.of());
         assertEquals("RUB", response.getCurrency());
         System.out.println(response);
     }
@@ -111,7 +112,7 @@ public class OpenAiAssistantIT {
     @DisplayName("Recognizes current date")
     void shouldRecognizeCurrentDate() {
         final var message = "Байк 700К RUB Вчера";
-        final var response = openAiAssistant.runTextPipeline(message, null, Set.of());
+        final var response = openAiAssistant.runTextPipeline(message, Optional.empty(), Set.of());
         final var yesterday = Instant.now().minus(1, ChronoUnit.DAYS).atZone(ZoneId.systemDefault()).toLocalDate();
         final var actualDate = response.getMentionedDate().atZone(ZoneId.systemDefault()).toLocalDate();
         assertEquals(yesterday, actualDate);
@@ -131,7 +132,7 @@ public class OpenAiAssistantIT {
         void forSomeFileExtension() {
             final var start = Instant.now();
             final var additionalMessage = "Sending you an invoice for the last tasks";
-            final var response = openAiAssistant.runFilePipeline(fileUrl.get(), additionalMessage, null, Set.of());
+            final var response = openAiAssistant.runFilePipeline(fileUrl.get(), additionalMessage, Optional.empty(), Set.of());
             assertEquals(expectedAmount.get(), response.getAmount());
             assertEquals(expectedCurrency.get(), response.getCurrency());
             System.out.println(response);

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 import static com.starter.telegram.service.TelegramBillService.NOT_RECOGNIZED_MESSAGE;
 import static com.starter.telegram.service.TelegramBillService.PROCESSING_ERROR_MESSAGE;
 import static com.starter.web.filter.PremiumFilter.Premium;
+import static java.util.stream.Collectors.toSet;
 
 @Slf4j
 @RestController
@@ -97,14 +99,15 @@ public class BillController {
     public UUID parseBill(@RequestBody @Valid RecognitionRequest request) {
         final var currentUser = currentUserService.getUser().orElseThrow();
         final var group = billService.selectGroupForAddingBill(request.getGroupId(), currentUser);
+        final var tags = billTagRepository.findAllByUser(currentUser).stream().map(BillTag::getName).collect(toSet());
         BillAssistantResponse response;
         String base64 = null;
         try {
             if (request.getType() == RecognitionRequest.RecognitionType.TEXT) {
-                response = openAiAssistant.runTextPipeline(request.getDetails(), group.getDefaultCurrency(), Set.of());
+                response = openAiAssistant.runTextPipeline(request.getDetails(), Optional.ofNullable(group.getDefaultCurrency()), tags);
             } else if (request.getType() == RecognitionRequest.RecognitionType.IMAGE) {
                 base64 = request.getDetails();
-                response = openAiAssistant.runFilePipeline(base64, "", group.getDefaultCurrency(), Set.of());
+                response = openAiAssistant.runFilePipeline(base64, "", Optional.ofNullable(group.getDefaultCurrency()), tags);
             } else {
                 throw new Exceptions.RecognitionException("Invalid recognition type");
             }

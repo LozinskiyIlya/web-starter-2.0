@@ -3,8 +3,10 @@ package com.starter.web.service;
 
 import com.starter.common.events.*;
 import com.starter.domain.entity.Bill;
+import com.starter.domain.entity.BillTag;
 import com.starter.domain.entity.Group;
 import com.starter.domain.entity.UserSettings;
+import com.starter.domain.repository.BillTagRepository;
 import com.starter.domain.repository.GroupRepository;
 import com.starter.domain.repository.UserSettingsRepository;
 import com.starter.web.fragments.BillAssistantResponse;
@@ -20,9 +22,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.Optional;
 
 import static com.starter.common.utils.CustomFileUtils.deleteLocalFile;
+import static java.util.stream.Collectors.toSet;
 
 @Slf4j
 @Service
@@ -36,6 +39,7 @@ public class MessageProcessor {
     private final BillService billService;
     private final GroupRepository groupRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final BillTagRepository billTagRepository;
 
     @Async
     @Transactional
@@ -45,8 +49,9 @@ public class MessageProcessor {
         final var groupId = payload.getFirst();
         final var content = payload.getSecond();
         final var group = groupRepository.findById(groupId).orElseThrow();
+        final var tags = billTagRepository.findAllByUser(group.getOwner()).stream().map(BillTag::getName).collect(toSet());
         try {
-            final var response = openAiAssistant.runTextPipeline(content, group.getDefaultCurrency(), Set.of());
+            final var response = openAiAssistant.runTextPipeline(content, Optional.ofNullable(group.getDefaultCurrency()), tags);
             save(group, response, Bill.DEFAULT_MESSAGE_ID, null);
         } catch (Exception e) {
             log.error("Error while processing message", e);
@@ -64,8 +69,9 @@ public class MessageProcessor {
         final var fileUrl = payload.fileUrl();
         final var messageId = payload.messageId();
         final var group = groupRepository.findById(groupId).orElseThrow();
+        final var tags = billTagRepository.findAllByUser(group.getOwner()).stream().map(BillTag::getName).collect(toSet());
         try {
-            final var response = openAiAssistant.runFilePipeline(fileUrl, caption, group.getDefaultCurrency(), Set.of());
+            final var response = openAiAssistant.runFilePipeline(fileUrl, caption, Optional.ofNullable(group.getDefaultCurrency()), tags);
             save(group, response, messageId, fileUrl);
         } catch (Exception e) {
             log.error("Error while processing message", e);

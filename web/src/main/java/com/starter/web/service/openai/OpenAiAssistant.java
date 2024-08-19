@@ -60,15 +60,15 @@ public class OpenAiAssistant {
 
     public BillAssistantResponse runFilePipeline(
             String filePathOrBase64String,
-            @Nullable String caption,
-            @Nullable String defaultCurrency,
+            String caption,
+            Optional<String> defaultCurrency,
             Set<String> customTags) {
         final var extension = filePathOrBase64String.substring(filePathOrBase64String.lastIndexOf('.') + 1);
         if (!extension.equals("pdf")) {
             final var textOnImage = transformer.visionTransform(filePathOrBase64String, caption);
             return runTextPipeline(textOnImage, defaultCurrency, customTags);
         }
-        final var filePrompt = fullFilePrompt(caption, defaultCurrency, customTags);
+        final var filePrompt = fullFilePrompt(caption, defaultCurrency.orElse(null), customTags);
         final var uploaded = openAiFileManager.uploadFile(filePathOrBase64String);
         try {
             final var threadRun = openAiService.createThreadAndRun(CreateThreadAndRunRequest.builder()
@@ -95,13 +95,13 @@ public class OpenAiAssistant {
 
     public BillAssistantResponse runTextPipeline(
             String forwardedMessage,
-            @Nullable String defaultCurrency,
+            Optional<String> defaultCurrency,
             Set<String> customTags) {
         final var withed = trimUserMessage(forwardedMessage);
         final var listOfMessages = new LinkedList<MessageRequest>();
         listOfMessages.add(MessageRequest.builder()
                 .role("assistant")
-                .content(runInstructions(defaultCurrency, customTags))
+                .content(runInstructions(defaultCurrency.orElse(null), customTags))
                 .build());
         listOfMessages.add(MessageRequest.builder()
                 .role("user")
