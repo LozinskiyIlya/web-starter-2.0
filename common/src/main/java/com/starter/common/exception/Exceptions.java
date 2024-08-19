@@ -83,4 +83,11 @@ public class Exceptions {
             super(message, cause);
         }
     }
+
+    public static class AllowedResourceCountExceeded extends RuntimeException {
+        public AllowedResourceCountExceeded(String message) {
+            super(message);
+        }
+
+    }
 }

@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.starter.web.controller.BillController.MAX_CUSTOM_TAGS_PER_USER;
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -520,9 +521,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             final var allTags = ((BillTagRepository) billCreator.billTagRepository()).findAllByUser(user);
             assertTrue(allTags.stream().anyMatch(t -> t.getName().equals(existingName)));
             final var token = userAuthHeader(user);
-            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            final var dto = userDefinedTagDto();
             dto.setName(existingName);
-            dto.setTagType(BillTag.TagType.USER_DEFINED);
             // when then
             mockMvc.perform(postRequest("/tags")
                             .header(token.getFirst(), token.getSecond())
@@ -537,7 +537,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             // given
             final var userWithoutPremium = userCreator.givenUserExists();
             final var token = userAuthHeader(userWithoutPremium);
-            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            final var dto = userDefinedTagDto();
             // when then
             mockMvc.perform(postRequest("/tags")
                             .header(token.getFirst(), token.getSecond())
@@ -554,7 +554,7 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                             s.setEndsAt(now().minusDays(1).toInstant(ZoneOffset.UTC)))
                     .getUser();
             final var token = userAuthHeader(userWithExpiredPremium);
-            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            final var dto = userDefinedTagDto();
             // when then
             mockMvc.perform(postRequest("/tags")
                             .header(token.getFirst(), token.getSecond())
@@ -565,13 +565,49 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
 
 
         @Test
+        @DisplayName("max tag count checked")
+        void maxTagCountChecked() throws Exception {
+            // given
+            final var user = userCreator.givenSubscriptionExists(s -> {
+            }).getUser();
+            for (int i = 0; i < MAX_CUSTOM_TAGS_PER_USER; i++) {
+                billCreator.givenBillTagExists(t -> t.setUser(user));
+            }
+            final var token = userAuthHeader(user);
+            final var dto = userDefinedTagDto();
+            // when then
+            mockMvc.perform(postRequest("/tags")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("Invalid type")
+        void invalidType() throws Exception {
+            // given
+            final var user = userCreator.givenSubscriptionExists(s -> {
+            }).getUser();
+            final var token = userAuthHeader(user);
+            final var dto = userDefinedTagDto();
+            dto.setTagType(BillTag.TagType.DEFAULT); // not allowed
+            // when then
+            mockMvc.perform(postRequest("/tags")
+                            .header(token.getFirst(), token.getSecond())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(dto)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
         @DisplayName("tag created properly")
         void tagCreatedProperly() throws Exception {
             // given
             final var user = userCreator.givenSubscriptionExists(s -> {
             }).getUser();
             final var token = userAuthHeader(user);
-            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            final var dto = userDefinedTagDto();
             // when
             final var response = mockMvc.perform(postRequest("/tags")
                             .header(token.getFirst(), token.getSecond())
@@ -587,8 +623,12 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             assertThat(createdTag.getTagType()).isEqualTo(dto.getTagType());
         }
 
+        private BillDto.BillTagDto userDefinedTagDto() {
+            final var dto = random.nextObject(BillDto.BillTagDto.class);
+            dto.setTagType(BillTag.TagType.USER_DEFINED);
+            return dto;
+        }
     }
-
 
     @Nested
     @DisplayName("Delete tag")

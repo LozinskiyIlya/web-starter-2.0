@@ -52,6 +52,7 @@ public class BillController {
     private final MessageProcessor messageProcessor;
     private final OpenAiAssistant openAiAssistant;
     private final BillService billService;
+    public final static int MAX_CUSTOM_TAGS_PER_USER = 10;
 
     @GetMapping("/{billId}/preview")
     public BillDto getBillPreview(@PathVariable UUID billId) {
@@ -177,13 +178,22 @@ public class BillController {
     @PostMapping("/tags")
     @Operation(summary = "Create tag", description = "Create custom tag from DTO, available only for premium users")
     public UUID createTag(@RequestBody @Valid BillDto.BillTagDto dto) {
-        final var current = currentUserService.getUser().orElseThrow();
-        final var newTag = billMapper.toTagEntity(dto);
-        newTag.setUser(current);
+        // Only allow user-defined tags
+        if (!dto.getTagType().equals(BillTag.TagType.USER_DEFINED)) {
+            throw new Exceptions.ValidationException("Invalid tag type: must be 'USER_DEFINED'");
+        }
+        // Check tag creation limit
+        final var currentUser = currentUserService.getUser().orElseThrow();
+        if (billTagRepository.countByUser(currentUser) >= MAX_CUSTOM_TAGS_PER_USER) {
+            throw new Exceptions.AllowedResourceCountExceeded("Maximum of " + MAX_CUSTOM_TAGS_PER_USER + " custom tags allowed.");
+        }
+        // Attempt to save the new tag in the database, throws exception if tag with the same name already exists
+        final var entity = billMapper.toTagEntity(dto);
+        entity.setUser(currentUser);
         try {
-            return billTagRepository.saveAndFlush(newTag).getId();
+            return billTagRepository.saveAndFlush(entity).getId();
         } catch (DataIntegrityViolationException e) {
-            throw new Exceptions.ValidationException("Tag with this name already exists");
+            throw new Exceptions.ValidationException("A tag with this name already exists");
         }
     }
 
