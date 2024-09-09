@@ -563,7 +563,6 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
                     .andExpect(status().isForbidden());
         }
 
-
         @Test
         @DisplayName("max tag count checked")
         void maxTagCountChecked() throws Exception {
@@ -667,8 +666,8 @@ class BillControllerIT extends AbstractSpringIntegrationTest {
             // and tombstone is set
             final var params = new MapSqlParameterSource()
                     .addValue("id", tag.getId());
-            var loginWithTombstone = jdbcTemplate.queryForObject("select name from bill_tags where id=:id", params, String.class);
-            assertTrue(loginWithTombstone.matches("^" + tag.getName() + "\\[deleted:\\d{4}-\\d{1,2}-\\d{1,2}T.+\\]$"));
+            var nameWithTombstone = jdbcTemplate.queryForObject("select name from bill_tags where id=:id", params, String.class);
+            assertTrue(nameWithTombstone.matches("^" + tag.getName() + "\\[deleted:\\d{4}-\\d{1,2}-\\d{1,2}T.+\\]$"));
         }
     }
 
