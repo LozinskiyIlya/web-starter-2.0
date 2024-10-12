@@ -5,10 +5,6 @@ import com.starter.common.service.CurrentUserService;
 import com.starter.domain.entity.User;
 import com.starter.domain.repository.UserInfoRepository;
 import com.starter.domain.repository.UserRepository;
-import com.starter.domain.repository.UserSettingsRepository;
-import com.starter.web.dto.UserSettingsDto;
-import com.starter.web.mapper.UserSettingsMapper;
-import com.starter.web.service.user.TimezoneService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,11 +29,8 @@ import java.util.UUID;
 public class CurrentUserController {
 
     private final CurrentUserService currentUserService;
-    private final TimezoneService timezoneService;
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
-    private final UserSettingsRepository userSettingsRepository;
-    private final UserSettingsMapper userSettingsMapper;
 
     @GetMapping("")
     @Operation(summary = "Отобразить данные пользователя")
@@ -49,15 +42,7 @@ public class CurrentUserController {
                 .ifPresent(currentUserInfo -> {
                     dto.setFirstName(currentUserInfo.getFirstName());
                     dto.setLastName(currentUserInfo.getLastName());
-                    final var telegramUser = new TelegramUserDto();
-                    telegramUser.setId(currentUserInfo.getTelegramChatId());
-                    telegramUser.setUsername(currentUserInfo.getTelegramUsername());
-                    dto.setTelegramUser(telegramUser);
                 });
-        userSettingsRepository.findOneByUser(current)
-                .map(settings -> timezoneService.updateTimezone(settings, request))
-                .map(userSettingsMapper::toDtoMaskedPin)
-                .ifPresent(dto::setSettings);
         Optional.ofNullable(session.getAttribute("pinEntered"))
                 .map(Boolean.class::cast)
                 .ifPresent(dto::setPinEntered);
@@ -85,13 +70,5 @@ public class CurrentUserController {
         private boolean isCredentialsNonExpired;
         private boolean isEnabled;
         private boolean pinEntered;
-        private TelegramUserDto telegramUser;
-        private UserSettingsDto settings;
-    }
-
-    @Data
-    public static class TelegramUserDto {
-        private Long id;
-        private String username;
     }
 }

@@ -32,4 +32,7 @@ public class UserSettings extends AbstractEntity {
     @NotNull
     @Column(name = "last_updated_at", nullable = false)
     private Instant lastUpdatedAt = Instant.now();
+
+    @NotNull
+    private String timezone = "UTC";
 }

@@ -28,7 +28,7 @@ public class JobRunner {
     private String activeProfile;
 
     private static final Set<String> IGNORED_PROFILES = Set.of(
-//            "local",
+            "local",
             "Unknown"
     );
 

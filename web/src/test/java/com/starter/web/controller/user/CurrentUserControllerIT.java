@@ -6,13 +6,11 @@ import com.starter.web.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
 import org.springframework.mock.web.MockHttpSession;
 
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import static com.starter.web.service.user.TimezoneService.TIMEZONE_HEADER;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,7 +46,6 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
         }).getUser();
         final var settings = userCreator.givenUserSettingsExists(us -> {
             us.setUser(user);
-            us.setPinCode("123456");
         });
         var header = userAuthHeader(login);
         // Define the desired format with nanosecond precision
@@ -57,7 +54,6 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
 
         var serializedUser = readResource("responses/user/current_user.json")
                 .replace("%USER_ID%", user.getId().toString())
-                .replace("%PIN_CODE%", settings.getPinCode())
                 .replace("%LAST_UPDATED_AT%", formattedLastUpdate)
                 .replace("\"%TELEGRAM_CHAT_ID%\"", chatId.toString());
         mockMvc.perform(getRequest("")
@@ -112,19 +108,6 @@ class CurrentUserControllerIT extends AbstractSpringIntegrationTest {
         assertEquals("GET", actions.get(0).getMetadata().getHttpMethod());
     }
 
-    @Test
-    @DisplayName("Updates timezone")
-    void updatesTimezone() throws Exception {
-        final var settings = userCreator.givenUserSettingsExists();
-        final var token = userAuthHeader(settings.getUser());
-        final var timezone = Pair.of(TIMEZONE_HEADER, "Europe/Moscow");
-        mockMvc.perform(getRequest("")
-                        .header(timezone.getFirst(), timezone.getSecond())
-                        .header(token.getFirst(), token.getSecond()))
-                .andExpect(status().isOk());
-        final var updated = userCreator.userSettingsRepository().findById(settings.getId()).orElseThrow();
-        assertEquals(timezone.getSecond(), updated.getTimezone());
-    }
 
     @Override
     protected String controllerPath() {

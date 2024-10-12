@@ -9,22 +9,5 @@
   "pinEntered": true,
   "accountNonExpired": true,
   "accountNonLocked": true,
-  "credentialsNonExpired": true,
-  "settings": {
-    "autoConfirmBills": false,
-    "spoilerBills": true,
-    "pinCodeEnabled": false,
-    "dailyReminder": true,
-    "weeklyReport": true,
-    "silentMode": false,
-    "skipZeros": true,
-    "timezone": "UTC",
-    "pinCode": "******",
-    "lastUpdatedAt": "%LAST_UPDATED_AT%",
-    "dailyReminderAt": "21:00"
-  },
-  "telegramUser": {
-    "id": "%TELEGRAM_CHAT_ID%",
-    "username": "current user telegram username"
-  }
+  "credentialsNonExpired": true
 }

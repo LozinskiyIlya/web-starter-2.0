@@ -11,8 +11,8 @@
 
     <artifactId>web</artifactId>
     <version>1.0.0</version>
-    <name>web-starter</name>
-    <description>web functionality for starter</description>
+    <name>coins-service</name>
+    <description>backend functionality for coins service</description>
 
     <dependencies>
         <dependency>
@@ -112,7 +112,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <skip>false</skip>
-                    <imageName>web-starter</imageName>
+                    <imageName>coins-service</imageName>
                     <layers>
                         <enabled>true</enabled>
                     </layers>

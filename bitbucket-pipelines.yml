@@ -29,13 +29,13 @@ pipelines:
                     SERVER: 'devadmin.joinee.io'
                     PORT: 19777
                     COMMAND: >-
-                      cd /var/www/aicounting/back &&
+                      cd /var/www/coins/back &&
                       git fetch --all &&
                       git checkout ${BITBUCKET_BRANCH:-'develop'} &&
                       git pull &&
                       ./mvnw clean package -DskipTests -Dmaven.test.skip=true -P dev spring-boot:build-image &&
                       docker image prune -f &&
-                      docker-compose up -d --build web chat-with-bills &&
+                      docker-compose up -d --build web &&
                       (timeout 30s docker-compose logs -f web; echo "Stop following logs after timeout reached"; exit 0 )
                     ENV_VARS: >-
                       BITBUCKET_BRANCH=${BITBUCKET_BRANCH}

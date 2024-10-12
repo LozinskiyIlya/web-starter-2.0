@@ -1,9 +1,0 @@
-{
-"buyer": "",
-"seller": "",
-"purpose": "",
-"currency": "",
-"amount": "",
-"mentionedDate": "",
-"tags": []
-}

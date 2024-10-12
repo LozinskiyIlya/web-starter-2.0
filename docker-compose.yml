@@ -7,26 +7,26 @@ services:
     volumes:
       - test_postgres:/var/lib/postgresql/data/
     ports:
-      - "5433:5432"
+      - "5434:5432"
     env_file:
       - .env
-    container_name: db_ai_counting
+    container_name: db_coins-service
     restart: always
 
   web:
-    image: docker.io/library/web-starter:latest
+    image: docker.io/library/coins-service:latest
     deploy:
       resources:
         limits:
           memory: 800M
-    container_name: back_ai_counting
+    container_name: back_coins-service
     volumes:
       - ./:/app
       - ~/.m2:/root/.m2
       - /host/downloads:/downloads
     ports:
-      - "8003:8888"
-      - "5006:5005"
+      - "8004:8888"
+      - "5007:5005"
     environment:
       #https://merikan.com/2019/04/jvm-in-a-container/
       JAVA_TOOL_OPTIONS: >-
@@ -39,16 +39,5 @@ services:
       - .env
     depends_on:
       - db
-
-  chat-with-bills:
-    container_name: chat_ai_counting
-    build:
-      context: ../chat-with-bills/
-      dockerfile: ../chat-with-bills/Dockerfile
-    restart: always
-    env_file:
-      - .env
-    depends_on:
-      - web
 volumes:
   test_postgres:

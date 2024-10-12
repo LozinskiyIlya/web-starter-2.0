@@ -1,9 +1,0 @@
-{
-"buyer": "",
-"seller": "",
-"purpose": "sprints 11-12",
-"currency": "EUR",
-"amount": "2026",
-"date": "2023-11-01T00:00:00Z",
-"tags": ["Work"]
-}
