@@ -1,7 +1,0 @@
-New bill#id# from 👥 <b>#group_name#</b>
-<tg-spoiler>
-Amount: <b>#amount#</b>
-Purpose: <b>#purpose#</b>
-Date: <b>#date#</b>
-</tg-spoiler>
-#tags#

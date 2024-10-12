@@ -1,1 +1,0 @@
-@#user_name# can now view bills in 👥 <b>#group_name#</b>. <a href='#edit_url#'>Edit group</a>

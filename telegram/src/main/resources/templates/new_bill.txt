@@ -1,7 +1,0 @@
-<b>NEW BILL</b>
-
-Let the bot extract all important info about your transaction, just send payment-related message or document in any format, for example:
-
-#example#
-
-Or enter the details manually using the form

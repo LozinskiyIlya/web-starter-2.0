@@ -31,7 +31,6 @@
         <module>domain</module>
         <module>common</module>
         <module>web</module>
-        <module>telegram</module>
     </modules>
 
     <dependencies>
@@ -80,11 +79,6 @@
             <dependency>
                 <groupId>com.starter</groupId>
                 <artifactId>common</artifactId>
-                <version>1.0.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.starter</groupId>
-                <artifactId>telegram</artifactId>
                 <version>1.0.0</version>
             </dependency>
             <dependency>

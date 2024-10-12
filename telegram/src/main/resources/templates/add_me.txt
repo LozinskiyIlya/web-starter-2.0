@@ -1,3 +1,0 @@
-Hello <b>#owner_name#</b>!
-
-@#user_name# requesting permission to see bills in your group <b>#group_name#</b>

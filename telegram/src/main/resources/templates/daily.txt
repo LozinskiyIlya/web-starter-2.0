@@ -1,6 +1,0 @@
-<b>🌃 Good evening #name#!</b>
-
-Just a friendly reminder to upload your expense details for the day 📝
-Keeping your records up-to-date helps you stay on top of your finances!
-
-<a href='#settings_url#'>Notification settings</a>
