@@ -3,7 +3,6 @@
 ### Starter for web back end based on spring boot
 
 ## Includes
-
 * Domain-starter
     * postgresql
     * ready to use basic entities for user management
@@ -23,3 +22,8 @@
 * Maven
 * Postgres
 * Docker
+
+## How to run
+* Change database connection props
+* Change artifact name in web/pom.xml
+* Change docker image name in docker-compose.yml
