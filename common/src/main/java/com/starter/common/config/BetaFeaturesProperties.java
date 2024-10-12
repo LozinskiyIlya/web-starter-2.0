@@ -10,6 +10,4 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "starter.features.beta")
 public class BetaFeaturesProperties {
 
-    private final boolean documentsRecognition = true;
-    private final boolean chatWithBills = true;
 }

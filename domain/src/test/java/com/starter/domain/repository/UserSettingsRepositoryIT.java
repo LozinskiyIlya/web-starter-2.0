@@ -34,12 +34,10 @@ class UserSettingsRepositoryIT extends AbstractRepositoryTest<UserSettings> {
         final var user = template.execute(t -> userTestDataCreator.givenUserExists());
         final var userSettings = template.execute(t -> userTestDataCreator.givenUserSettingsExists(us -> {
             us.setUser(user);
-            us.setPinCode("000000");
         }));
         template.executeWithoutResult(t -> {
             final var fetched = userRepository.findById(user.getId()).orElseThrow();
             assertNotNull(fetched.getUserSettings());
-            assertEquals(userSettings.getPinCode(), fetched.getUserSettings().getPinCode());
         });
         template.executeWithoutResult(t -> {
             final var fetched = userSettingsRepository.findById(userSettings.getId()).orElseThrow();

@@ -15,7 +15,4 @@ public class ServerProperties {
 
     @NotNull
     private URI host;
-
-    @NotNull
-    private URI frontendHost;
 }
