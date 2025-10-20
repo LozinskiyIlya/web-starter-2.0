@@ -25,11 +25,11 @@ pipelines:
               script:
                 - pipe: atlassian/ssh-run:0.4.1
                   variables:
-                    SSH_USER: 'devlabs'
-                    SERVER: 'devadmin.joinee.io'
-                    PORT: 19777
+                    SSH_USER: 'someadmin'
+                    SERVER: 'some.server.io'
+                    PORT: 12345
                     COMMAND: >-
-                      cd /var/www/coins/back &&
+                      cd /var/www/some/back &&
                       git fetch --all &&
                       git checkout ${BITBUCKET_BRANCH:-'develop'} &&
                       git pull &&

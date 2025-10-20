@@ -10,16 +10,16 @@ services:
       - "5434:5432"
     env_file:
       - .env
-    container_name: db_coins-service
+    container_name: db_some-service
     restart: always
 
   web:
-    image: docker.io/library/coins-service:latest
+    image: docker.io/library/some-service:latest
     deploy:
       resources:
         limits:
           memory: 800M
-    container_name: back_coins-service
+    container_name: back_some-service
     volumes:
       - ./:/app
       - ~/.m2:/root/.m2
