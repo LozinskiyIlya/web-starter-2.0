@@ -15,7 +15,7 @@ import java.time.ZoneId;
 @Service
 @RequiredArgsConstructor
 public class TimezoneService {
-    public static final String TIMEZONE_HEADER = "Timezone";
+    public static final String TIMEZONE_HEADER = "X-Timezone";
     private final UserSettingsRepository userSettingsRepository;
 
     public UserSettings updateTimezone(UserSettings userSettings, HttpServletRequest request) {
