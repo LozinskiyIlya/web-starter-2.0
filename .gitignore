@@ -34,3 +34,6 @@ build/
 
 ### ENVIRONMENT ###
 .env
+
+### Application properties ###
+open-ai/src/test/resources/application.properties
